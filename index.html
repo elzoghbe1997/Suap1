@@ -121,6 +121,8 @@
     }
   })();
 </script>
+<!-- Add Babel Standalone for in-browser JSX/TSX compilation -->
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
   <body class="bg-slate-50 dark:bg-slate-900">
     <div id="root"></div>
@@ -138,5 +140,7 @@
         });
       }
     </script>
+    <!-- Change script type to text/babel for Babel to transpile it -->
+    <script type="text/babel" data-type="module" src="/index.tsx"></script>
   </body>
 </html>
