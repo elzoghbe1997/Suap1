@@ -2,7 +2,7 @@ import React from 'react';
 
 const SkeletonCard: React.FC = () => {
     return (
-        <div className="bg-white dark:bg-gray-800 p-5 rounded-lg shadow-md animate-pulse">
+        <div className="bg-white dark:bg-gray-800 p-5 rounded-lg shadow-md skeleton-shimmer">
             <div className="flex justify-between items-start mb-4">
                 <div>
                     <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-3"></div>

@@ -4,6 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>المحاسب للصوب الزراعية</title>
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#0f172a" />
     <script>
       tailwind.config = {
         darkMode: 'class',
@@ -16,6 +18,76 @@
     <style>
       body {
         font-family: 'Cairo', sans-serif;
+      }
+      @keyframes pageFadeIn {
+        from { opacity: 0; transform: translateY(5px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .animate-page-fade-in {
+        animation: pageFadeIn 0.4s ease-out forwards;
+      }
+      @keyframes fadeInSlideUp {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .animate-fadeInSlideUp {
+        animation: fadeInSlideUp 0.5s ease-out forwards;
+        opacity: 0; /* Start with opacity 0 to prevent flash before animation */
+      }
+      @keyframes shimmer {
+        100% {
+          transform: translateX(100%);
+        }
+      }
+      .skeleton-shimmer {
+        position: relative;
+        overflow: hidden;
+      }
+      .skeleton-shimmer::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        transform: translateX(-100%);
+        background-image: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        animation: shimmer 1.5s infinite;
+      }
+      .dark .skeleton-shimmer::after {
+          background-image: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+      }
+      .timeline-container {
+        position: relative;
+      }
+      .timeline-container::before {
+          content: '';
+          position: absolute;
+          top: 1.25rem;
+          bottom: 1.25rem;
+          right: 1.25rem;
+          width: 2px;
+          background-color: #e2e8f0;
+          transform: translateX(50%);
+      }
+      .dark .timeline-container::before {
+          background-color: #475569;
+      }
+      .timeline-item {
+          position: relative;
+      }
+      .timeline-icon-container {
+          position: absolute;
+          top: 0;
+          right: 1.25rem;
+          transform: translateX(50%);
+          z-index: 10;
       }
     </style>
   <script type="importmap">
@@ -50,7 +122,21 @@
   })();
 </script>
 </head>
-  <body class="bg-gray-100 dark:bg-gray-900">
+  <body class="bg-slate-50 dark:bg-slate-900">
     <div id="root"></div>
+    <script>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker.register("/sw.js").then(
+            (registration) => {
+              console.log("ServiceWorker registration successful with scope: ", registration.scope);
+            },
+            (error) => {
+              console.log("ServiceWorker registration failed: ", error);
+            }
+          );
+        });
+      }
+    </script>
   </body>
 </html>

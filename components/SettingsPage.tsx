@@ -1,16 +1,30 @@
-import React, { useContext, useRef } from 'react';
+import React from 'react';
 import { AppContext } from '../App';
 import { AppContextType, Theme, BackupData } from '../types';
 import { ToastContext, ToastContextType } from '../context/ToastContext';
-import { SunIcon, MoonIcon, SystemIcon, DownloadIcon, UploadIcon } from './Icons';
+import { SunIcon, MoonIcon, SystemIcon, DownloadIcon, UploadIcon, WarningIcon } from './Icons';
+import ConfirmationModal from './ConfirmationModal';
+import ExpenseCategoryManager from './ExpenseCategoryManager';
 
 const SettingsPage: React.FC = () => {
-    const { settings, updateSettings, loadBackupData } = useContext(AppContext) as AppContextType;
-    const { addToast } = useContext(ToastContext) as ToastContextType;
-    const restoreInputRef = useRef<HTMLInputElement>(null);
+    const context = React.useContext(AppContext) as AppContextType;
+    const { settings, updateSettings, loadBackupData, deleteAllData } = context;
+    const { addToast } = React.useContext(ToastContext) as ToastContextType;
+    const restoreInputRef = React.useRef<HTMLInputElement>(null);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
+    const [isCategoryManagerOpen, setIsCategoryManagerOpen] = React.useState(false);
+    const [activeTab, setActiveTab] = React.useState<'general' | 'appearance' | 'data'>('general');
 
-    const handleToggle = () => {
+    const handleFarmerToggle = () => {
         updateSettings({ isFarmerSystemEnabled: !settings.isFarmerSystemEnabled });
+    };
+
+    const handleSupplierToggle = () => {
+        updateSettings({ isSupplierSystemEnabled: !settings.isSupplierSystemEnabled });
+    };
+
+    const handleAgriculturalProgramsToggle = () => {
+        updateSettings({ isAgriculturalProgramsSystemEnabled: !settings.isAgriculturalProgramsSystemEnabled });
     };
 
     const handleThemeChange = (theme: Theme) => {
@@ -25,14 +39,17 @@ const SettingsPage: React.FC = () => {
     
     const handleBackup = () => {
         try {
-            const backupData: Partial<BackupData> = {};
-            const keysToBackup = ['greenhouses', 'cropCycles', 'transactions', 'farmers', 'farmerWithdrawals', 'settings'];
-            keysToBackup.forEach(key => {
-                const data = localStorage.getItem(key);
-                if (data) {
-                    backupData[key as keyof BackupData] = JSON.parse(data);
-                }
-            });
+            const backupData: BackupData = {
+              greenhouses: context.greenhouses,
+              cropCycles: context.cropCycles,
+              transactions: context.transactions,
+              farmers: context.farmers,
+              farmerWithdrawals: context.farmerWithdrawals,
+              settings: context.settings,
+              suppliers: context.suppliers,
+              supplierPayments: context.supplierPayments,
+              fertilizationPrograms: context.fertilizationPrograms,
+            };
 
             const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
@@ -81,86 +98,201 @@ const SettingsPage: React.FC = () => {
         reader.readAsText(file);
     };
 
+    const handleConfirmDeleteAll = () => {
+        deleteAllData();
+        setIsDeleteModalOpen(false);
+    };
+    
+    const tabButtonClass = (tabName: 'general' | 'appearance' | 'data') => 
+        `whitespace-nowrap py-3 px-4 border-b-2 font-medium text-base transition-colors duration-200 ${
+            activeTab === tabName
+            ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400'
+            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:border-gray-600'
+        }`;
+
 
     return (
-        <div className="space-y-8 max-w-4xl mx-auto">
-            <header>
+        <div className="max-w-4xl mx-auto">
+            <header className="mb-8">
                 <h1 className="text-3xl font-bold text-gray-800 dark:text-white">الإعدادات</h1>
                 <p className="mt-2 text-lg text-gray-600 dark:text-gray-400">إدارة تفضيلات التطبيق والبيانات الأساسية.</p>
             </header>
-
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-                <h2 className="text-xl font-semibold text-gray-800 dark:text-white">نظام حصة المزارع</h2>
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">تفعيل أو تعطيل نظام حساب حصة المزارع من إيرادات العروة.</p>
-                <div className="mt-6">
-                    <div className="flex items-center justify-between">
-                        <span className="font-medium text-gray-700 dark:text-gray-300">تفعيل النظام</span>
-                        <label htmlFor="farmer-system-toggle" className="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" id="farmer-system-toggle" className="sr-only peer" checked={settings.isFarmerSystemEnabled} onChange={handleToggle} />
-                            <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 rounded-full peer peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-600"></div>
-                        </label>
-                    </div>
-                </div>
-            </div>
-
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-                <h2 className="text-xl font-semibold text-gray-800 dark:text-white">مظهر التطبيق</h2>
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">اختر المظهر المفضل لديك لواجهة التطبيق.</p>
-                <div className="mt-6">
-                     <fieldset>
-                        <legend className="sr-only">Appearance</legend>
-                        <div className="flex items-center justify-center sm:justify-start space-x-2 space-x-reverse rounded-md bg-gray-100 dark:bg-gray-700/50 p-1">
-                            {themeOptions.map((option) => (
-                                <button
-                                    key={option.value}
-                                    onClick={() => handleThemeChange(option.value)}
-                                    className={`w-full flex items-center justify-center space-x-2 space-x-reverse rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                                        settings.theme === option.value
-                                            ? 'bg-white dark:bg-gray-800 text-green-700 dark:text-green-400 shadow-sm'
-                                            : 'text-gray-500 dark:text-gray-400 hover:bg-white/60 dark:hover:bg-gray-800/60'
-                                    }`}
-                                >
-                                    {option.icon}
-                                    <span>{option.label}</span>
-                                </button>
-                            ))}
-                        </div>
-                    </fieldset>
-                </div>
+            
+            <div className="border-b border-gray-200 dark:border-gray-700">
+                <nav className="-mb-px flex space-x-4 space-x-reverse" aria-label="Tabs">
+                    <button onClick={() => setActiveTab('general')} className={tabButtonClass('general')}>
+                        عام
+                    </button>
+                    <button onClick={() => setActiveTab('appearance')} className={tabButtonClass('appearance')}>
+                        المظهر
+                    </button>
+                    <button onClick={() => setActiveTab('data')} className={tabButtonClass('data')}>
+                        البيانات
+                    </button>
+                </nav>
             </div>
             
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-                <h2 className="text-xl font-semibold text-gray-800 dark:text-white">إدارة البيانات</h2>
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    قم بإنشاء نسخة احتياطية من جميع بياناتك أو استعادتها. يوصى بعمل نسخة احتياطية بشكل دوري.
-                </p>
-                <div className="mt-6 flex flex-col sm:flex-row gap-4">
-                    <button
-                        onClick={handleBackup}
-                        className="flex-1 flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-                    >
-                        <DownloadIcon className="w-5 h-5 ml-2" />
-                        <span>تنزيل نسخة احتياطية</span>
-                    </button>
-                    <button
-                        onClick={handleRestoreClick}
-                        className="flex-1 flex items-center justify-center px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-md shadow-sm hover:bg-gray-300 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition-colors"
-                    >
-                        <UploadIcon className="w-5 h-5 ml-2" />
-                        <span>استعادة من نسخة احتياطية</span>
-                    </button>
-                    <input
-                        type="file"
-                        ref={restoreInputRef}
-                        onChange={handleFileChange}
-                        accept=".json"
-                        className="hidden"
-                    />
-                </div>
-                 <p className="mt-4 text-xs text-yellow-600 dark:text-yellow-400">
-                    تحذير: استعادة نسخة احتياطية سيقوم بحذف جميع البيانات الحالية واستبدالها ببيانات الملف.
-                </p>
+            <div className="pt-8 space-y-8">
+                {activeTab === 'general' && (
+                    <div className="space-y-8 animate-fadeInSlideUp">
+                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+                            <h2 className="text-xl font-semibold text-gray-800 dark:text-white">الأنظمة</h2>
+                            <div className="mt-6 space-y-4 divide-y divide-gray-200 dark:divide-gray-700">
+                                <div className="flex items-center justify-between pt-4 first:pt-0">
+                                    <div>
+                                        <span className="font-medium text-gray-700 dark:text-gray-300">نظام حصة المزارع</span>
+                                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">تفعيل نظام حساب حصة المزارع من إيرادات العروة.</p>
+                                    </div>
+                                    <label htmlFor="farmer-system-toggle" className="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                                        <input type="checkbox" id="farmer-system-toggle" className="sr-only peer" checked={settings.isFarmerSystemEnabled} onChange={handleFarmerToggle} />
+                                        <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 rounded-full peer peer-focus:ring-4 peer-focus:ring-emerald-300 dark:peer-focus:ring-emerald-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-emerald-600"></div>
+                                    </label>
+                                </div>
+                                <div className="flex items-center justify-between pt-4 first:pt-0">
+                                    <div>
+                                    <span className="font-medium text-gray-700 dark:text-gray-300">نظام الموردين للأسمدة والمبيدات</span>
+                                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">تفعيل نظام لتتبع الفواتير الآجلة والمدفوعات للموردين.</p>
+                                    </div>
+                                    <label htmlFor="supplier-system-toggle" className="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                                        <input type="checkbox" id="supplier-system-toggle" className="sr-only peer" checked={settings.isSupplierSystemEnabled} onChange={handleSupplierToggle} />
+                                        <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 rounded-full peer peer-focus:ring-4 peer-focus:ring-emerald-300 dark:peer-focus:ring-emerald-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-emerald-600"></div>
+                                    </label>
+                                </div>
+                                <div className="flex items-center justify-between pt-4 first:pt-0">
+                                    <div>
+                                        <span className="font-medium text-gray-700 dark:text-gray-300">نظام أرباح البرامج</span>
+                                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">تتبع تكاليف البرامج وربطها مع الايرادات لحساب ربحية كل برنامج</p>
+                                    </div>
+                                    <label htmlFor="programs-system-toggle" className="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                                        <input type="checkbox" id="programs-system-toggle" className="sr-only peer" checked={settings.isAgriculturalProgramsSystemEnabled} onChange={handleAgriculturalProgramsToggle} />
+                                        <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 rounded-full peer peer-focus:ring-4 peer-focus:ring-emerald-300 dark:peer-focus:ring-emerald-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-emerald-600"></div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+                            <div className="flex justify-between items-center">
+                                <div>
+                                    <h2 className="text-xl font-semibold text-gray-800 dark:text-white">إدارة فئات المصروفات</h2>
+                                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">إضافة أو تعديل فئات المصروفات المخصصة لتناسب احتياجاتك.</p>
+                                </div>
+                                <button
+                                    onClick={() => setIsCategoryManagerOpen(true)}
+                                    className="flex-shrink-0 px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"
+                                >
+                                    إدارة
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'appearance' && (
+                     <div className="space-y-8 animate-fadeInSlideUp">
+                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+                            <h2 className="text-xl font-semibold text-gray-800 dark:text-white">مظهر التطبيق</h2>
+                            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">اختر المظهر المفضل لديك لواجهة التطبيق.</p>
+                            <div className="mt-6">
+                                <fieldset>
+                                    <legend className="sr-only">Appearance</legend>
+                                    <div className="flex items-center justify-center sm:justify-start space-x-2 space-x-reverse rounded-md bg-gray-100 dark:bg-gray-700/50 p-1">
+                                        {themeOptions.map((option) => (
+                                            <button
+                                                key={option.value}
+                                                onClick={() => handleThemeChange(option.value)}
+                                                className={`w-full flex items-center justify-center space-x-2 space-x-reverse rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                                                    settings.theme === option.value
+                                                        ? 'bg-white dark:bg-gray-800 text-emerald-700 dark:text-emerald-400 shadow-sm'
+                                                        : 'text-gray-500 dark:text-gray-400 hover:bg-white/60 dark:hover:bg-gray-800/60'
+                                                }`}
+                                            >
+                                                {option.icon}
+                                                <span>{option.label}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </fieldset>
+                            </div>
+                        </div>
+                    </div>
+                )}
+                
+                {activeTab === 'data' && (
+                     <div className="space-y-8 animate-fadeInSlideUp">
+                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+                            <h2 className="text-xl font-semibold text-gray-800 dark:text-white">النسخ الاحتياطي والاستعادة</h2>
+                            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                قم بإنشاء نسخة احتياطية من جميع بياناتك أو استعادتها. يوصى بعمل نسخة احتياطية بشكل دوري.
+                            </p>
+                            <div className="mt-6 flex flex-col sm:flex-row gap-4">
+                                <button
+                                    onClick={handleBackup}
+                                    className="flex-1 flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                                >
+                                    <DownloadIcon className="w-5 h-5 ml-2" />
+                                    <span>تنزيل نسخة احتياطية</span>
+                                </button>
+                                <button
+                                    onClick={handleRestoreClick}
+                                    className="flex-1 flex items-center justify-center px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-md shadow-sm hover:bg-gray-300 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition-colors"
+                                >
+                                    <UploadIcon className="w-5 h-5 ml-2" />
+                                    <span>استعادة من نسخة احتياطية</span>
+                                </button>
+                                <input
+                                    type="file"
+                                    ref={restoreInputRef}
+                                    onChange={handleFileChange}
+                                    accept=".json"
+                                    className="hidden"
+                                />
+                            </div>
+                            <p className="mt-4 text-xs text-yellow-600 dark:text-yellow-400">
+                                تحذير: استعادة نسخة احتياطية سيقوم بحذف جميع البيانات الحالية واستبدالها ببيانات الملف.
+                            </p>
+                        </div>
+
+                        <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 rounded-r-lg p-6">
+                            <div className="flex">
+                                <div className="flex-shrink-0">
+                                    <WarningIcon className="h-6 w-6 text-red-500" aria-hidden="true" />
+                                </div>
+                                <div className="mr-3 flex-1 md:flex md:justify-between">
+                                    <div>
+                                        <h2 className="text-xl font-semibold text-red-800 dark:text-red-200">حذف جميع البيانات</h2>
+                                        <p className="mt-2 text-sm text-red-700 dark:text-red-300">
+                                            سيقوم هذا الإجراء بحذف جميع بيانات التطبيق بشكل نهائي، بما في ذلك الصوب والعروات والمعاملات. <strong>لا يمكن التراجع عن هذا الإجراء.</strong>
+                                        </p>
+                                    </div>
+                                    <div className="mt-4 md:mt-0 md:mr-6 flex-shrink-0 self-center">
+                                        <button
+                                            onClick={() => setIsDeleteModalOpen(true)}
+                                            className="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                                        >
+                                            حذف جميع البيانات
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
+
+            {isCategoryManagerOpen && (
+                <ExpenseCategoryManager 
+                    isOpen={isCategoryManagerOpen} 
+                    onClose={() => setIsCategoryManagerOpen(false)} 
+                />
+            )}
+
+            <ConfirmationModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onConfirm={handleConfirmDeleteAll}
+                title="تأكيد حذف جميع البيانات"
+                message="هل أنت متأكد تمامًا؟ سيتم حذف جميع بيانات التطبيق بشكل نهائي ولا يمكن التراجع عن هذا الإجراء."
+            />
         </div>
     );
 };

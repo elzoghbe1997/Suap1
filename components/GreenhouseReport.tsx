@@ -1,12 +1,20 @@
-import React, { useContext, useMemo } from 'react';
+import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { AppContext } from '../App';
 import { AppContextType, TransactionType } from '../types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
 import { ArrowRightIcon, CostIcon, RevenueIcon, ExpenseIcon, ProfitIcon, ReportIcon } from './Icons';
 import LoadingSpinner from './LoadingSpinner';
+import { useAnimatedCounter } from '../hooks/useAnimatedCounter';
 
-const StatCard: React.FC<{ title: string; value: string; icon: React.ReactNode; color?: string; description?: string }> = ({ title, value, icon, color, description }) => (
+const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EGP', maximumFractionDigits: 0 }).format(amount);
+
+const AnimatedNumber: React.FC<{ value: number; formatter: (val: number) => string; }> = React.memo(({ value, formatter }) => {
+    const count = useAnimatedCounter(value);
+    return <>{formatter(count)}</>;
+});
+
+const StatCard: React.FC<{ title: string; value: number; icon: React.ReactNode; color?: string; description?: string; formatter?: (val: number) => string; }> = React.memo(({ title, value, icon, color, description, formatter = formatCurrency }) => (
     <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-md p-5 border-r-4 ${color || 'border-gray-300'}`}>
         <div className="flex items-center">
              <div className="flex-shrink-0">
@@ -14,22 +22,22 @@ const StatCard: React.FC<{ title: string; value: string; icon: React.ReactNode; 
             </div>
             <div className="mr-4">
                 <p className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">{title}</p>
-                <p className="text-2xl font-bold text-gray-800 dark:text-gray-200">{value}</p>
+                <p className="text-2xl font-bold text-gray-800 dark:text-gray-200">
+                    <AnimatedNumber value={value} formatter={formatter} />
+                </p>
             </div>
         </div>
         {description && <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">{description}</p>}
     </div>
-);
+));
 
 const GreenhouseReport: React.FC = () => {
     const { greenhouseId } = useParams<{ greenhouseId: string }>();
-    const { loading, greenhouses, cropCycles, transactions } = useContext(AppContext) as AppContextType;
-    
-    const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EGP', maximumFractionDigits: 0 }).format(amount);
+    const { loading, greenhouses, cropCycles, transactions, settings } = React.useContext(AppContext) as AppContextType;
 
-    const greenhouse = useMemo(() => greenhouses.find(g => g.id === greenhouseId), [greenhouses, greenhouseId]);
+    const greenhouse = React.useMemo(() => greenhouses.find(g => g.id === greenhouseId), [greenhouses, greenhouseId]);
     
-    const reportData = useMemo(() => {
+    const reportData = React.useMemo(() => {
         if (!greenhouse) return null;
         
         const cyclesInGreenhouse = cropCycles.filter(c => c.greenhouseId === greenhouse.id);
@@ -39,16 +47,37 @@ const GreenhouseReport: React.FC = () => {
         const totalRevenue = relevantTransactions.filter(t => t.type === TransactionType.REVENUE).reduce((s, t) => s + t.amount, 0);
         const totalExpense = relevantTransactions.filter(t => t.type === TransactionType.EXPENSE).reduce((s, t) => s + t.amount, 0);
         const operationalProfit = totalRevenue - totalExpense;
-        const lifetimeProfit = operationalProfit - greenhouse.initialCost;
-        const roi = greenhouse.initialCost > 0 ? (operationalProfit / greenhouse.initialCost) * 100 : Infinity;
+
+        let totalFarmerShare = 0;
+        if (settings.isFarmerSystemEnabled) {
+            cyclesInGreenhouse.forEach(cycle => {
+                if (cycle.farmerId && cycle.farmerSharePercentage) {
+                    const cycleRevenue = relevantTransactions
+                        .filter(t => t.cropCycleId === cycle.id && t.type === TransactionType.REVENUE)
+                        .reduce((sum, t) => sum + t.amount, 0);
+                    totalFarmerShare += cycleRevenue * (cycle.farmerSharePercentage / 100);
+                }
+            });
+        }
+    
+        const ownerNetProfit = operationalProfit - totalFarmerShare;
+        const lifetimeProfit = ownerNetProfit - greenhouse.initialCost;
+        const roi = greenhouse.initialCost > 0 ? (ownerNetProfit / greenhouse.initialCost) * 100 : Infinity;
         
         const cyclePerformance = cyclesInGreenhouse.map(cycle => {
             const cycleTransactions = relevantTransactions.filter(t => t.cropCycleId === cycle.id);
             const revenue = cycleTransactions.filter(t => t.type === TransactionType.REVENUE).reduce((sum, t) => sum + t.amount, 0);
             const expense = cycleTransactions.filter(t => t.type === TransactionType.EXPENSE).reduce((sum, t) => sum + t.amount, 0);
+            let ownerProfit = revenue - expense;
+
+            if (settings.isFarmerSystemEnabled && cycle.farmerId && cycle.farmerSharePercentage) {
+                const farmerShare = revenue * (cycle.farmerSharePercentage / 100);
+                ownerProfit -= farmerShare;
+            }
+
             return {
                 name: cycle.name,
-                "الربح": revenue - expense,
+                "الربح": ownerProfit,
             };
         }).sort((a, b) => {
             const cycleA = cropCycles.find(c => c.name === a.name);
@@ -57,8 +86,8 @@ const GreenhouseReport: React.FC = () => {
             return new Date(cycleA.startDate).getTime() - new Date(cycleB.startDate).getTime();
         });
         
-        return { totalRevenue, totalExpense, operationalProfit, lifetimeProfit, roi, cyclePerformance };
-    }, [greenhouse, cropCycles, transactions]);
+        return { totalRevenue, totalExpense, ownerNetProfit, lifetimeProfit, roi, cyclePerformance };
+    }, [greenhouse, cropCycles, transactions, settings.isFarmerSystemEnabled]);
     
     if (loading) {
         return <LoadingSpinner />;
@@ -89,16 +118,16 @@ const GreenhouseReport: React.FC = () => {
             </header>
             
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                 <StatCard title="عائد الاستثمار (ROI)" value={`${reportData.roi === Infinity ? '∞' : reportData.roi.toFixed(1)}%`} icon={<ReportIcon className="h-8 w-8 text-purple-500"/>} color="border-purple-500" description="الربح التشغيلي كنسبة من التكلفة التأسيسية." />
-                 <StatCard title="صافي الربح مدى الحياة" value={formatCurrency(reportData.lifetimeProfit)} icon={<ProfitIcon className="h-8 w-8 text-blue-500"/>} color={reportData.lifetimeProfit >= 0 ? "border-blue-500" : "border-orange-500"} description="بعد خصم التكلفة التأسيسية." />
-                 <StatCard title="التكلفة التأسيسية" value={formatCurrency(greenhouse.initialCost)} icon={<CostIcon className="h-8 w-8 text-gray-500"/>} color="border-gray-500" />
-                 <StatCard title="إجمالي الإيرادات" value={formatCurrency(reportData.totalRevenue)} icon={<RevenueIcon className="h-8 w-8 text-green-500"/>} color="border-green-500" />
-                 <StatCard title="إجمالي المصروفات" value={formatCurrency(reportData.totalExpense)} icon={<ExpenseIcon className="h-8 w-8 text-red-500"/>} color="border-red-500" />
-                 <StatCard title="صافي الربح التشغيلي" value={formatCurrency(reportData.operationalProfit)} icon={<ProfitIcon className="h-8 w-8 text-teal-500"/>} color={reportData.operationalProfit >= 0 ? "border-teal-500" : "border-orange-500"} description="الإيرادات ناقص المصروفات (بدون التكلفة التأسيسية)." />
+                 <StatCard title="عائد استثمار المالك (ROI)" value={reportData.roi} formatter={(v) => `${v === Infinity ? '∞' : v.toFixed(1)}%`} icon={<ReportIcon className="h-8 w-8 text-purple-500"/>} color="border-purple-500" description="صافي ربح المالك التشغيلي كنسبة من التكلفة التأسيسية." />
+                 <StatCard title="صافي ربح المالك (مدى الحياة)" value={reportData.lifetimeProfit} icon={<ProfitIcon className="h-8 w-8 text-blue-500"/>} color={reportData.lifetimeProfit >= 0 ? "border-blue-500" : "border-orange-500"} description="ربح المالك بعد خصم التكلفة التأسيسية." />
+                 <StatCard title="التكلفة التأسيسية" value={greenhouse.initialCost} icon={<CostIcon className="h-8 w-8 text-gray-500"/>} color="border-gray-500" />
+                 <StatCard title="إجمالي الإيرادات" value={reportData.totalRevenue} icon={<RevenueIcon className="h-8 w-8 text-green-500"/>} color="border-green-500" />
+                 <StatCard title="إجمالي المصروفات" value={reportData.totalExpense} icon={<ExpenseIcon className="h-8 w-8 text-red-500"/>} color="border-red-500" />
+                 <StatCard title="صافي ربح المالك (تشغيلي)" value={reportData.ownerNetProfit} icon={<ProfitIcon className="h-8 w-8 text-teal-500"/>} color={reportData.ownerNetProfit >= 0 ? "border-teal-500" : "border-orange-500"} description="بعد خصم حصص المزارعين." />
             </div>
 
              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 sm:p-6">
-                <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">أداء العروات داخل الصوبة</h2>
+                <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">أداء العروات داخل الصوبة (ربحية المالك)</h2>
                 <ResponsiveContainer width="100%" height={400}>
                     <BarChart data={reportData.cyclePerformance} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(128, 128, 128, 0.2)" />
@@ -111,7 +140,7 @@ const GreenhouseReport: React.FC = () => {
                             formatter={(value) => formatCurrency(value as number)}
                         />
                         <Legend />
-                        <Bar dataKey="الربح" name="صافي الربح" radius={[4, 4, 0, 0]}>
+                        <Bar dataKey="الربح" name="صافي ربح المالك" radius={[4, 4, 0, 0]}>
                            {reportData.cyclePerformance.map((entry, index) => (
                                 <Cell key={`cell-${index}`} fill={entry.الربح >= 0 ? '#10B981' : '#EF4444'} />
                             ))}

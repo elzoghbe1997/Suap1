@@ -1,0 +1,24 @@
+{
+  "name": "المحاسب للصوب الزراعية",
+  "short_name": "المحاسب",
+  "description": "تطبيق محاسبي متكامل لإدارة الصوب الزراعية، يساعد المزارعين على إدارة العروات وتسجيل الإيرادات والمصروفات وحساب الأرباح والخسائر وعرض تقارير ورسوم بيانية تفاعلية.",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#0f172a",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

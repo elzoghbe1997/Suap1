@@ -1,30 +1,36 @@
-import React, { useContext, useMemo } from 'react';
+import React from 'react';
 import { AppContext } from '../App';
 import { AppContextType, TransactionType } from '../types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import LoadingSpinner from './LoadingSpinner';
 
 const ReportsPage: React.FC = () => {
-    const { loading, cropCycles, transactions, greenhouses } = useContext(AppContext) as AppContextType;
+    const { loading, cropCycles, transactions, greenhouses, settings } = React.useContext(AppContext) as AppContextType;
 
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EGP', maximumFractionDigits: 0 }).format(amount);
     };
 
-    const cyclesPerformanceData = useMemo(() => {
+    const cyclesPerformanceData = React.useMemo(() => {
         return cropCycles.map(cycle => {
             const cycleTransactions = transactions.filter(t => t.cropCycleId === cycle.id);
             const revenue = cycleTransactions.filter(t => t.type === TransactionType.REVENUE).reduce((sum, t) => sum + t.amount, 0);
             const expense = cycleTransactions.filter(t => t.type === TransactionType.EXPENSE).reduce((sum, t) => sum + t.amount, 0);
-            const profit = revenue - expense;
+            let ownerProfit = revenue - expense;
+
+            if (settings.isFarmerSystemEnabled && cycle.farmerId && cycle.farmerSharePercentage) {
+                const farmerShare = revenue * (cycle.farmerSharePercentage / 100);
+                ownerProfit -= farmerShare;
+            }
+
             return {
                 name: cycle.name,
-                "صافي الربح": profit,
+                "صافي ربح المالك": ownerProfit,
             };
-        }).sort((a, b) => b['صافي الربح'] - a['صافي الربح']);
-    }, [cropCycles, transactions]);
+        }).sort((a, b) => b['صافي ربح المالك'] - a['صافي ربح المالك']);
+    }, [cropCycles, transactions, settings.isFarmerSystemEnabled]);
 
-    const expenseByGreenhouseData = useMemo(() => {
+    const expenseByGreenhouseData = React.useMemo(() => {
         const data: { [key: string]: number } = {};
         
         transactions
@@ -56,7 +62,7 @@ const ReportsPage: React.FC = () => {
             </header>
 
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 sm:p-6">
-                <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">مقارنة أداء العروات</h2>
+                <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">مقارنة أداء العروات (ربحية المالك)</h2>
                 <ResponsiveContainer width="100%" height={400}>
                     <BarChart data={cyclesPerformanceData} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(128, 128, 128, 0.2)" />
@@ -69,7 +75,7 @@ const ReportsPage: React.FC = () => {
                             formatter={(value) => formatCurrency(value as number)}
                         />
                         <Legend />
-                        <Bar dataKey="صافي الربح" fill="#3B82F6" radius={[0, 4, 4, 0]} barSize={25} />
+                        <Bar dataKey="صافي ربح المالك" fill="#3B82F6" radius={[0, 4, 4, 0]} barSize={25} />
                     </BarChart>
                 </ResponsiveContainer>
             </div>

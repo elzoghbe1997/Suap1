@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { ToastMessage, ToastType } from '../context/ToastContext';
 import { CloseIcon, WarningIcon } from './Icons'; 
 
@@ -9,7 +9,7 @@ interface ToastProps {
 }
 
 const Toast: React.FC<ToastProps> = ({ toast, onRemove, duration = 5000 }) => {
-    useEffect(() => {
+    React.useEffect(() => {
         const timer = setTimeout(() => {
             onRemove(toast.id);
         }, duration);

@@ -6,12 +6,17 @@ import {
   LogoIcon,
   InvoiceIcon,
   ReceiptIcon,
+  ProgramIcon,
   GreenhouseIcon,
   ReportIcon,
   SettingsIcon,
-  FarmerIcon
+  FarmerIcon,
+  SupplierIcon,
+  LogoutIcon,
 } from './Icons';
 import { AppSettings } from '../types';
+import { useAuth } from '../context/AuthContext';
+
 
 interface SidebarProps {
   isOpen: boolean;
@@ -19,10 +24,12 @@ interface SidebarProps {
   settings: AppSettings;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, settings }) => {
-  const commonLinkClasses = "flex items-center px-4 py-3 rounded-lg text-lg transition-colors duration-200";
-  const activeLinkClasses = "bg-green-600 text-white";
-  const inactiveLinkClasses = "text-gray-300 hover:bg-gray-700 hover:text-white";
+const Sidebar: React.FC<SidebarProps> = React.memo(({ isOpen, setIsOpen, settings }) => {
+  const { logout } = useAuth();
+
+  const commonLinkClasses = "flex items-center px-4 py-3 rounded-lg text-lg transition-all duration-200 transform hover:translate-x-1 focus:translate-x-1";
+  const activeLinkClasses = "bg-emerald-600 text-white shadow-lg";
+  const inactiveLinkClasses = "text-slate-300 hover:bg-slate-700 hover:text-white";
   
   const closeSidebarOnMobile = () => {
     if (window.innerWidth < 768) {
@@ -42,16 +49,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, settings }) => {
       ></div>
       
       <aside
-        className={`fixed top-0 right-0 h-full w-64 bg-gray-800 text-white z-40 transform transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'
+        className={`fixed top-0 right-0 h-full w-64 bg-slate-900 text-white z-40 transition-transform duration-300 ease-in-out md:translate-x-0 flex flex-col ${
+          isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
         aria-label="Sidebar"
       >
-        <div className="flex items-center justify-center h-20 border-b border-gray-700">
-          <LogoIcon className="w-10 h-10 text-green-400" />
+        <div className="flex items-center justify-center h-16 border-b border-slate-700 flex-shrink-0">
+          <LogoIcon className="w-10 h-10 text-emerald-400" />
           <span className="text-2xl font-bold mr-2 text-white">المحاسب</span>
         </div>
-        <nav className="flex-1 px-4 py-4 space-y-2">
+        <nav className="flex-1 px-4 py-4 space-y-2 overflow-y-auto">
           <NavLink
             to="/dashboard"
             className={({ isActive }) => `${commonLinkClasses} ${isActive ? activeLinkClasses : inactiveLinkClasses}`}
@@ -84,25 +91,35 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, settings }) => {
             <ReceiptIcon className="h-6 w-6" />
             <span className="mx-4 font-semibold">إدارة المصروفات</span>
           </NavLink>
+          {settings.isAgriculturalProgramsSystemEnabled && (
+            <NavLink
+              to="/programs"
+              className={({ isActive }) => `${commonLinkClasses} ${isActive ? activeLinkClasses : inactiveLinkClasses}`}
+              onClick={closeSidebarOnMobile}
+            >
+              <ProgramIcon className="h-6 w-6" />
+              <span className="mx-4 font-semibold">أرباح البرامج</span>
+            </NavLink>
+          )}
+          {settings.isSupplierSystemEnabled && (
+              <NavLink
+                to="/suppliers"
+                className={({ isActive }) => `${commonLinkClasses} ${isActive ? activeLinkClasses : inactiveLinkClasses}`}
+                onClick={closeSidebarOnMobile}
+              >
+                <SupplierIcon className="h-6 w-6" />
+                <span className="mx-4 font-semibold">حسابات الموردين</span>
+              </NavLink>
+          )}
           {settings.isFarmerSystemEnabled && (
-            <>
               <NavLink
                 to="/farmer-accounts"
                 className={({ isActive }) => `${commonLinkClasses} ${isActive ? activeLinkClasses : inactiveLinkClasses}`}
                 onClick={closeSidebarOnMobile}
               >
                 <FarmerIcon className="h-6 w-6" />
-                <span className="mx-4 font-semibold">حسابات المزارعين</span>
+                <span className="mx-4 font-semibold">ادارة حساب المزارع</span>
               </NavLink>
-              <NavLink
-                to="/farmer-withdrawals"
-                className={({ isActive }) => `${commonLinkClasses} ${isActive ? activeLinkClasses : inactiveLinkClasses}`}
-                onClick={closeSidebarOnMobile}
-              >
-                <ReceiptIcon className="h-6 w-6" />
-                <span className="mx-4 font-semibold">سحوبات المزارعين</span>
-              </NavLink>
-            </>
           )}
           <NavLink
             to="/greenhouse"
@@ -113,7 +130,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, settings }) => {
             <span className="mx-4 font-semibold">إدارة الصوبة</span>
           </NavLink>
           
-          <div className="pt-4 mt-4 space-y-2 border-t border-gray-700">
+          <div className="pt-4 mt-4 space-y-2 border-t border-slate-700">
              <NavLink
                 to="/reports"
                 className={({ isActive }) => `${commonLinkClasses} ${isActive ? activeLinkClasses : inactiveLinkClasses}`}
@@ -132,9 +149,18 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, settings }) => {
               </NavLink>
           </div>
         </nav>
+        <div className="px-4 py-4 mt-auto border-t border-slate-700">
+            <button
+                onClick={logout}
+                className={`${commonLinkClasses} ${inactiveLinkClasses} w-full`}
+            >
+                <LogoutIcon className="h-6 w-6" />
+                <span className="mx-4 font-semibold">تسجيل الخروج</span>
+            </button>
+        </div>
       </aside>
     </>
   );
-};
+});
 
 export default Sidebar;

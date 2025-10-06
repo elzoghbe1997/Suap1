@@ -1,4 +1,4 @@
-import React, { useState, useContext, useMemo } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { AppContext } from '../App';
 import { AppContextType, Greenhouse } from '../types';
@@ -10,10 +10,10 @@ import SkeletonCard from './SkeletonCard';
 const formInputClass = "mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500";
 
 const GreenhouseForm: React.FC<{ greenhouse?: Greenhouse; onSave: (greenhouse: Omit<Greenhouse, 'id'> | Greenhouse) => void; onCancel: () => void }> = ({ greenhouse, onSave, onCancel }) => {
-    const { addToast } = useContext(ToastContext) as ToastContextType;
-    const [name, setName] = useState(greenhouse?.name || '');
-    const [initialCost, setInitialCost] = useState(greenhouse?.initialCost?.toString() || '');
-    const [creationDate] = useState(greenhouse?.creationDate || new Date().toISOString().split('T')[0]);
+    const { addToast } = React.useContext(ToastContext) as ToastContextType;
+    const [name, setName] = React.useState(greenhouse?.name || '');
+    const [initialCost, setInitialCost] = React.useState(greenhouse?.initialCost?.toString() || '');
+    const [creationDate] = React.useState(greenhouse?.creationDate || new Date().toISOString().split('T')[0]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -51,10 +51,10 @@ const GreenhouseForm: React.FC<{ greenhouse?: Greenhouse; onSave: (greenhouse: O
 };
 
 const GreenhouseCard: React.FC<{ greenhouse: Greenhouse; onEdit: () => void; onDelete: () => void; }> = ({ greenhouse, onEdit, onDelete }) => {
-    const { cropCycles } = useContext(AppContext) as AppContextType;
+    const { cropCycles } = React.useContext(AppContext) as AppContextType;
     const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EGP', maximumFractionDigits: 0 }).format(amount);
     
-    const cycleCount = useMemo(() => {
+    const cycleCount = React.useMemo(() => {
         return cropCycles.filter(c => c.greenhouseId === greenhouse.id).length;
     }, [cropCycles, greenhouse.id]);
 
@@ -108,10 +108,11 @@ const GreenhouseCard: React.FC<{ greenhouse: Greenhouse; onEdit: () => void; onD
 
 
 const GreenhousePage: React.FC = () => {
-    const { loading, greenhouses, addGreenhouse, updateGreenhouse, deleteGreenhouse } = useContext(AppContext) as AppContextType;
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [editingGreenhouse, setEditingGreenhouse] = useState<Greenhouse | undefined>(undefined);
-    const [deletingId, setDeletingId] = useState<string | null>(null);
+    const { loading, greenhouses, cropCycles, addGreenhouse, updateGreenhouse, deleteGreenhouse } = React.useContext(AppContext) as AppContextType;
+    const { addToast } = React.useContext(ToastContext) as ToastContextType;
+    const [isModalOpen, setIsModalOpen] = React.useState(false);
+    const [editingGreenhouse, setEditingGreenhouse] = React.useState<Greenhouse | undefined>(undefined);
+    const [deletingId, setDeletingId] = React.useState<string | null>(null);
 
     const handleSave = (greenhouse: Omit<Greenhouse, 'id'> | Greenhouse) => {
         if ('id' in greenhouse) {
@@ -129,7 +130,12 @@ const GreenhousePage: React.FC = () => {
     };
 
     const handleDelete = (id: string) => {
-        setDeletingId(id);
+        const hasCycles = cropCycles.some(c => c.greenhouseId === id);
+        if (hasCycles) {
+            addToast('لا يمكن حذف الصوبة لأنها تحتوي على عروات. يجب حذف أو أرشفة العروات أولاً.', 'error');
+        } else {
+            setDeletingId(id);
+        }
     };
 
     const confirmDelete = () => {
@@ -201,7 +207,7 @@ const GreenhousePage: React.FC = () => {
                 onClose={() => setDeletingId(null)}
                 onConfirm={confirmDelete}
                 title="تأكيد حذف الصوبة"
-                message="هل أنت متأكد من حذف هذه الصوبة؟ سيتم حذف جميع العروات والمعاملات المرتبطة بها بشكل دائم."
+                message="هل أنت متأكد من حذف هذه الصوبة؟ لا يمكن التراجع عن هذا الإجراء."
             />
 
         </div>

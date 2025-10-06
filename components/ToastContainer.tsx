@@ -1,9 +1,9 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import { ToastContext, ToastContextType } from '../context/ToastContext';
 import Toast from './Toast';
 
 const ToastContainer: React.FC = () => {
-    const context = useContext(ToastContext);
+    const context = React.useContext(ToastContext);
 
     if (!context) {
         return null;

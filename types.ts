@@ -10,15 +10,12 @@ export enum TransactionType {
   EXPENSE = 'مصروفات',
 }
 
-export enum ExpenseCategory {
-  SEEDS = 'بذور',
-  FERTILIZERS = 'أسمدة ومغذيات',
-  PESTICIDES = 'مبيدات',
-  LABOR = 'أجور عمال',
-  MAINTENANCE = 'صيانة',
-  UTILITIES = 'فواتير',
-  OTHER = 'أخرى',
+// Custom expense category type
+export interface ExpenseCategorySetting {
+  id: string;
+  name: string;
 }
+
 
 export interface Farmer {
   id: string;
@@ -37,7 +34,10 @@ export type Theme = 'light' | 'dark' | 'system';
 
 export interface AppSettings {
   isFarmerSystemEnabled: boolean;
+  isSupplierSystemEnabled: boolean;
+  isAgriculturalProgramsSystemEnabled: boolean;
   theme: Theme;
+  expenseCategories: ExpenseCategorySetting[];
 }
 
 
@@ -66,15 +66,18 @@ export interface Transaction {
   date: string;
   description: string;
   type: TransactionType;
-  category: ExpenseCategory;
+  category: string; // Changed from ExpenseCategory to string
   amount: number;
   cropCycleId: string;
   quantity?: number;
+  priceItems?: { quantity: number; price: number }[];
   quantityGrade1?: number;
   priceGrade1?: number;
   quantityGrade2?: number;
   priceGrade2?: number;
   discount?: number;
+  supplierId?: string | null;
+  fertilizationProgramId?: string | null;
 }
 
 export enum AlertType {
@@ -90,6 +93,28 @@ export interface Alert {
   relatedId: string; // ID of crop cycle or farmer
 }
 
+export interface Supplier {
+  id: string;
+  name: string;
+}
+
+export interface SupplierPayment {
+  id: string;
+  date: string;
+  amount: number;
+  supplierId: string;
+  description: string;
+  linkedExpenseIds?: string[];
+}
+
+export interface FertilizationProgram {
+  id: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+  cropCycleId: string;
+}
+
 export interface BackupData {
   greenhouses: Greenhouse[];
   cropCycles: CropCycle[];
@@ -97,6 +122,9 @@ export interface BackupData {
   farmers: Farmer[];
   farmerWithdrawals: FarmerWithdrawal[];
   settings: AppSettings;
+  suppliers: Supplier[];
+  supplierPayments: SupplierPayment[];
+  fertilizationPrograms: FertilizationProgram[];
 }
 
 
@@ -109,20 +137,38 @@ export interface AppContextType {
   farmers: Farmer[];
   farmerWithdrawals: FarmerWithdrawal[];
   alerts: Alert[];
-  addCropCycle: (cycle: Omit<CropCycle, 'id' | 'productionStartDate'>) => void;
-  updateCropCycle: (updatedCycle: CropCycle) => void;
-  addTransaction: (transaction: Omit<Transaction, 'id'>) => void;
-  updateTransaction: (updatedTransaction: Transaction) => void;
-  deleteTransaction: (id: string) => void;
-  addGreenhouse: (greenhouse: Omit<Greenhouse, 'id'>) => void;
-  updateGreenhouse: (updatedGreenhouse: Greenhouse) => void;
-  deleteGreenhouse: (id: string) => void;
-  updateSettings: (newSettings: Partial<AppSettings>) => void;
-  addFarmer: (farmer: Omit<Farmer, 'id'>) => void;
-  updateFarmer: (updatedFarmer: Farmer) => void;
-  deleteFarmer: (id: string) => void;
-  addFarmerWithdrawal: (withdrawal: Omit<FarmerWithdrawal, 'id'>) => void;
-  updateFarmerWithdrawal: (updatedWithdrawal: FarmerWithdrawal) => void;
-  deleteFarmerWithdrawal: (id: string) => void;
-  loadBackupData: (data: BackupData) => void;
+  suppliers: Supplier[];
+  supplierPayments: SupplierPayment[];
+  fertilizationPrograms: FertilizationProgram[];
+  addCropCycle: (cycle: Omit<CropCycle, 'id'>) => Promise<void>;
+  updateCropCycle: (updatedCycle: CropCycle) => Promise<void>;
+  deleteCropCycle: (id: string) => Promise<void>;
+  addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<void>;
+  updateTransaction: (updatedTransaction: Transaction) => Promise<void>;
+  deleteTransaction: (id: string) => Promise<void>;
+  addGreenhouse: (greenhouse: Omit<Greenhouse, 'id'>) => Promise<void>;
+  updateGreenhouse: (updatedGreenhouse: Greenhouse) => Promise<void>;
+  deleteGreenhouse: (id: string) => Promise<void>;
+  updateSettings: (newSettings: Partial<AppSettings>) => Promise<void>;
+  addFarmer: (farmer: Omit<Farmer, 'id'>) => Promise<void>;
+  updateFarmer: (updatedFarmer: Farmer) => Promise<void>;
+  deleteFarmer: (id: string) => Promise<void>;
+  addFarmerWithdrawal: (withdrawal: Omit<FarmerWithdrawal, 'id'>) => Promise<void>;
+  updateFarmerWithdrawal: (updatedWithdrawal: FarmerWithdrawal) => Promise<void>;
+  deleteFarmerWithdrawal: (id: string) => Promise<void>;
+  addSupplier: (supplier: Omit<Supplier, 'id'>) => Promise<void>;
+  updateSupplier: (updatedSupplier: Supplier) => Promise<void>;
+  deleteSupplier: (id: string) => Promise<void>;
+  addSupplierPayment: (payment: Omit<SupplierPayment, 'id'>) => Promise<void>;
+  updateSupplierPayment: (updatedPayment: SupplierPayment) => Promise<void>;
+  deleteSupplierPayment: (id: string) => Promise<void>;
+  addFertilizationProgram: (program: Omit<FertilizationProgram, 'id'>) => Promise<void>;
+  updateFertilizationProgram: (updatedProgram: FertilizationProgram) => Promise<void>;
+  deleteFertilizationProgram: (id: string) => Promise<void>;
+  addExpenseCategory: (category: Omit<ExpenseCategorySetting, 'id'>) => Promise<void>;
+  updateExpenseCategory: (updatedCategory: ExpenseCategorySetting) => Promise<void>;
+  deleteExpenseCategory: (id: string) => Promise<void>;
+  loadBackupData: (data: BackupData) => Promise<void>;
+  deleteAllData: () => Promise<void>;
+  startFresh: () => Promise<void>;
 }
