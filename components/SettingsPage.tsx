@@ -1,6 +1,7 @@
 import React from 'react';
 import { AppContext } from '../App';
-import { AppContextType, Theme, BackupData } from '../types';
+// FIX: Imported `AppSettings` type to resolve missing type error.
+import { AppContextType, Theme, BackupData, AppSettings } from '../types';
 import { ToastContext, ToastContextType } from '../context/ToastContext';
 import { SunIcon, MoonIcon, SystemIcon, DownloadIcon, UploadIcon, WarningIcon } from './Icons';
 import ConfirmationModal from './ConfirmationModal';
@@ -15,16 +16,8 @@ const SettingsPage: React.FC = () => {
     const [isCategoryManagerOpen, setIsCategoryManagerOpen] = React.useState(false);
     const [activeTab, setActiveTab] = React.useState<'general' | 'appearance' | 'data'>('general');
 
-    const handleFarmerToggle = () => {
-        updateSettings({ isFarmerSystemEnabled: !settings.isFarmerSystemEnabled });
-    };
-
-    const handleSupplierToggle = () => {
-        updateSettings({ isSupplierSystemEnabled: !settings.isSupplierSystemEnabled });
-    };
-
-    const handleAgriculturalProgramsToggle = () => {
-        updateSettings({ isAgriculturalProgramsSystemEnabled: !settings.isAgriculturalProgramsSystemEnabled });
+    const handleToggle = (key: keyof AppSettings) => {
+        updateSettings({ [key]: !settings[key] });
     };
 
     const handleThemeChange = (theme: Theme) => {
@@ -49,6 +42,7 @@ const SettingsPage: React.FC = () => {
               suppliers: context.suppliers,
               supplierPayments: context.supplierPayments,
               fertilizationPrograms: context.fertilizationPrograms,
+              advances: context.advances,
             };
 
             const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
@@ -107,18 +101,31 @@ const SettingsPage: React.FC = () => {
         `whitespace-nowrap py-3 px-4 border-b-2 font-medium text-base transition-colors duration-200 ${
             activeTab === tabName
             ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400'
-            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:border-gray-600'
+            : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 dark:text-slate-400 dark:hover:text-slate-300 dark:hover:border-slate-600'
         }`;
+
+    const ToggleSwitch: React.FC<{ id: string; checked: boolean; onChange: () => void; title: string; description: string; disabled?: boolean; }> = ({ id, checked, onChange, title, description, disabled = false }) => (
+         <div className="flex items-center justify-between pt-4 first:pt-0">
+            <div className={`${disabled ? 'opacity-50' : ''}`}>
+                <span className="font-medium text-slate-700 dark:text-slate-300">{title}</span>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{description}</p>
+            </div>
+            <label htmlFor={id} className={`relative inline-flex items-center flex-shrink-0 ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
+                <input type="checkbox" id={id} className="sr-only peer" checked={checked} onChange={onChange} disabled={disabled} />
+                <div className="w-11 h-6 bg-slate-200 dark:bg-slate-700 rounded-full peer peer-focus:ring-4 peer-focus:ring-emerald-300 dark:peer-focus:ring-emerald-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-emerald-600"></div>
+            </label>
+        </div>
+    );
 
 
     return (
         <div className="max-w-4xl mx-auto">
             <header className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-800 dark:text-white">الإعدادات</h1>
-                <p className="mt-2 text-lg text-gray-600 dark:text-gray-400">إدارة تفضيلات التطبيق والبيانات الأساسية.</p>
+                <h1 className="text-3xl font-bold text-slate-800 dark:text-white">الإعدادات</h1>
+                <p className="mt-2 text-lg text-slate-600 dark:text-slate-400">إدارة تفضيلات التطبيق والبيانات الأساسية.</p>
             </header>
             
-            <div className="border-b border-gray-200 dark:border-gray-700">
+            <div className="border-b border-slate-200 dark:border-slate-700">
                 <nav className="-mb-px flex space-x-4 space-x-reverse" aria-label="Tabs">
                     <button onClick={() => setActiveTab('general')} className={tabButtonClass('general')}>
                         عام
@@ -135,46 +142,50 @@ const SettingsPage: React.FC = () => {
             <div className="pt-8 space-y-8">
                 {activeTab === 'general' && (
                     <div className="space-y-8 animate-fadeInSlideUp">
-                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-                            <h2 className="text-xl font-semibold text-gray-800 dark:text-white">الأنظمة</h2>
-                            <div className="mt-6 space-y-4 divide-y divide-gray-200 dark:divide-gray-700">
-                                <div className="flex items-center justify-between pt-4 first:pt-0">
-                                    <div>
-                                        <span className="font-medium text-gray-700 dark:text-gray-300">نظام حصة المزارع</span>
-                                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">تفعيل نظام حساب حصة المزارع من إيرادات العروة.</p>
-                                    </div>
-                                    <label htmlFor="farmer-system-toggle" className="relative inline-flex items-center cursor-pointer flex-shrink-0">
-                                        <input type="checkbox" id="farmer-system-toggle" className="sr-only peer" checked={settings.isFarmerSystemEnabled} onChange={handleFarmerToggle} />
-                                        <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 rounded-full peer peer-focus:ring-4 peer-focus:ring-emerald-300 dark:peer-focus:ring-emerald-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-emerald-600"></div>
-                                    </label>
-                                </div>
-                                <div className="flex items-center justify-between pt-4 first:pt-0">
-                                    <div>
-                                    <span className="font-medium text-gray-700 dark:text-gray-300">نظام الموردين للأسمدة والمبيدات</span>
-                                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">تفعيل نظام لتتبع الفواتير الآجلة والمدفوعات للموردين.</p>
-                                    </div>
-                                    <label htmlFor="supplier-system-toggle" className="relative inline-flex items-center cursor-pointer flex-shrink-0">
-                                        <input type="checkbox" id="supplier-system-toggle" className="sr-only peer" checked={settings.isSupplierSystemEnabled} onChange={handleSupplierToggle} />
-                                        <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 rounded-full peer peer-focus:ring-4 peer-focus:ring-emerald-300 dark:peer-focus:ring-emerald-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-emerald-600"></div>
-                                    </label>
-                                </div>
-                                <div className="flex items-center justify-between pt-4 first:pt-0">
-                                    <div>
-                                        <span className="font-medium text-gray-700 dark:text-gray-300">نظام أرباح البرامج</span>
-                                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">تتبع تكاليف البرامج وربطها مع الايرادات لحساب ربحية كل برنامج</p>
-                                    </div>
-                                    <label htmlFor="programs-system-toggle" className="relative inline-flex items-center cursor-pointer flex-shrink-0">
-                                        <input type="checkbox" id="programs-system-toggle" className="sr-only peer" checked={settings.isAgriculturalProgramsSystemEnabled} onChange={handleAgriculturalProgramsToggle} />
-                                        <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 rounded-full peer peer-focus:ring-4 peer-focus:ring-emerald-300 dark:peer-focus:ring-emerald-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-emerald-600"></div>
-                                    </label>
-                                </div>
+                        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6">
+                            <h2 className="text-xl font-semibold text-slate-800 dark:text-white">الأنظمة</h2>
+                            <div className="mt-6 space-y-4 divide-y divide-slate-200 dark:divide-slate-700">
+                                <ToggleSwitch 
+                                    id="treasury-system-toggle"
+                                    checked={settings.isTreasurySystemEnabled ?? false}
+                                    onChange={() => {
+                                        const newValue = !(settings.isTreasurySystemEnabled ?? false);
+                                        updateSettings({
+                                            isTreasurySystemEnabled: newValue,
+                                            isAdvancesSystemEnabled: newValue
+                                        });
+                                    }}
+                                    title="نظام الخزنة"
+                                    description="تفعيل نظام الخزنة لتتبع السيولة النقدية والسلف الشخصية."
+                                />
+                                <ToggleSwitch 
+                                    id="farmer-system-toggle"
+                                    checked={settings.isFarmerSystemEnabled}
+                                    onChange={() => handleToggle('isFarmerSystemEnabled')}
+                                    title="نظام حصة المزارع"
+                                    description="تفعيل نظام حساب حصة المزارع من إيرادات العروة."
+                                />
+                                <ToggleSwitch 
+                                    id="supplier-system-toggle"
+                                    checked={settings.isSupplierSystemEnabled}
+                                    onChange={() => handleToggle('isSupplierSystemEnabled')}
+                                    title="نظام الموردين"
+                                    description="تفعيل نظام لتتبع الفواتير الآجلة والمدفوعات للموردين."
+                                />
+                                <ToggleSwitch 
+                                    id="programs-system-toggle"
+                                    checked={settings.isAgriculturalProgramsSystemEnabled}
+                                    onChange={() => handleToggle('isAgriculturalProgramsSystemEnabled')}
+                                    title="نظام أرباح البرامج"
+                                    description="تتبع تكاليف البرامج وربطها مع الايرادات لحساب ربحية كل برنامج."
+                                />
                             </div>
                         </div>
-                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+                        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6">
                             <div className="flex justify-between items-center">
                                 <div>
-                                    <h2 className="text-xl font-semibold text-gray-800 dark:text-white">إدارة فئات المصروفات</h2>
-                                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">إضافة أو تعديل فئات المصروفات المخصصة لتناسب احتياجاتك.</p>
+                                    <h2 className="text-xl font-semibold text-slate-800 dark:text-white">إدارة فئات المصروفات</h2>
+                                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">إضافة أو تعديل فئات المصروفات المخصصة لتناسب احتياجاتك.</p>
                                 </div>
                                 <button
                                     onClick={() => setIsCategoryManagerOpen(true)}
@@ -189,21 +200,21 @@ const SettingsPage: React.FC = () => {
 
                 {activeTab === 'appearance' && (
                      <div className="space-y-8 animate-fadeInSlideUp">
-                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-                            <h2 className="text-xl font-semibold text-gray-800 dark:text-white">مظهر التطبيق</h2>
-                            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">اختر المظهر المفضل لديك لواجهة التطبيق.</p>
+                        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6">
+                            <h2 className="text-xl font-semibold text-slate-800 dark:text-white">مظهر التطبيق</h2>
+                            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">اختر المظهر المفضل لديك لواجهة التطبيق.</p>
                             <div className="mt-6">
                                 <fieldset>
                                     <legend className="sr-only">Appearance</legend>
-                                    <div className="flex items-center justify-center sm:justify-start space-x-2 space-x-reverse rounded-md bg-gray-100 dark:bg-gray-700/50 p-1">
+                                    <div className="flex items-center justify-center sm:justify-start space-x-2 space-x-reverse rounded-md bg-slate-100 dark:bg-slate-700/50 p-1">
                                         {themeOptions.map((option) => (
                                             <button
                                                 key={option.value}
                                                 onClick={() => handleThemeChange(option.value)}
                                                 className={`w-full flex items-center justify-center space-x-2 space-x-reverse rounded-md px-3 py-2 text-sm font-medium transition-colors ${
                                                     settings.theme === option.value
-                                                        ? 'bg-white dark:bg-gray-800 text-emerald-700 dark:text-emerald-400 shadow-sm'
-                                                        : 'text-gray-500 dark:text-gray-400 hover:bg-white/60 dark:hover:bg-gray-800/60'
+                                                        ? 'bg-white dark:bg-slate-800 text-emerald-700 dark:text-emerald-400 shadow-sm'
+                                                        : 'text-slate-500 dark:text-slate-400 hover:bg-white/60 dark:hover:bg-slate-800/60'
                                                 }`}
                                             >
                                                 {option.icon}
@@ -219,9 +230,9 @@ const SettingsPage: React.FC = () => {
                 
                 {activeTab === 'data' && (
                      <div className="space-y-8 animate-fadeInSlideUp">
-                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-                            <h2 className="text-xl font-semibold text-gray-800 dark:text-white">النسخ الاحتياطي والاستعادة</h2>
-                            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6">
+                            <h2 className="text-xl font-semibold text-slate-800 dark:text-white">النسخ الاحتياطي والاستعادة</h2>
+                            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                                 قم بإنشاء نسخة احتياطية من جميع بياناتك أو استعادتها. يوصى بعمل نسخة احتياطية بشكل دوري.
                             </p>
                             <div className="mt-6 flex flex-col sm:flex-row gap-4">
@@ -234,7 +245,7 @@ const SettingsPage: React.FC = () => {
                                 </button>
                                 <button
                                     onClick={handleRestoreClick}
-                                    className="flex-1 flex items-center justify-center px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-md shadow-sm hover:bg-gray-300 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition-colors"
+                                    className="flex-1 flex items-center justify-center px-4 py-2 bg-slate-200 dark:bg-slate-600 text-slate-800 dark:text-slate-200 rounded-md shadow-sm hover:bg-slate-300 dark:hover:bg-slate-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-400 transition-colors"
                                 >
                                     <UploadIcon className="w-5 h-5 ml-2" />
                                     <span>استعادة من نسخة احتياطية</span>

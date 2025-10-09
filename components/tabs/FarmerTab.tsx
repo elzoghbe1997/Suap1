@@ -42,6 +42,18 @@ const FarmerTab: React.FC<{ cycle: CropCycle }> = ({ cycle }) => {
     const [editingWithdrawal, setEditingWithdrawal] = React.useState<FarmerWithdrawal | undefined>(undefined);
     const [deletingWithdrawalId, setDeletingWithdrawalId] = React.useState<string | null>(null);
 
+    React.useEffect(() => {
+        const isAnyModalOpen = isWithdrawalModalOpen || !!deletingWithdrawalId;
+        if (isAnyModalOpen) {
+            document.body.classList.add('body-no-scroll');
+        } else {
+            document.body.classList.remove('body-no-scroll');
+        }
+        return () => {
+            document.body.classList.remove('body-no-scroll');
+        };
+    }, [isWithdrawalModalOpen, deletingWithdrawalId]);
+
     const farmer = React.useMemo(() => farmers.find(f => f.id === cycle.farmerId), [farmers, cycle.farmerId]);
 
     const { farmerShare, totalWithdrawals, balance, cycleWithdrawals } = React.useMemo(() => {

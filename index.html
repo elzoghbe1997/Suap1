@@ -19,6 +19,9 @@
       body {
         font-family: 'Cairo', sans-serif;
       }
+      .body-no-scroll main {
+        overflow-y: hidden;
+      }
       @keyframes pageFadeIn {
         from { opacity: 0; transform: translateY(5px); }
         to { opacity: 1; transform: translateY(0); }
@@ -89,6 +92,16 @@
           transform: translateX(50%);
           z-index: 10;
       }
+      .hide-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .hide-scrollbar {
+        -ms-overflow-style: none;  /* IE and Edge */
+        scrollbar-width: none;  /* Firefox */
+      }
+      .modal-scroll-contain {
+        overscroll-behavior: contain;
+      }
     </style>
   <script type="importmap">
 {
@@ -105,19 +118,23 @@
 <script>
   // Prevents Flash of Incorrect Theme (FOUC)
   (function () {
+    let theme = 'system';
     try {
-      const settings = JSON.parse(localStorage.getItem('settings'));
-      const theme = settings?.theme || 'system';
-      if (theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
+      const settingsStr = localStorage.getItem('settings');
+      if (settingsStr && settingsStr !== 'undefined' && settingsStr !== 'null') {
+        const settings = JSON.parse(settingsStr);
+        if (settings && settings.theme) {
+          theme = settings.theme;
+        }
       }
     } catch (e) {
-      // Fallback for system theme if settings are not available/parsable
-      if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-         document.documentElement.classList.add('dark');
-      }
+      console.warn("Could not parse settings from localStorage for FOUC prevention.");
+    }
+    
+    if (theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
     }
   })();
 </script>

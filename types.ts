@@ -14,6 +14,7 @@ export enum TransactionType {
 export interface ExpenseCategorySetting {
   id: string;
   name: string;
+  isFoundational?: boolean;
 }
 
 
@@ -36,10 +37,18 @@ export interface AppSettings {
   isFarmerSystemEnabled: boolean;
   isSupplierSystemEnabled: boolean;
   isAgriculturalProgramsSystemEnabled: boolean;
+  isTreasurySystemEnabled?: boolean;
+  isAdvancesSystemEnabled?: boolean;
   theme: Theme;
   expenseCategories: ExpenseCategorySetting[];
 }
 
+export interface Advance {
+  id: string;
+  date: string;
+  amount: number;
+  description: string;
+}
 
 export interface Greenhouse {
   id: string;
@@ -125,11 +134,13 @@ export interface BackupData {
   suppliers: Supplier[];
   supplierPayments: SupplierPayment[];
   fertilizationPrograms: FertilizationProgram[];
+  advances: Advance[];
 }
 
 
 export interface AppContextType {
   loading: boolean;
+  isDeletingData: boolean;
   cropCycles: CropCycle[];
   transactions: Transaction[];
   greenhouses: Greenhouse[];
@@ -140,6 +151,7 @@ export interface AppContextType {
   suppliers: Supplier[];
   supplierPayments: SupplierPayment[];
   fertilizationPrograms: FertilizationProgram[];
+  advances: Advance[];
   addCropCycle: (cycle: Omit<CropCycle, 'id'>) => Promise<void>;
   updateCropCycle: (updatedCycle: CropCycle) => Promise<void>;
   deleteCropCycle: (id: string) => Promise<void>;
@@ -165,10 +177,14 @@ export interface AppContextType {
   addFertilizationProgram: (program: Omit<FertilizationProgram, 'id'>) => Promise<void>;
   updateFertilizationProgram: (updatedProgram: FertilizationProgram) => Promise<void>;
   deleteFertilizationProgram: (id: string) => Promise<void>;
+  addAdvance: (advance: Omit<Advance, 'id'>) => Promise<void>;
+  updateAdvance: (updatedAdvance: Advance) => Promise<void>;
+  deleteAdvance: (id: string) => Promise<void>;
   addExpenseCategory: (category: Omit<ExpenseCategorySetting, 'id'>) => Promise<void>;
   updateExpenseCategory: (updatedCategory: ExpenseCategorySetting) => Promise<void>;
   deleteExpenseCategory: (id: string) => Promise<void>;
   loadBackupData: (data: BackupData) => Promise<void>;
+  loadDemoData: () => Promise<void>;
   deleteAllData: () => Promise<void>;
   startFresh: () => Promise<void>;
 }

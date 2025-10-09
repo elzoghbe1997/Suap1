@@ -9,7 +9,7 @@ import Pagination from './Pagination';
 import { useAnimatedCounter } from '../hooks/useAnimatedCounter';
 import InvoiceForm from './InvoiceForm';
 
-const formInputClass = "mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500";
+const formInputClass = "mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500";
 const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EGP' }).format(amount);
 
 
@@ -20,12 +20,12 @@ const AnimatedNumber: React.FC<{ value: number }> = React.memo(({ value }) => {
 
 
 const StatCard: React.FC<{ title: string; value: number; icon: React.ReactNode; color: string }> = React.memo(({ title, value, icon, color }) => (
-    <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-md p-5 border-r-4 ${color}`}>
+    <div className={`bg-white dark:bg-slate-800 rounded-lg shadow-md p-5 border-r-4 ${color}`}>
         <div className="flex items-center">
             <div className="flex-shrink-0">{icon}</div>
             <div className="mr-4">
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">{title}</p>
-                <p className="text-2xl font-bold text-gray-800 dark:text-gray-200">
+                <p className="text-sm font-medium text-slate-500 dark:text-slate-400 truncate">{title}</p>
+                <p className="text-2xl font-bold text-slate-800 dark:text-slate-200">
                     <AnimatedNumber value={value} />
                 </p>
             </div>
@@ -38,20 +38,20 @@ const StatCard: React.FC<{ title: string; value: number; icon: React.ReactNode; 
 const SkeletonList: React.FC = () => (
     <div className="space-y-4">
         {[...Array(3)].map((_, i) => (
-             <div key={i} className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 space-y-3 animate-pulse">
+             <div key={i} className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-4 space-y-3 animate-pulse">
                 <div className="flex justify-between items-start">
-                    <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-3/5"></div>
-                    <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-1/5"></div>
+                    <div className="h-5 bg-slate-200 dark:bg-slate-700 rounded w-3/5"></div>
+                    <div className="h-5 bg-slate-200 dark:bg-slate-700 rounded w-1/5"></div>
                 </div>
                 <div className="space-y-2">
-                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
-                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div>
+                    <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/2"></div>
+                    <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-2/3"></div>
                 </div>
-                <div className="flex justify-between items-center border-t border-gray-200 dark:border-gray-700 pt-3 mt-3">
-                    <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
+                <div className="flex justify-between items-center border-t border-slate-200 dark:border-slate-700 pt-3 mt-3">
+                    <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-1/4"></div>
                     <div className="flex items-center space-x-2 space-x-reverse">
-                        <div className="h-6 w-6 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
-                        <div className="h-6 w-6 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+                        <div className="h-6 w-6 bg-slate-200 dark:bg-slate-700 rounded-full"></div>
+                        <div className="h-6 w-6 bg-slate-200 dark:bg-slate-700 rounded-full"></div>
                     </div>
                 </div>
             </div>
@@ -68,36 +68,36 @@ interface InvoiceRowProps {
 }
 
 const InvoiceRowDesktop: React.FC<InvoiceRowProps> = React.memo(({ invoice, cropCycleName, onEdit, onDelete, index }) => (
-    <tr style={{ animationDelay: `${index * 50}ms` }} className="even:bg-gray-50 dark:even:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors duration-200 animate-fadeInSlideUp">
+    <tr style={{ animationDelay: `${index * 50}ms` }} className="even:bg-slate-50 dark:even:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors duration-200 animate-fadeInSlideUp">
         <td className="py-4 px-4 whitespace-nowrap">{invoice.date}</td>
         <td className="py-4 px-4 whitespace-nowrap">{invoice.description}</td>
-        <td className="py-4 px-4 whitespace-nowrap text-gray-500 dark:text-gray-400">{cropCycleName}</td>
+        <td className="py-4 px-4 whitespace-nowrap text-slate-500 dark:text-slate-400">{cropCycleName}</td>
         <td className="py-4 px-4 whitespace-nowrap">{invoice.quantity?.toLocaleString() ?? '-'}</td>
         <td className="py-4 px-4 whitespace-nowrap font-medium text-green-600">{formatCurrency(invoice.amount)}</td>
         <td className="py-4 px-4 whitespace-nowrap font-medium">
             <div className="flex items-center space-x-2 space-x-reverse">
-                <button onClick={() => onEdit(invoice)} className="text-blue-500 hover:text-blue-700 p-1 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/50"><EditIcon className="w-5 h-5"/></button>
-                <button onClick={() => onDelete(invoice.id)} className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50"><DeleteIcon className="w-5 h-5"/></button>
+                <button onClick={() => onEdit(invoice)} className="text-blue-500 hover:text-blue-700 p-1 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/50" aria-label={`تعديل الفاتورة ${invoice.description}`}><EditIcon className="w-5 h-5"/></button>
+                <button onClick={() => onDelete(invoice.id)} className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50" aria-label={`حذف الفاتورة ${invoice.description}`}><DeleteIcon className="w-5 h-5"/></button>
             </div>
         </td>
     </tr>
 ));
 
 const InvoiceRowMobile: React.FC<InvoiceRowProps> = React.memo(({ invoice, cropCycleName, onEdit, onDelete, index }) => (
-    <div style={{ animationDelay: `${index * 50}ms` }} className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 space-y-3 animate-fadeInSlideUp">
+    <div style={{ animationDelay: `${index * 50}ms` }} className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-4 space-y-3 animate-fadeInSlideUp">
         <div className="flex justify-between items-start">
-            <p className="font-bold text-gray-800 dark:text-white flex-1 pr-2">{invoice.description}</p>
+            <p className="font-bold text-slate-800 dark:text-white flex-1 pr-2">{invoice.description}</p>
             <p className="font-semibold text-green-600 whitespace-nowrap">{formatCurrency(invoice.amount)}</p>
         </div>
-        <div className="text-sm text-gray-600 dark:text-gray-400">
-            <p><strong className="font-medium text-gray-700 dark:text-gray-300">العروة:</strong> {cropCycleName}</p>
-            <p><strong className="font-medium text-gray-700 dark:text-gray-300">الكمية:</strong> {invoice.quantity?.toLocaleString() ?? '-'} ك.ج</p>
+        <div className="text-sm text-slate-600 dark:text-slate-400">
+            <p><strong className="font-medium text-slate-700 dark:text-slate-300">العروة:</strong> {cropCycleName}</p>
+            <p><strong className="font-medium text-slate-700 dark:text-slate-300">الكمية:</strong> {invoice.quantity?.toLocaleString() ?? '-'} ك.ج</p>
         </div>
-        <div className="flex justify-between items-center border-t border-gray-200 dark:border-gray-700 pt-3 mt-3">
-            <p className="text-xs text-gray-500 dark:text-gray-400">{invoice.date}</p>
+        <div className="flex justify-between items-center border-t border-slate-200 dark:border-slate-700 pt-3 mt-3">
+            <p className="text-xs text-slate-500 dark:text-slate-400">{invoice.date}</p>
             <div className="flex items-center space-x-2 space-x-reverse">
-                <button onClick={() => onEdit(invoice)} className="text-blue-500 hover:text-blue-700 p-1 rounded-full"><EditIcon className="w-5 h-5"/></button>
-                <button onClick={() => onDelete(invoice.id)} className="text-red-500 hover:text-red-700 p-1 rounded-full"><DeleteIcon className="w-5 h-5"/></button>
+                <button onClick={() => onEdit(invoice)} className="text-blue-500 hover:text-blue-700 p-1 rounded-full" aria-label={`تعديل الفاتورة ${invoice.description}`}><EditIcon className="w-5 h-5"/></button>
+                <button onClick={() => onDelete(invoice.id)} className="text-red-500 hover:text-red-700 p-1 rounded-full" aria-label={`حذف الفاتورة ${invoice.description}`}><DeleteIcon className="w-5 h-5"/></button>
             </div>
         </div>
     </div>
@@ -121,6 +121,18 @@ const InvoicesPage: React.FC = () => {
     
     const [currentPage, setCurrentPage] = React.useState(1);
     const ITEMS_PER_PAGE = 10;
+    
+    React.useEffect(() => {
+        const isAnyModalOpen = isModalOpen || !!deletingId;
+        if (isAnyModalOpen) {
+            document.body.classList.add('body-no-scroll');
+        } else {
+            document.body.classList.remove('body-no-scroll');
+        }
+        return () => {
+            document.body.classList.remove('body-no-scroll');
+        };
+    }, [isModalOpen, deletingId]);
     
     React.useEffect(() => {
         const state = location.state as { action?: string };
@@ -222,7 +234,7 @@ const InvoicesPage: React.FC = () => {
     
     const TableHeader: React.FC<{ sortKey: SortableKeys; children: React.ReactNode; className?: string }> = ({ sortKey, children, className }) => (
         <th
-            className={`py-3 px-4 text-right font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer ${className}`}
+            className={`py-3 px-4 text-right font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider cursor-pointer ${className}`}
             onClick={() => requestSort(sortKey)}
         >
             <div className="flex items-center">
@@ -238,12 +250,12 @@ const InvoicesPage: React.FC = () => {
 
         if (invoices.length === 0) {
             return (
-                <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-700">
-                    <div className="flex justify-center mb-4 text-gray-400 dark:text-gray-500">
+                <div className="text-center py-16 bg-white dark:bg-slate-800 rounded-lg border-2 border-dashed border-slate-200 dark:border-slate-700">
+                    <div className="flex justify-center mb-4 text-slate-400 dark:text-slate-500">
                         <InvoiceIcon className="w-16 h-16"/>
                     </div>
-                    <p className="text-lg font-semibold text-gray-600 dark:text-gray-300">لا توجد فواتير للعروات النشطة</p>
-                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">ابدأ بإضافة فاتورة لبيع المحصول في عروة نشطة.</p>
+                    <p className="text-lg font-semibold text-slate-600 dark:text-slate-300">لا توجد فواتير للعروات النشطة</p>
+                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">ابدأ بإضافة فاتورة لبيع المحصول في عروة نشطة.</p>
                 </div>
             );
         }
@@ -257,20 +269,20 @@ const InvoicesPage: React.FC = () => {
         return (
             <>
                 {/* Desktop Table View */}
-                <div className="hidden md:block bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+                <div className="hidden md:block bg-white dark:bg-slate-800 rounded-lg shadow-md overflow-hidden">
                     <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
-                            <thead className="bg-gray-50 dark:bg-gray-700/50">
+                        <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700 text-sm">
+                            <thead className="bg-slate-50 dark:bg-slate-700/50">
                                 <tr>
                                     <TableHeader sortKey="date">التاريخ</TableHeader>
                                     <TableHeader sortKey="description">الوصف</TableHeader>
                                     <TableHeader sortKey="cropCycleName">العروة</TableHeader>
                                     <TableHeader sortKey="quantity">الكمية (ك.ج)</TableHeader>
                                     <TableHeader sortKey="amount">المبلغ</TableHeader>
-                                    <th className="py-3 px-4 text-right font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">الإجراءات</th>
+                                    <th className="py-3 px-4 text-right font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">الإجراءات</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                            <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
                                 {currentInvoices.map((t, index) => (
                                     <InvoiceRowDesktop
                                         key={t.id}
@@ -335,8 +347,8 @@ const InvoicesPage: React.FC = () => {
 
             {isModalOpen && (
                 <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4" aria-modal="true" role="dialog">
-                    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-lg max-h-full overflow-y-auto">
-                        <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-white">{editingInvoice ? 'تعديل فاتورة' : 'إضافة فاتورة جديدة'}</h2>
+                    <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-xl w-full max-w-lg max-h-full overflow-y-auto modal-scroll-contain">
+                        <h2 className="text-2xl font-bold mb-6 text-slate-800 dark:text-white">{editingInvoice ? 'تعديل فاتورة' : 'إضافة فاتورة جديدة'}</h2>
                         <InvoiceForm
                             invoice={editingInvoice}
                             onSave={handleSave} 

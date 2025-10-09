@@ -19,6 +19,19 @@ export const DashboardIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) =>
   </svg>
 );
 
+// Treasury / Safe Icon
+export const TreasuryIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+    <svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="18" height="16" rx="2" ry="2" />
+      <circle cx="12" cy="12" r="2" />
+      <path d="M12 10v-4" />
+      <path d="M12 14v4" />
+      <path d="M10 12h-4" />
+      <path d="M14 12h4" />
+    </svg>
+);
+
+
 // Recycle icon for cycles
 export const CycleIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
   <svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -83,6 +96,15 @@ export const SupplierIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => 
     <path d="M22 17H14v-2.17a3 3 0 0 0-1.2-2.34l-1.6-1.2A3 3 0 0 0 9.16 11H3" />
     <circle cx="7" cy="17" r="2" />
     <circle cx="17" cy="17" r="2" />
+  </svg>
+);
+
+// Advance / Loan Icon
+export const AdvanceIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+  <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M18 6H7a4 4 0 0 0-4 4v6a4 4 0 0 0 4 4h11" />
+    <path d="M21 12H7" />
+    <path d="m10 9-3 3 3 3" />
   </svg>
 );
 
@@ -189,6 +211,40 @@ export const CostIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
       <line x1="2" y1="14" x2="22" y2="14" />
     </svg>
 );
+
+export const PercentIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+  <svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="19" y1="5" x2="5" y2="19" />
+    <circle cx="6.5" cy="6.5" r="2.5" />
+    <circle cx="17.5" cy="17.5" r="2.5" />
+  </svg>
+);
+
+export const CostPerKgIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+    <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 3v18"/>
+        <path d="M3 6h18"/>
+        <path d="M3 18h18"/>
+        <path d="M12 12a3 3 0 0 0-3 3H7a5 5 0 0 1 10 0h-2a3 3 0 0 0-3-3z"/>
+        <path d="M12 9a3 3 0 0 1 3-3h2a5 5 0 0 0-10 0h2a3 3 0 0 1 3 3z"/>
+    </svg>
+);
+
+export const DailyProductionIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+    <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+        <line x1="16" y1="2" x2="16" y2="6"></line>
+        <line x1="8" y1="2" x2="8" y2="6"></line>
+        <line x1="3" y1="10" x2="21" y2="10"></line>
+        <path d="M7 14h.01"/>
+        <path d="M12 14h.01"/>
+        <path d="M17 14h.01"/>
+        <path d="M7 18h.01"/>
+        <path d="M12 18h.01"/>
+        <path d="M17 18h.01"/>
+    </svg>
+);
+
 
 export const AddIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
   <svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -416,4 +472,33 @@ export const LockIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
     <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
   </svg>
+);
+
+export const ChevronDownIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+  <svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="6 9 12 15 18 9" />
+  </svg>
+);
+
+export const RefreshIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+    <svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="23 4 23 10 17 10" />
+        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+    </svg>
+);
+
+export const FullscreenIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+    <svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
+    </svg>
+);
+
+export const DataCorruptedIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+    <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M9 18C9.69736 16.8384 10.7787 16 12 16C13.2213 16 14.3026 16.8384 15 18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        <path d="M14 2H6C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M14 2V8H20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <circle cx="10" cy="14" r="1" fill="currentColor"/>
+        <circle cx="14" cy="14" r="1" fill="currentColor"/>
+    </svg>
 );

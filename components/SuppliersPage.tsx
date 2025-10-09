@@ -7,7 +7,7 @@ import ConfirmationModal from './ConfirmationModal';
 import SkeletonCard from './SkeletonCard';
 import Pagination from './Pagination';
 
-const formInputClass = "mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500";
+const formInputClass = "mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500";
 const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EGP' }).format(amount);
 
 
@@ -21,11 +21,11 @@ const SupplierForm: React.FC<{ supplier?: Supplier; onSave: (supplier: Omit<Supp
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">اسم المورد</label>
-                <input type="text" id="name" value={name} onChange={(e) => setName(e.target.value)} required className={formInputClass}/>
+                <label htmlFor="name" className="block text-sm font-medium text-slate-700 dark:text-slate-300">اسم المورد</label>
+                <input type="text" id="name" value={name} onChange={e => setName(e.target.value)} required className={formInputClass}/>
             </div>
             <div className="flex justify-end space-x-2 space-x-reverse pt-4">
-                <button type="button" onClick={onCancel} className="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500">إلغاء</button>
+                <button type="button" onClick={onCancel} className="px-4 py-2 bg-slate-200 dark:bg-slate-600 text-slate-800 dark:text-slate-200 rounded-md hover:bg-slate-300 dark:hover:bg-slate-500">إلغاء</button>
                 <button type="submit" className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">حفظ</button>
             </div>
         </form>
@@ -97,40 +97,40 @@ const PaymentForm: React.FC<{ payment?: SupplierPayment; suppliers: Supplier[]; 
             </div>
 
             <div className="mt-4">
-                <button type="button" onClick={() => setShowLinker(!showLinker)} className="w-full text-sm text-green-600 dark:text-green-400 hover:underline disabled:text-gray-400 disabled:no-underline" disabled={!supplierId}>
+                <button type="button" onClick={() => setShowLinker(!showLinker)} className="w-full text-sm text-green-600 dark:text-green-400 hover:underline disabled:text-slate-400 disabled:no-underline" disabled={!supplierId}>
                     {showLinker ? 'إخفاء الفواتير' : '+ ربط بفواتير مشتريات'}
                 </button>
             </div>
 
             {showLinker && supplierId && (
-                <div className="mt-2 border-t dark:border-gray-700 pt-4">
-                    <h3 className="text-md font-medium text-gray-700 dark:text-gray-300 mb-2">اختر الفواتير لربطها بهذه الدفعة:</h3>
+                <div className="mt-2 border-t dark:border-slate-700 pt-4">
+                    <h3 className="text-md font-medium text-slate-700 dark:text-slate-300 mb-2">اختر الفواتير لربطها بهذه الدفعة:</h3>
                     {availableExpenses.length > 0 ? (
-                        <div className="space-y-2 max-h-48 overflow-y-auto p-2 border rounded-md dark:border-gray-600">
+                        <div className="space-y-2 max-h-48 overflow-y-auto p-2 border rounded-md dark:border-slate-600">
                             {availableExpenses.map(exp => (
-                                <label key={exp.id} htmlFor={`exp-${exp.id}`} className="flex items-center p-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer">
+                                <label key={exp.id} htmlFor={`exp-${exp.id}`} className="flex items-center p-2 rounded-md hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer">
                                     <input
                                         type="checkbox"
                                         id={`exp-${exp.id}`}
                                         checked={linkedExpenseIds.includes(exp.id)}
                                         onChange={() => handleLinkToggle(exp.id)}
-                                        className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                                        className="h-4 w-4 rounded border-slate-300 text-green-600 focus:ring-green-500"
                                     />
                                     <div className="mr-3 flex-grow">
-                                        <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{exp.description}</p>
-                                        <p className="text-xs text-gray-500 dark:text-gray-400">{exp.date} - {formatCurrency(exp.amount)}</p>
+                                        <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{exp.description}</p>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400">{exp.date} - {formatCurrency(exp.amount)}</p>
                                     </div>
                                 </label>
                             ))}
                         </div>
                     ) : (
-                        <p className="text-sm text-center text-gray-500 dark:text-gray-400 py-4">لا توجد فواتير آجلة لهذا المورد.</p>
+                        <p className="text-sm text-center text-slate-500 dark:text-slate-400 py-4">لا توجد فواتير آجلة لهذا المورد.</p>
                     )}
                 </div>
             )}
 
             <div className="flex justify-end space-x-2 space-x-reverse pt-4">
-                <button type="button" onClick={onCancel} className="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500">إلغاء</button>
+                <button type="button" onClick={onCancel} className="px-4 py-2 bg-slate-200 dark:bg-slate-600 text-slate-800 dark:text-slate-200 rounded-md hover:bg-slate-300 dark:hover:bg-slate-500">إلغاء</button>
                 <button type="submit" className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">حفظ الدفعة</button>
             </div>
         </form>
@@ -140,12 +140,12 @@ const PaymentForm: React.FC<{ payment?: SupplierPayment; suppliers: Supplier[]; 
 
 // Stat Card
 const StatCard: React.FC<{ title: string; value: string; icon: React.ReactNode; }> = ({ title, value, icon }) => (
-    <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+    <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-4">
         <div className="flex items-center">
             {icon}
             <div className="mr-3">
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{title}</p>
-                <p className="text-xl font-bold text-gray-800 dark:text-gray-200">{value}</p>
+                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{title}</p>
+                <p className="text-xl font-bold text-slate-800 dark:text-slate-200">{value}</p>
             </div>
         </div>
     </div>
@@ -190,39 +190,39 @@ const DetailsModal: React.FC<{ supplier: Supplier; transactions: Transaction[]; 
     );
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4" onClick={onClose}>
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
-                <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
-                    <h2 className="text-2xl font-bold text-gray-800 dark:text-white">كشف حساب: {supplier.name}</h2>
-                    <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"><CloseIcon className="w-6 h-6" /></button>
+        <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4" onClick={onClose}>
+            <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+                <div className="flex justify-between items-center mb-4 pb-4 border-b border-slate-200 dark:border-slate-700">
+                    <h2 className="text-2xl font-bold text-slate-800 dark:text-white">كشف حساب: {supplier.name}</h2>
+                    <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700"><CloseIcon className="w-6 h-6" /></button>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                     <StatCard title="إجمالي الفواتير" value={formatCurrency(totalInvoices)} icon={<InvoiceIcon className="w-7 h-7 text-red-500" />} />
                     <StatCard title="إجمالي المدفوعات" value={formatCurrency(totalPayments)} icon={<ExpenseIcon className="w-7 h-7 text-green-500" />} />
-                    <StatCard title="الرصيد النهائي" value={formatCurrency(balance)} icon={<ProfitIcon className={`w-7 h-7 ${balance > 0 ? 'text-red-500' : (balance < 0 ? 'text-blue-500' : 'text-gray-500')}`} />} />
+                    <StatCard title="الرصيد النهائي" value={formatCurrency(balance)} icon={<ProfitIcon className={`w-7 h-7 ${balance > 0 ? 'text-red-500' : (balance < 0 ? 'text-blue-500' : 'text-slate-500')}`} />} />
                 </div>
 
-                <div className="flex-grow overflow-y-auto pr-2">
+                <div className="flex-grow overflow-y-auto pr-2 modal-scroll-contain">
                 {combinedLedger.length > 0 ? (
                     <>
                         <div className="space-y-3">
                             {currentLedgerItems.map(item => (
-                                <div key={`${item.type}-${item.id}`} className="p-3 rounded-md border dark:border-gray-700 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                                <div key={`${item.type}-${item.id}`} className="p-3 rounded-md border dark:border-slate-700 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
                                     <div className="flex-grow">
                                         <p className={`font-semibold ${item.type === 'invoice' ? 'text-red-600' : 'text-green-600'}`}>{item.type === 'invoice' ? 'فاتورة مشتريات' : 'دفعة مسددة'}</p>
-                                        <p className="text-sm text-gray-700 dark:text-gray-300">
+                                        <p className="text-sm text-slate-700 dark:text-slate-300">
                                           {item.description}
-                                          {item.type === 'invoice' && <span className="text-gray-500 dark:text-gray-400"> ({cropCycles.find(c => c.id === item.cropCycleId)?.name || 'عروة محذوفة'})</span>}
+                                          {item.type === 'invoice' && <span className="text-slate-500 dark:text-slate-400"> ({cropCycles.find(c => c.id === item.cropCycleId)?.name || 'عروة محذوفة'})</span>}
                                         </p>
-                                        <p className="text-xs text-gray-500 dark:text-gray-400">{item.date}</p>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400">{item.date}</p>
                                         {item.type === 'payment' && item.linkedInvoices && item.linkedInvoices.length > 0 && (
-                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 italic">
+                                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 italic">
                                                 يسدد: {item.linkedInvoices.map(inv => inv.description).join(', ')}
                                             </p>
                                         )}
                                         {item.type === 'invoice' && item.paidAmount > 0 && (
-                                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-4">
+                                            <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-4">
                                                 <span>مدفوع: <span className="font-medium text-green-600">{formatCurrency(item.paidAmount)}</span></span>
                                                 <span>متبقي: <span className="font-medium text-red-600">{formatCurrency(item.remainingAmount)}</span></span>
                                             </div>
@@ -241,7 +241,7 @@ const DetailsModal: React.FC<{ supplier: Supplier; transactions: Transaction[]; 
                         />
                     </>
                  ) : (
-                    <p className="text-center text-gray-500 dark:text-gray-400 py-16">لا توجد معاملات مسجلة لهذا المورد.</p>
+                    <p className="text-center text-slate-500 dark:text-slate-400 py-16">لا توجد معاملات مسجلة لهذا المورد.</p>
                  )}
                 </div>
             </div>
@@ -260,6 +260,17 @@ const SuppliersPage: React.FC = () => {
     const [selectedSupplier, setSelectedSupplier] = React.useState<Supplier | undefined>(undefined);
     const [deletingId, setDeletingId] = React.useState<string | null>(null);
 
+    React.useEffect(() => {
+        const isAnyModalOpen = modal !== null || !!deletingId;
+        if (isAnyModalOpen) {
+            document.body.classList.add('body-no-scroll');
+        } else {
+            document.body.classList.remove('body-no-scroll');
+        }
+        return () => {
+            document.body.classList.remove('body-no-scroll');
+        };
+    }, [modal, deletingId]);
 
     const supplierAccountData = React.useMemo(() => {
         return suppliers.map(supplier => {
@@ -293,9 +304,9 @@ const SuppliersPage: React.FC = () => {
     
      if (!settings.isSupplierSystemEnabled) {
         return (
-             <div className="text-center p-8 bg-white dark:bg-gray-800 rounded-lg shadow-md">
-                <h2 className="text-2xl font-bold text-gray-800 dark:text-white">نظام الموردين غير مفعل</h2>
-                <p className="mt-2 text-gray-600 dark:text-gray-400">
+             <div className="text-center p-8 bg-white dark:bg-slate-800 rounded-lg shadow-md">
+                <h2 className="text-2xl font-bold text-slate-800 dark:text-white">نظام الموردين غير مفعل</h2>
+                <p className="mt-2 text-slate-600 dark:text-slate-400">
                     يرجى تفعيل "نظام الموردين" من صفحة <a href="#/settings" className="text-green-600 hover:underline">الإعدادات</a> لعرض هذه الصفحة.
                 </p>
             </div>
@@ -305,10 +316,10 @@ const SuppliersPage: React.FC = () => {
     const renderContent = () => {
         if (loading) return <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">{[...Array(3)].map((_, i) => <SkeletonCard key={i} />)}</div>;
         if (supplierAccountData.length === 0) return (
-            <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-700">
-                <SupplierIcon className="w-16 h-16 mx-auto text-gray-400 dark:text-gray-500 mb-4"/>
-                <p className="text-lg font-semibold text-gray-600 dark:text-gray-300">لا يوجد موردين مسجلين</p>
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">ابدأ بإضافة الموردين لتتبع حساباتهم.</p>
+            <div className="text-center py-16 bg-white dark:bg-slate-800 rounded-lg border-2 border-dashed border-slate-200 dark:border-slate-700">
+                <SupplierIcon className="w-16 h-16 mx-auto text-slate-400 dark:text-slate-500 mb-4"/>
+                <p className="text-lg font-semibold text-slate-600 dark:text-slate-300">لا يوجد موردين مسجلين</p>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">ابدأ بإضافة الموردين لتتبع حساباتهم.</p>
             </div>
         );
         return (
@@ -316,35 +327,36 @@ const SuppliersPage: React.FC = () => {
                 {supplierAccountData.map(s => {
                     const hasFinancials = s.invoices.length > 0 || s.payments.length > 0;
                     return (
-                        <div key={s.id} className="bg-white dark:bg-gray-800 p-5 rounded-lg shadow-md hover:shadow-xl transition-shadow flex flex-col justify-between">
+                        <div key={s.id} className="bg-white dark:bg-slate-800 p-5 rounded-lg shadow-md hover:shadow-xl transition-shadow flex flex-col justify-between">
                             <div>
                                 <div className="flex items-center mb-4">
                                     <div className="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-full mr-3"><SupplierIcon className="w-6 h-6 text-blue-600 dark:text-blue-400" /></div>
                                     <div>
-                                        <h3 className="text-xl font-bold text-gray-800 dark:text-white">{s.name}</h3>
-                                        <p className="text-sm text-gray-500 dark:text-gray-400">مورد أسمدة ومبيدات</p>
+                                        <h3 className="text-xl font-bold text-slate-800 dark:text-white">{s.name}</h3>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400">مورد أسمدة ومبيدات</p>
                                     </div>
                                 </div>
                                 <div className="space-y-3">
                                     <StatCard title="إجمالي الفواتير" value={formatCurrency(s.totalInvoices)} icon={<InvoiceIcon className="w-7 h-7 text-red-500" />} />
                                     <StatCard title="إجمالي المدفوعات" value={formatCurrency(s.totalPayments)} icon={<ExpenseIcon className="w-7 h-7 text-green-500" />} />
-                                    <StatCard title="الرصيد المتبقي" value={formatCurrency(s.balance)} icon={<ProfitIcon className={`w-7 h-7 ${s.balance > 0 ? 'text-red-500' : (s.balance < 0 ? 'text-blue-500' : 'text-gray-500')}`} />} />
+                                    <StatCard title="الرصيد المتبقي" value={formatCurrency(s.balance)} icon={<ProfitIcon className={`w-7 h-7 ${s.balance > 0 ? 'text-red-500' : (s.balance < 0 ? 'text-blue-500' : 'text-slate-500')}`} />} />
                                 </div>
                             </div>
-                            <div className="flex justify-between items-center mt-4 border-t border-gray-200 dark:border-gray-700 pt-3">
-                                <button onClick={() => { setSelectedSupplier(s); setModal('VIEW_DETAILS'); }} className="flex items-center px-3 py-1.5 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600">
+                            <div className="flex justify-between items-center mt-4 border-t border-slate-200 dark:border-slate-700 pt-3">
+                                <button onClick={() => { setSelectedSupplier(s); setModal('VIEW_DETAILS'); }} className="flex items-center px-3 py-1.5 text-xs bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-md hover:bg-slate-200 dark:hover:bg-slate-600">
                                     <ReportIcon className="w-4 h-4 ml-1.5"/><span>كشف حساب</span>
                                 </button>
                                 <div className="flex items-center space-x-1 space-x-reverse">
-                                    <button onClick={() => { setSelectedSupplier(s); setModal('EDIT_SUPPLIER'); }} className="p-2 text-gray-400 hover:text-blue-500 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"><EditIcon className="w-5 h-5"/></button>
+                                    <button onClick={() => { setSelectedSupplier(s); setModal('EDIT_SUPPLIER'); }} className="p-2 text-slate-400 hover:text-blue-500 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700" aria-label={`تعديل المورد ${s.name}`}><EditIcon className="w-5 h-5"/></button>
                                     <button 
                                         onClick={() => setDeletingId(s.id)}
                                         disabled={hasFinancials}
-                                        className={`p-2 text-gray-400 rounded-full transition-colors ${
+                                        className={`p-2 text-slate-400 rounded-full transition-colors ${
                                             hasFinancials
-                                            ? 'cursor-not-allowed text-gray-300 dark:text-gray-600'
-                                            : 'hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                            ? 'cursor-not-allowed text-slate-300 dark:text-slate-600'
+                                            : 'hover:text-red-500 hover:bg-slate-100 dark:hover:bg-slate-700'
                                         }`}
+                                        aria-label={`حذف المورد ${s.name}`}
                                     >
                                         <DeleteIcon className="w-5 h-5"/>
                                     </button>
@@ -361,8 +373,8 @@ const SuppliersPage: React.FC = () => {
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-800 dark:text-white">حسابات الموردين</h1>
-                    <p className="mt-2 text-lg text-gray-600 dark:text-gray-400">إدارة ومتابعة الفواتير الآجلة والمدفوعات للموردين.</p>
+                    <h1 className="text-3xl font-bold text-slate-800 dark:text-white">حسابات الموردين</h1>
+                    <p className="mt-2 text-lg text-slate-600 dark:text-slate-400">إدارة ومتابعة الفواتير الآجلة والمدفوعات للموردين.</p>
                 </div>
                 <div className="flex-shrink-0 flex items-center gap-2">
                     <button onClick={() => { setSelectedSupplier(undefined); setModal('ADD_SUPPLIER'); }} className="flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-md shadow-sm hover:bg-green-700">
@@ -377,16 +389,16 @@ const SuppliersPage: React.FC = () => {
 
             {/* Modals */}
             {(modal === 'ADD_SUPPLIER' || modal === 'EDIT_SUPPLIER') && (
-                <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-md">
+                <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-xl w-full max-w-md">
                         <h2 className="text-2xl font-bold mb-4">{modal === 'EDIT_SUPPLIER' ? 'تعديل مورد' : 'إضافة مورد جديد'}</h2>
                         <SupplierForm supplier={selectedSupplier} onSave={handleSaveSupplier} onCancel={() => setModal(null)} />
                     </div>
                 </div>
             )}
             {modal === 'ADD_PAYMENT' && (
-                <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-lg max-h-full overflow-y-auto">
+                <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-xl w-full max-w-lg max-h-full overflow-y-auto modal-scroll-contain">
                         <h2 className="text-2xl font-bold mb-4">إضافة دفعة للمورد</h2>
                         <PaymentForm suppliers={suppliers} onSave={handleSavePayment} onCancel={() => setModal(null)} />
                     </div>

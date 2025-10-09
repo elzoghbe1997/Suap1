@@ -140,6 +140,10 @@ const DynamicTitle: React.FC = () => {
             const cycle = cropCycles.find(c => c.id === cropCycleId);
             return cycle ? `تفاصيل: ${cycle.name}` : 'تفاصيل العروة';
         }
+        if (path.startsWith('/treasury/') && cropCycleId) {
+            const cycle = cropCycles.find(c => c.id === cropCycleId);
+            return cycle ? `صندوق: ${cycle.name}` : 'تفاصيل الصندوق';
+        }
         if (path.startsWith('/invoices')) return 'إدارة الفواتير';
         if (path.startsWith('/expenses')) return 'إدارة المصروفات';
         if (path.startsWith('/greenhouse/') && path.endsWith('/report')) return 'تقرير الصوبة';
@@ -147,10 +151,12 @@ const DynamicTitle: React.FC = () => {
         switch (path) {
           case '/dashboard': return 'لوحة التحكم';
           case '/cycles': return 'إدارة العروات';
+          case '/advances': return 'إدارة السلف الشخصية';
           case '/programs': return 'أرباح البرامج الزراعية';
           case '/farmer-accounts': return 'ادارة حساب المزارع';
           case '/suppliers': return 'حسابات الموردين';
           case '/greenhouse': return 'إدارة الصوبة';
+          case '/treasury': return 'صناديق العروات';
           case '/reports': return 'التقارير';
           case '/settings': return 'الإعدادات';
           default: return 'المحاسب الزراعي';

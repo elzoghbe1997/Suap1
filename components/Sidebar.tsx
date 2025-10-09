@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { 
   DashboardIcon, 
   CycleIcon, 
@@ -13,6 +13,9 @@ import {
   FarmerIcon,
   SupplierIcon,
   LogoutIcon,
+  TreasuryIcon,
+  AdvanceIcon,
+  ChevronDownIcon,
 } from './Icons';
 import { AppSettings } from '../types';
 import { useAuth } from '../context/AuthContext';
@@ -26,6 +29,11 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = React.memo(({ isOpen, setIsOpen, settings }) => {
   const { logout } = useAuth();
+  const location = useLocation();
+  
+  // FIX: The Treasury menu state is now initialized based on the active route, ensuring it stays open during navigation within its section.
+  const isTreasuryActive = location.pathname.startsWith('/treasury') || location.pathname.startsWith('/advances');
+  const [isTreasuryMenuOpen, setIsTreasuryMenuOpen] = React.useState(isTreasuryActive);
 
   const commonLinkClasses = "flex items-center px-4 py-3 rounded-lg text-lg transition-all duration-200 transform hover:translate-x-1 focus:translate-x-1";
   const activeLinkClasses = "bg-emerald-600 text-white shadow-lg";
@@ -36,6 +44,13 @@ const Sidebar: React.FC<SidebarProps> = React.memo(({ isOpen, setIsOpen, setting
       setIsOpen(false);
     }
   };
+
+  // Keep the menu open if the user navigates to a child route.
+  React.useEffect(() => {
+    if (isTreasuryActive) {
+      setIsTreasuryMenuOpen(true);
+    }
+  }, [isTreasuryActive]);
 
   return (
     <>
@@ -129,6 +144,37 @@ const Sidebar: React.FC<SidebarProps> = React.memo(({ isOpen, setIsOpen, setting
             <GreenhouseIcon className="h-6 w-6" />
             <span className="mx-4 font-semibold">إدارة الصوبة</span>
           </NavLink>
+
+          {(settings.isTreasurySystemEnabled || settings.isAdvancesSystemEnabled) && (
+            <div>
+                <button
+                    onClick={() => setIsTreasuryMenuOpen(!isTreasuryMenuOpen)}
+                    className={`${commonLinkClasses} w-full justify-between ${isTreasuryActive ? 'text-white' : inactiveLinkClasses.replace('hover:bg-slate-700', '')}`}
+                >
+                    <div className="flex items-center">
+                        <TreasuryIcon className="h-6 w-6" />
+                        <span className="mx-4 font-semibold">الخزنة</span>
+                    </div>
+                    <ChevronDownIcon className={`h-5 w-5 transition-transform duration-200 ${isTreasuryMenuOpen ? 'rotate-180' : ''}`} />
+                </button>
+                {isTreasuryMenuOpen && (
+                    <div className="mt-2 space-y-2 pr-4">
+                        {settings.isTreasurySystemEnabled && (
+                            <NavLink to="/treasury" className={({ isActive }) => `${commonLinkClasses} py-2 text-base ${isActive ? activeLinkClasses : inactiveLinkClasses}`} onClick={closeSidebarOnMobile}>
+                                <span className="w-6 h-6 text-center">-</span>
+                                <span className="mx-4 font-normal">صناديق العروات</span>
+                            </NavLink>
+                        )}
+                        {settings.isAdvancesSystemEnabled && (
+                             <NavLink to="/advances" className={({ isActive }) => `${commonLinkClasses} py-2 text-base ${isActive ? activeLinkClasses : inactiveLinkClasses}`} onClick={closeSidebarOnMobile}>
+                                <AdvanceIcon className="h-5 w-5" />
+                                <span className="mx-4 font-normal">السلف الشخصية</span>
+                            </NavLink>
+                        )}
+                    </div>
+                )}
+            </div>
+          )}
           
           <div className="pt-4 mt-4 space-y-2 border-t border-slate-700">
              <NavLink

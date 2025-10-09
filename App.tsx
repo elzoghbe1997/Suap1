@@ -14,6 +14,9 @@ import SettingsPage from './components/SettingsPage';
 import FarmerAccountsPage from './components/FarmerAccountsPage';
 import SuppliersPage from './components/SuppliersPage';
 import FertilizationProgramsPage from './components/FertilizationProgramsPage';
+import TreasuryPage from './components/TreasuryPage';
+import TreasuryDetailsPage from './components/TreasuryDetailsPage';
+import AdvancesPage from './components/AdvancesPage';
 import { AppContextType } from './types';
 import { useAppData } from './hooks/useAppData';
 import { ToastProvider } from './context/ToastContext';
@@ -23,6 +26,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import AuthPage from './components/AuthPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import DashboardSkeleton from './components/DashboardSkeleton';
+import PWAInstallBanner from './components/PWAInstallBanner';
 
 
 export const AppContext = React.createContext<AppContextType | null>(null);
@@ -36,7 +40,7 @@ const OnboardingModal: React.FC<{ onSelect: (choice: 'demo' | 'fresh') => void }
   }, []);
 
   return (
-    <div className={`fixed inset-0 bg-slate-100 dark:bg-slate-900 z-50 flex items-center justify-center p-4 transition-opacity duration-500 ${isAnimating ? 'opacity-100' : 'opacity-0'}`}>
+    <div className={`absolute inset-0 bg-slate-100 dark:bg-slate-900 z-50 flex items-center justify-center p-4 transition-opacity duration-500 ${isAnimating ? 'opacity-100' : 'opacity-0'}`}>
       <div className={`w-full max-w-2xl mx-auto bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8 sm:p-12 text-center transform transition-all duration-500 ease-out ${isAnimating ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
         <SparklesIcon className="w-16 h-16 text-emerald-500 mx-auto mb-6" />
         <h1 className="text-3xl sm:text-4xl font-bold text-slate-800 dark:text-white mb-4">
@@ -66,12 +70,28 @@ const OnboardingModal: React.FC<{ onSelect: (choice: 'demo' | 'fresh') => void }
   );
 };
 
+const DeletingDataOverlay: React.FC = () => (
+    <div className="absolute inset-0 bg-slate-900 z-50 flex flex-col items-center justify-center text-white">
+        <svg className="animate-spin h-10 w-10 text-white mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <p className="text-xl font-semibold">جاري حذف جميع البيانات...</p>
+        <p className="text-slate-400 mt-2">سيتم إعادة تشغيل التطبيق بعد قليل.</p>
+    </div>
+);
+
 
 const AppLayout: React.FC = () => {
     const contextValue = React.useContext(AppContext) as AppContextType;
     const location = useLocation();
     const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
     
+    // FIX: Wrapped toggleSidebar in useCallback for performance optimization to prevent unnecessary re-renders of the Header component.
+    const toggleSidebar = React.useCallback(() => {
+        setIsSidebarOpen(prevIsOpen => !prevIsOpen);
+    }, []);
+
     React.useEffect(() => {
         const mediaQuery = window.matchMedia('(min-width: 768px)');
         setIsSidebarOpen(mediaQuery.matches);
@@ -131,12 +151,13 @@ const AppLayout: React.FC = () => {
         <div className="relative h-screen flex overflow-hidden bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-200">
             <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} settings={contextValue.settings} />
             <div className={`flex-1 flex flex-col w-full transition-all duration-300 ease-in-out ${isSidebarOpen ? 'md:mr-64' : 'md:mr-0'}`}>
-                <Header toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
+                <Header toggleSidebar={toggleSidebar} />
                 <main key={location.pathname} className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto animate-page-fade-in">
                     <Outlet />
                 </main>
             </div>
             <ToastContainer />
+            <PWAInstallBanner />
         </div>
     );
 };
@@ -153,17 +174,21 @@ const AppContent: React.FC = () => {
     }
   }, [isAuthenticated, contextValue.loading]);
 
-  const handleOnboardingSelect = (choice: 'demo' | 'fresh') => {
-    if (choice === 'fresh') {
-      contextValue.startFresh();
-      localStorage.setItem('startFresh', 'true');
-    } else {
-      localStorage.removeItem('startFresh');
-    }
+  const handleOnboardingSelect = async (choice: 'demo' | 'fresh') => {
     localStorage.setItem('appInitialized', 'true');
-    setShowOnboarding(false);
+    setShowOnboarding(false); // Hide modal immediately
+
+    if (choice === 'fresh') {
+      await contextValue.startFresh();
+    } else {
+      await contextValue.loadDemoData();
+    }
   };
   
+  if (contextValue.isDeletingData) {
+    return <DeletingDataOverlay />;
+  }
+
   if (isAuthenticated && showOnboarding) {
     return <OnboardingModal onSelect={handleOnboardingSelect} />;
   }
@@ -184,6 +209,9 @@ const AppContent: React.FC = () => {
                 {contextValue.settings.isSupplierSystemEnabled && <Route path="/suppliers" element={<SuppliersPage />} />}
                 <Route path="/greenhouse" element={<GreenhousePage />} />
                 <Route path="/greenhouse/:greenhouseId/report" element={<GreenhouseReport />} />
+                {contextValue.settings.isTreasurySystemEnabled && <Route path="/treasury" element={<TreasuryPage />} />}
+                {contextValue.settings.isTreasurySystemEnabled && <Route path="/treasury/:cropCycleId" element={<TreasuryDetailsPage />} />}
+                {contextValue.settings.isAdvancesSystemEnabled && <Route path="/advances" element={<AdvancesPage />} />}
                 <Route path="/reports" element={<ReportsPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="*" element={<Navigate to="/dashboard" />} />

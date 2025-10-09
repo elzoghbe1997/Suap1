@@ -34,18 +34,18 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = React.memo(({ isOpen
 
 
     return (
-        <div className={`fixed inset-0 flex items-center justify-center z-70 p-4 transition-opacity duration-300 ease-out ${isAnimating ? 'bg-black bg-opacity-60' : 'bg-black bg-opacity-0'}`} aria-modal="true" role="dialog" onClick={onClose}>
-            <div className={`bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-md transform transition-all duration-300 ease-out ${isAnimating ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`} onClick={e => e.stopPropagation()}>
+        <div className={`absolute inset-0 flex items-center justify-center z-70 p-4 transition-opacity duration-300 ease-out ${isAnimating ? 'bg-black bg-opacity-60' : 'bg-black bg-opacity-0'}`} aria-modal="true" role="dialog" onClick={onClose}>
+            <div className={`bg-white dark:bg-slate-800 p-6 rounded-lg shadow-xl w-full max-w-md transform transition-all duration-300 ease-out ${isAnimating ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`} onClick={e => e.stopPropagation()}>
                 <div className="flex">
                     <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/50 sm:mx-0 sm:h-10 sm:w-10">
                         <WarningIcon className="h-6 w-6 text-red-600 dark:text-red-400" aria-hidden="true" />
                     </div>
                     <div className="mt-3 text-center sm:mt-0 sm:mr-4 sm:text-right flex-grow">
-                        <h3 className="text-lg leading-6 font-bold text-gray-900 dark:text-white" id="modal-title">
+                        <h3 className="text-lg leading-6 font-bold text-slate-900 dark:text-white" id="modal-title">
                             {title}
                         </h3>
                         <div className="mt-2">
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                            <p className="text-sm text-slate-500 dark:text-slate-400">
                                 {message}
                             </p>
                         </div>
@@ -61,7 +61,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = React.memo(({ isOpen
                     </button>
                     <button
                         type="button"
-                        className="w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-500 shadow-sm px-4 py-2 bg-white dark:bg-gray-700 text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:w-auto sm:text-sm transition-colors"
+                        className="w-full inline-flex justify-center rounded-md border border-slate-300 dark:border-slate-500 shadow-sm px-4 py-2 bg-white dark:bg-slate-700 text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:w-auto sm:text-sm transition-colors"
                         onClick={onClose}
                     >
                         إلغاء

@@ -92,13 +92,13 @@ const ProgramReportModal: React.FC<{
     }, [program, transactions, cropCycles, settings]);
 
     if (!reportData) {
-        return <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"><div className="bg-white p-4 rounded-lg">خطأ في تحميل بيانات التقرير.</div></div>;
+        return <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"><div className="bg-white p-4 rounded-lg">خطأ في تحميل بيانات التقرير.</div></div>;
     }
 
     const { expenses, revenues, totalExpenses, totalRevenue, farmerShare, ownerProfit, cycle } = reportData;
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4" onClick={onClose}>
+        <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4" onClick={onClose}>
             <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
                 <div className="flex justify-between items-center mb-4 pb-4 border-b border-slate-200 dark:border-slate-700">
                     <div>
@@ -108,7 +108,7 @@ const ProgramReportModal: React.FC<{
                     <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700"><CloseIcon className="w-6 h-6" /></button>
                 </div>
 
-                <div className="flex-grow overflow-y-auto space-y-6">
+                <div className="flex-grow overflow-y-auto space-y-6 modal-scroll-contain">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="bg-slate-100 dark:bg-slate-700/50 p-4 rounded-lg flex items-center"><ExpenseIcon className="w-7 h-7 text-rose-500 ml-3"/><div className="text-right"><p className="text-sm text-slate-500">إجمالي مصروفات البرنامج</p><p className="text-xl font-bold">{formatCurrency(totalExpenses)}</p></div></div>
                         <div className="bg-slate-100 dark:bg-slate-700/50 p-4 rounded-lg flex items-center"><RevenueIcon className="w-7 h-7 text-emerald-500 ml-3"/><div className="text-right"><p className="text-sm text-slate-500">إيرادات البرنامج المرتبطة</p><p className="text-xl font-bold">{formatCurrency(totalRevenue)}</p></div></div>
@@ -156,6 +156,18 @@ const FertilizationProgramsPage: React.FC = () => {
     const [modal, setModal] = React.useState<'ADD' | 'EDIT' | 'VIEW_REPORT' | null>(null);
     const [selectedProgram, setSelectedProgram] = React.useState<FertilizationProgram | undefined>(undefined);
     const [deletingId, setDeletingId] = React.useState<string | null>(null);
+
+    React.useEffect(() => {
+        const isAnyModalOpen = modal !== null || !!deletingId;
+        if (isAnyModalOpen) {
+            document.body.classList.add('body-no-scroll');
+        } else {
+            document.body.classList.remove('body-no-scroll');
+        }
+        return () => {
+            document.body.classList.remove('body-no-scroll');
+        };
+    }, [modal, deletingId]);
 
     const handleSave = (program: Omit<FertilizationProgram, 'id'> | FertilizationProgram) => {
         if ('id' in program) {
@@ -285,8 +297,8 @@ const FertilizationProgramsPage: React.FC = () => {
                                     <div className="flex justify-between items-center mt-4 border-t border-slate-200 dark:border-slate-700 pt-3">
                                         <button onClick={() => { setSelectedProgram(program); setModal('VIEW_REPORT'); }} className="flex items-center px-3 py-1.5 text-xs bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-md hover:bg-slate-200 dark:hover:bg-slate-600"><ReportIcon className="w-4 h-4 ml-1.5"/><span>عرض التقرير</span></button>
                                         <div className="flex items-center space-x-1 space-x-reverse">
-                                            <button onClick={() => { setSelectedProgram(program); setModal('EDIT'); }} className="p-2 text-slate-400 hover:text-blue-500 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700"><EditIcon className="w-5 h-5"/></button>
-                                            <button onClick={() => setDeletingId(program.id)} className="p-2 text-slate-400 hover:text-red-500 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700"><DeleteIcon className="w-5 h-5"/></button>
+                                            <button onClick={() => { setSelectedProgram(program); setModal('EDIT'); }} className="p-2 text-slate-400 hover:text-blue-500 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700" aria-label={`تعديل البرنامج ${program.name}`}><EditIcon className="w-5 h-5"/></button>
+                                            <button onClick={() => setDeletingId(program.id)} className="p-2 text-slate-400 hover:text-red-500 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700" aria-label={`حذف البرنامج ${program.name}`}><DeleteIcon className="w-5 h-5"/></button>
                                         </div>
                                     </div>
                                 </div>
@@ -309,10 +321,15 @@ const FertilizationProgramsPage: React.FC = () => {
             {renderContent()}
 
             {(modal === 'ADD' || modal === 'EDIT') && (
-                <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-                    <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-lg shadow-xl w-full max-w-lg">
+                <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+                    <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-lg shadow-xl w-full max-w-lg" onClick={e=>e.stopPropagation()}>
                         <h2 className="text-2xl font-bold mb-4">{modal === 'EDIT' ? 'تعديل البرنامج' : 'إضافة برنامج جديد'}</h2>
-                        <ProgramForm program={selectedProgram} onSave={handleSave} onCancel={() => setModal(null)} cropCycles={cropCycles} />
+                        <ProgramForm 
+                            program={selectedProgram} 
+                            onSave={handleSave} 
+                            onCancel={() => setModal(null)}
+                            cropCycles={cropCycles} 
+                        />
                     </div>
                 </div>
             )}

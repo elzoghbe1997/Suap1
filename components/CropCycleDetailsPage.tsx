@@ -27,7 +27,7 @@ const CropCycleDetailsPage: React.FC = () => {
         `whitespace-nowrap py-3 px-4 border-b-2 font-medium text-base transition-colors duration-200 ${
             activeTab === tabName
             ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400'
-            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:border-gray-600'
+            : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 dark:text-slate-400 dark:hover:text-slate-300 dark:hover:border-slate-600'
         }`;
     
     return (
@@ -39,7 +39,7 @@ const CropCycleDetailsPage: React.FC = () => {
                         <ArrowRightIcon className="w-4 h-4 mx-2 transform scale-x-[-1]" />
                         <span>{cycle.name}</span>
                     </div>
-                    <h1 className="text-3xl font-bold text-gray-800 dark:text-white">{cycle.name}</h1>
+                    <h1 className="text-3xl font-bold text-slate-800 dark:text-white">{cycle.name}</h1>
                     <div className="flex items-center text-md text-slate-500 dark:text-slate-400 mt-1">
                         <GreenhouseIcon className="w-5 h-5 ml-2 text-sky-500"/>
                         <span>{greenhouse?.name}</span>
@@ -50,8 +50,8 @@ const CropCycleDetailsPage: React.FC = () => {
                 </div>
             </header>
             
-             <div className="border-b border-gray-200 dark:border-gray-700">
-                <nav className="-mb-px flex space-x-4 space-x-reverse overflow-x-auto">
+             <div className="border-b border-slate-200 dark:border-slate-700">
+                <nav className="-mb-px flex space-x-4 space-x-reverse overflow-x-auto hide-scrollbar">
                     <button onClick={() => setActiveTab('overview')} className={tabButtonClass('overview')}>نظرة عامة</button>
                     <button onClick={() => setActiveTab('transactions')} className={tabButtonClass('transactions')}>المعاملات</button>
                     {settings.isAgriculturalProgramsSystemEnabled && <button onClick={() => setActiveTab('programs')} className={tabButtonClass('programs')}>البرامج الزراعية</button>}

@@ -22,8 +22,8 @@ const TransactionCard: React.FC<{
         <div className="flex-shrink-0 flex w-full justify-between items-center sm:w-auto sm:flex-col sm:items-end sm:justify-start gap-2">
             <p className={`text-lg font-bold ${t.type === TransactionType.REVENUE ? 'text-emerald-600' : 'text-rose-600'}`}>{formatCurrency(t.amount)}</p>
             <div className="flex items-center space-x-2 space-x-reverse">
-                <button onClick={onEdit} className="p-1 text-slate-400 hover:text-blue-500 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700"><EditIcon className="w-5 h-5"/></button>
-                <button onClick={onDelete} className="p-1 text-slate-400 hover:text-red-500 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700"><DeleteIcon className="w-5 h-5"/></button>
+                <button onClick={onEdit} className="p-1 text-slate-400 hover:text-blue-500 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700" aria-label={`تعديل ${t.description}`}><EditIcon className="w-5 h-5"/></button>
+                <button onClick={onDelete} className="p-1 text-slate-400 hover:text-red-500 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700" aria-label={`حذف ${t.description}`}><DeleteIcon className="w-5 h-5"/></button>
             </div>
         </div>
     </div>
@@ -42,8 +42,8 @@ const TransactionFormModal: React.FC<{
 }> = ({ type, transaction, cycle, onSave, onClose, ...props}) => {
     const isRevenue = type === 'REVENUE';
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4" onClick={onClose}>
-            <div className="bg-slate-50 dark:bg-slate-900 p-6 rounded-lg shadow-xl w-full max-w-lg max-h-full overflow-y-auto" onClick={e=>e.stopPropagation()}>
+        <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4" onClick={onClose}>
+            <div className="bg-slate-50 dark:bg-slate-900 p-6 rounded-lg shadow-xl w-full max-w-lg max-h-full overflow-y-auto modal-scroll-contain" onClick={e=>e.stopPropagation()}>
                 <h2 className="text-2xl font-bold mb-6 text-slate-800 dark:text-white">{transaction ? 'تعديل' : 'إضافة'} {isRevenue ? 'فاتورة' : 'مصروف'}</h2>
                 {isRevenue ? 
                     <InvoiceForm invoice={transaction} onSave={onSave} onCancel={onClose} cycles={[cycle]} fertilizationPrograms={props.fertilizationPrograms} initialCycleId={cycle.id} /> : 
@@ -56,14 +56,26 @@ const TransactionFormModal: React.FC<{
 
 const TransactionsTab: React.FC<{ cycle: CropCycle }> = ({ cycle }) => {
     const { transactions, addTransaction, updateTransaction, deleteTransaction, settings, suppliers, fertilizationPrograms } = React.useContext(AppContext) as AppContextType;
-    const [isModalOpen, setIsModalOpen] = React.useState(false);
-    const [modalType, setModalType] = React.useState<'REVENUE' | 'EXPENSE' | null>(null);
-    const [editingTransaction, setEditingTransaction] = React.useState<Transaction | undefined>(undefined);
+    
+    // FIX: Refactored modal state to a single state object for better clarity and management.
+    const [modalState, setModalState] = React.useState<{ type: 'REVENUE' | 'EXPENSE', transaction?: Transaction } | null>(null);
     const [deletingId, setDeletingId] = React.useState<string | null>(null);
 
     const [invoicePage, setInvoicePage] = React.useState(1);
     const [expensePage, setExpensePage] = React.useState(1);
     const ITEMS_PER_PAGE = 5;
+
+    React.useEffect(() => {
+        const isAnyModalOpen = !!modalState || !!deletingId;
+        if (isAnyModalOpen) {
+            document.body.classList.add('body-no-scroll');
+        } else {
+            document.body.classList.remove('body-no-scroll');
+        }
+        return () => {
+            document.body.classList.remove('body-no-scroll');
+        };
+    }, [modalState, deletingId]);
 
     const { cycleInvoices, cycleExpenses, totalRevenue, totalExpenses } = React.useMemo(() => {
         const cycleTransactions = transactions.filter(t => t.cropCycleId === cycle.id);
@@ -80,7 +92,7 @@ const TransactionsTab: React.FC<{ cycle: CropCycle }> = ({ cycle }) => {
         } else {
             addTransaction(transaction);
         }
-        setIsModalOpen(false);
+        setModalState(null);
     };
 
     const totalInvoicePages = Math.ceil(cycleInvoices.length / ITEMS_PER_PAGE);
@@ -95,7 +107,7 @@ const TransactionsTab: React.FC<{ cycle: CropCycle }> = ({ cycle }) => {
                 <section>
                     <div className="flex justify-between items-center mb-4">
                         <h3 className="text-2xl font-bold text-slate-800 dark:text-white">الفواتير ({cycleInvoices.length})</h3>
-                        <button onClick={() => { setEditingTransaction(undefined); setModalType('REVENUE'); setIsModalOpen(true); }} className="flex items-center justify-center px-4 py-2 bg-emerald-600 text-white rounded-md shadow-sm hover:bg-emerald-700 transition-colors text-sm">
+                        <button onClick={() => setModalState({ type: 'REVENUE' })} className="flex items-center justify-center px-4 py-2 bg-emerald-600 text-white rounded-md shadow-sm hover:bg-emerald-700 transition-colors text-sm">
                             <AddIcon className="w-4 h-4 ml-2" />
                             <span>إضافة فاتورة</span>
                         </button>
@@ -106,7 +118,7 @@ const TransactionsTab: React.FC<{ cycle: CropCycle }> = ({ cycle }) => {
                     </div>
                     {currentInvoices.length > 0 ? (
                         <div className="space-y-4">
-                            {currentInvoices.map(t => <TransactionCard key={t.id} t={t} onEdit={() => { setEditingTransaction(t); setModalType('REVENUE'); setIsModalOpen(true); }} onDelete={() => setDeletingId(t.id)} />)}
+                            {currentInvoices.map(t => <TransactionCard key={t.id} t={t} onEdit={() => setModalState({ type: 'REVENUE', transaction: t })} onDelete={() => setDeletingId(t.id)} />)}
                             <Pagination currentPage={invoicePage} totalPages={totalInvoicePages} onPageChange={setInvoicePage} />
                         </div>
                     ) : (
@@ -117,7 +129,7 @@ const TransactionsTab: React.FC<{ cycle: CropCycle }> = ({ cycle }) => {
                 <section>
                      <div className="flex justify-between items-center mb-4">
                         <h3 className="text-2xl font-bold text-slate-800 dark:text-white">المصروفات ({cycleExpenses.length})</h3>
-                        <button onClick={() => { setEditingTransaction(undefined); setModalType('EXPENSE'); setIsModalOpen(true); }} className="flex items-center justify-center px-4 py-2 bg-rose-600 text-white rounded-md shadow-sm hover:bg-rose-700 transition-colors text-sm">
+                        <button onClick={() => setModalState({ type: 'EXPENSE' })} className="flex items-center justify-center px-4 py-2 bg-rose-600 text-white rounded-md shadow-sm hover:bg-rose-700 transition-colors text-sm">
                             <AddIcon className="w-4 h-4 ml-2" />
                             <span>إضافة مصروف</span>
                         </button>
@@ -128,7 +140,7 @@ const TransactionsTab: React.FC<{ cycle: CropCycle }> = ({ cycle }) => {
                     </div>
                     {currentExpenses.length > 0 ? (
                         <div className="space-y-4">
-                            {currentExpenses.map(t => <TransactionCard key={t.id} t={t} onEdit={() => { setEditingTransaction(t); setModalType('EXPENSE'); setIsModalOpen(true); }} onDelete={() => setDeletingId(t.id)} />)}
+                            {currentExpenses.map(t => <TransactionCard key={t.id} t={t} onEdit={() => setModalState({ type: 'EXPENSE', transaction: t })} onDelete={() => setDeletingId(t.id)} />)}
                             <Pagination currentPage={expensePage} totalPages={totalExpensePages} onPageChange={setExpensePage} />
                         </div>
                     ) : (
@@ -137,13 +149,13 @@ const TransactionsTab: React.FC<{ cycle: CropCycle }> = ({ cycle }) => {
                 </section>
             </div>
 
-            {isModalOpen && modalType && (
+            {modalState && (
                 <TransactionFormModal
-                    type={modalType}
-                    transaction={editingTransaction}
+                    type={modalState.type}
+                    transaction={modalState.transaction}
                     cycle={cycle}
                     onSave={handleSave}
-                    onClose={() => setIsModalOpen(false)}
+                    onClose={() => setModalState(null)}
                     settings={settings}
                     suppliers={suppliers}
                     fertilizationPrograms={fertilizationPrograms}

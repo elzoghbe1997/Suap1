@@ -57,12 +57,12 @@ const ReportsPage: React.FC = () => {
     return (
         <div className="space-y-8">
             <header>
-                <h1 className="text-3xl font-bold text-gray-800 dark:text-white">التقارير التحليلية</h1>
-                <p className="mt-2 text-lg text-gray-600 dark:text-gray-400">نظرة شاملة على أداء مشروعك المالي والزراعي.</p>
+                <h1 className="text-3xl font-bold text-slate-800 dark:text-white">التقارير التحليلية</h1>
+                <p className="mt-2 text-lg text-slate-600 dark:text-slate-400">نظرة شاملة على أداء مشروعك المالي والزراعي.</p>
             </header>
 
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 sm:p-6">
-                <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">مقارنة أداء العروات (ربحية المالك)</h2>
+            <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-4 sm:p-6">
+                <h2 className="text-xl font-semibold mb-4 text-slate-800 dark:text-white">مقارنة أداء العروات (ربحية المالك)</h2>
                 <ResponsiveContainer width="100%" height={400}>
                     <BarChart data={cyclesPerformanceData} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(128, 128, 128, 0.2)" />
@@ -80,8 +80,8 @@ const ReportsPage: React.FC = () => {
                 </ResponsiveContainer>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 sm:p-6">
-                <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">تحليل المصروفات حسب الصوبة</h2>
+            <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-4 sm:p-6">
+                <h2 className="text-xl font-semibold mb-4 text-slate-800 dark:text-white">تحليل المصروفات حسب الصوبة</h2>
                 {expenseByGreenhouseData.length > 0 ? (
                     <ResponsiveContainer width="100%" height={350}>
                         <PieChart>
@@ -108,7 +108,7 @@ const ReportsPage: React.FC = () => {
                     </ResponsiveContainer>
                 ) : (
                     <div className="text-center py-10">
-                        <p className="text-gray-500 dark:text-gray-400">لا توجد بيانات مصروفات كافية لعرض هذا التحليل.</p>
+                        <p className="text-slate-500 dark:text-slate-400">لا توجد بيانات مصروفات كافية لعرض هذا التحليل.</p>
                     </div>
                 )}
             </div>

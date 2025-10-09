@@ -62,8 +62,8 @@ const Pagination: React.FC<PaginationProps> = React.memo(({ currentPage, totalPa
 
   const buttonClass = "px-3 py-1.5 text-sm font-medium rounded-md transition-colors";
   const activeClass = "bg-green-600 text-white shadow-md";
-  const inactiveClass = "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700";
-  const disabledClass = "bg-gray-100 dark:bg-gray-700/50 text-gray-400 dark:text-gray-500 cursor-not-allowed border border-gray-200 dark:border-gray-700";
+  const inactiveClass = "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700";
+  const disabledClass = "bg-slate-100 dark:bg-slate-700/50 text-slate-400 dark:text-slate-500 cursor-not-allowed border border-slate-200 dark:border-slate-700";
 
   return (
     <nav className="flex justify-center items-center space-x-2 space-x-reverse mt-6" aria-label="Pagination">
@@ -87,7 +87,7 @@ const Pagination: React.FC<PaginationProps> = React.memo(({ currentPage, totalPa
               {num}
             </button>
           ) : (
-            <span key={index} className="px-1.5 py-1.5 text-sm text-gray-500 dark:text-gray-400">
+            <span key={index} className="px-1.5 py-1.5 text-sm text-slate-500 dark:text-slate-400">
               {num}
             </span>
           )

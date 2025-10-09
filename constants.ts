@@ -2,7 +2,7 @@
 import { AppSettings, ExpenseCategorySetting } from './types';
 
 export const INITIAL_EXPENSE_CATEGORIES: ExpenseCategorySetting[] = [
-    { id: 'cat1', name: 'بذور' },
+    { id: 'cat1', name: 'بذور', isFoundational: true },
     { id: 'cat2', name: 'أسمدة ومغذيات' },
     { id: 'cat3', name: 'مبيدات' },
     { id: 'cat4', name: 'أجور عمال' },
@@ -15,6 +15,8 @@ export const INITIAL_SETTINGS: AppSettings = {
   isFarmerSystemEnabled: true,
   isSupplierSystemEnabled: true,
   isAgriculturalProgramsSystemEnabled: true,
+  isTreasurySystemEnabled: true,
+  isAdvancesSystemEnabled: true,
   theme: 'system',
   expenseCategories: INITIAL_EXPENSE_CATEGORIES,
 };

@@ -192,7 +192,6 @@ const RecentTransactionCard: React.FC<{ t: Transaction }> = React.memo(({ t }) =
     </div>
 ));
 
-
 const Dashboard: React.FC = () => {
     const { cropCycles, transactions, loading, settings, greenhouses } = React.useContext(AppContext) as AppContextType;
 
@@ -383,6 +382,15 @@ const Dashboard: React.FC = () => {
 
 
     const COLORS = ['#10b981', '#0ea5e9', '#f97316', '#f43f5e', '#8b5cf6', '#f59e0b', '#6366f1'];
+    
+    // FIX: Replaced unstable hashing with a stable color map based on all available expense categories from settings.
+    const categoryColorMap = React.useMemo(() => {
+        const map = new Map<string, string>();
+        settings.expenseCategories.forEach((category, index) => {
+            map.set(category.name, COLORS[index % COLORS.length]);
+        });
+        return map;
+    }, [settings.expenseCategories]);
 
     if (loading) {
         return <DashboardSkeleton />;
@@ -493,7 +501,7 @@ const Dashboard: React.FC = () => {
                             />
                             <Bar dataKey="value" name="المبلغ" barSize={20} radius={[0, 4, 4, 0]}>
                                 {expenseCategoryData.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                    <Cell key={`cell-${index}`} fill={categoryColorMap.get(entry.name) || COLORS[5]} />
                                 ))}
                             </Bar>
                         </BarChart>

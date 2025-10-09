@@ -3,7 +3,7 @@ import { AppContext } from '../App';
 import { AppContextType, Transaction, CropCycle, TransactionType, Supplier, CropCycleStatus, FertilizationProgram } from '../types';
 import { ToastContext, ToastContextType } from '../context/ToastContext';
 
-const formInputClass = "mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500";
+const formInputClass = "mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500";
 
 const ExpenseForm: React.FC<{
     expense?: Transaction;
@@ -114,18 +114,18 @@ const ExpenseForm: React.FC<{
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300">وصف المصروف</label>
+                <label htmlFor="description" className="block text-sm font-medium text-slate-700 dark:text-slate-300">وصف المصروف</label>
                 <input type="text" id="description" value={description} onChange={e => setDescription(e.target.value)} className={`${formInputClass} ${errors.description ? errorInputClass : ''}`}/>
                 {errors.description && <p className="mt-1 text-sm text-red-600">{errors.description}</p>}
             </div>
             
              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label htmlFor="date" className="block text-sm font-medium text-gray-700 dark:text-gray-300">تاريخ المصروف</label>
+                    <label htmlFor="date" className="block text-sm font-medium text-slate-700 dark:text-slate-300">تاريخ المصروف</label>
                     <input type="date" id="date" value={date} onChange={e => setDate(e.target.value)} required className={formInputClass}/>
                 </div>
                  <div>
-                    <label htmlFor="amount" className="block text-sm font-medium text-gray-700 dark:text-gray-300">المبلغ (ج.م)</label>
+                    <label htmlFor="amount" className="block text-sm font-medium text-slate-700 dark:text-slate-300">المبلغ (ج.م)</label>
                     <input type="number" id="amount" value={amount} onChange={e => setAmount(e.target.value)} min="0" step="0.01" className={`${formInputClass} ${errors.amount ? errorInputClass : ''}`}/>
                     {errors.amount && <p className="mt-1 text-sm text-red-600">{errors.amount}</p>}
                 </div>
@@ -133,13 +133,13 @@ const ExpenseForm: React.FC<{
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label htmlFor="category" className="block text-sm font-medium text-gray-700 dark:text-gray-300">الفئة</label>
+                    <label htmlFor="category" className="block text-sm font-medium text-slate-700 dark:text-slate-300">الفئة</label>
                     <select id="category" value={category} onChange={e => setCategory(e.target.value)} required className={formInputClass}>
                         {expenseCategories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                     </select>
                 </div>
                  <div>
-                    <label htmlFor="cropCycle" className="block text-sm font-medium text-gray-700 dark:text-gray-300">العروة</label>
+                    <label htmlFor="cropCycle" className="block text-sm font-medium text-slate-700 dark:text-slate-300">العروة</label>
                     <select id="cropCycle" value={cropCycleId} onChange={e => setCropCycleId(e.target.value)} disabled={cycles.length === 1} className={`${formInputClass} ${errors.cropCycleId ? errorInputClass : ''}`}>
                         <option value="" disabled>اختر عروة</option>
                          {cycles.filter(c => c.status === CropCycleStatus.ACTIVE || c.status === CropCycleStatus.CLOSED || c.id === expense?.cropCycleId).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -150,7 +150,7 @@ const ExpenseForm: React.FC<{
 
              {settings.isAgriculturalProgramsSystemEnabled && cropCycleId && availablePrograms.length > 0 && (
                 <div>
-                    <label htmlFor="fertilizationProgram" className="block text-sm font-medium text-gray-700 dark:text-gray-300">البرنامج الزراعي (اختياري)</label>
+                    <label htmlFor="fertilizationProgram" className="block text-sm font-medium text-slate-700 dark:text-slate-300">البرنامج الزراعي (اختياري)</label>
                     <select id="fertilizationProgram" value={fertilizationProgramId || ''} onChange={e => setFertilizationProgramId(e.target.value)} className={formInputClass}>
                         <option value="">بدون برنامج</option>
                         {availablePrograms.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -160,7 +160,7 @@ const ExpenseForm: React.FC<{
             
             {showSupplierField && (
                 <div>
-                    <label htmlFor="supplier" className="block text-sm font-medium text-gray-700 dark:text-gray-300">المورد (آجل)</label>
+                    <label htmlFor="supplier" className="block text-sm font-medium text-slate-700 dark:text-slate-300">المورد (آجل)</label>
                     <select id="supplier" value={supplierId || ''} onChange={e => setSupplierId(e.target.value)} className={formInputClass}>
                         <option value="">نقدي (بدون مورد)</option>
                         {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -169,7 +169,7 @@ const ExpenseForm: React.FC<{
             )}
 
             <div className="flex justify-end space-x-2 space-x-reverse pt-4">
-                <button type="button" onClick={onCancel} className="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors">إلغاء</button>
+                <button type="button" onClick={onCancel} className="px-4 py-2 bg-slate-200 dark:bg-slate-600 text-slate-800 dark:text-slate-200 rounded-md hover:bg-slate-300 dark:hover:bg-slate-500 transition-colors">إلغاء</button>
                 <button type="submit" className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors">حفظ المصروف</button>
             </div>
         </form>

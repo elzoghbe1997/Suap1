@@ -7,7 +7,7 @@ import { AddIcon, EditIcon, DeleteIcon, CostIcon, GreenhouseIcon, CycleIcon, Rep
 import ConfirmationModal from './ConfirmationModal';
 import SkeletonCard from './SkeletonCard';
 
-const formInputClass = "mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500";
+const formInputClass = "mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500";
 
 const GreenhouseForm: React.FC<{ greenhouse?: Greenhouse; onSave: (greenhouse: Omit<Greenhouse, 'id'> | Greenhouse) => void; onCancel: () => void }> = ({ greenhouse, onSave, onCancel }) => {
     const { addToast } = React.useContext(ToastContext) as ToastContextType;
@@ -35,15 +35,15 @@ const GreenhouseForm: React.FC<{ greenhouse?: Greenhouse; onSave: (greenhouse: O
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">اسم الصوبة</label>
+                <label htmlFor="name" className="block text-sm font-medium text-slate-700 dark:text-slate-300">اسم الصوبة</label>
                 <input type="text" id="name" value={name} onChange={(e) => setName(e.target.value)} required className={formInputClass}/>
             </div>
             <div>
-                <label htmlFor="initialCost" className="block text-sm font-medium text-gray-700 dark:text-gray-300">التكلفة التأسيسية (ج.م)</label>
+                <label htmlFor="initialCost" className="block text-sm font-medium text-slate-700 dark:text-slate-300">التكلفة التأسيسية (ج.م)</label>
                 <input type="number" id="initialCost" value={initialCost} onChange={(e) => setInitialCost(e.target.value)} required min="0" className={formInputClass}/>
             </div>
             <div className="flex justify-end space-x-2 space-x-reverse pt-4">
-                <button type="button" onClick={onCancel} className="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors">إلغاء</button>
+                <button type="button" onClick={onCancel} className="px-4 py-2 bg-slate-200 dark:bg-slate-600 text-slate-800 dark:text-slate-200 rounded-md hover:bg-slate-300 dark:hover:bg-slate-500 transition-colors">إلغاء</button>
                 <button type="submit" className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors">حفظ</button>
             </div>
         </form>
@@ -59,45 +59,45 @@ const GreenhouseCard: React.FC<{ greenhouse: Greenhouse; onEdit: () => void; onD
     }, [cropCycles, greenhouse.id]);
 
     return (
-        <div className="bg-white dark:bg-gray-800 p-5 rounded-lg shadow-md transition-shadow hover:shadow-xl flex flex-col justify-between">
+        <div className="bg-white dark:bg-slate-800 p-5 rounded-lg shadow-md transition-shadow hover:shadow-xl flex flex-col justify-between">
             <div>
                 <div className="flex justify-between items-start mb-4">
                     <div className="flex items-center space-x-3 space-x-reverse">
                         <GreenhouseIcon className="w-8 h-8 text-green-500" />
                         <div>
-                            <h3 className="text-xl font-bold text-gray-800 dark:text-white">{greenhouse.name}</h3>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">تاريخ الإنشاء: {greenhouse.creationDate}</p>
+                            <h3 className="text-xl font-bold text-slate-800 dark:text-white">{greenhouse.name}</h3>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">تاريخ الإنشاء: {greenhouse.creationDate}</p>
                         </div>
                     </div>
                 </div>
                 
-                <div className="border-t border-gray-200 dark:border-gray-700 pt-4 grid grid-cols-2 gap-4">
-                     <div className="flex items-center text-gray-700 dark:text-gray-300">
+                <div className="border-t border-slate-200 dark:border-slate-700 pt-4 grid grid-cols-2 gap-4">
+                     <div className="flex items-center text-slate-700 dark:text-slate-300">
                         <CostIcon className="w-6 h-6 text-blue-500 ml-3 flex-shrink-0" />
                         <div>
-                           <p className="text-sm text-gray-500 dark:text-gray-400">التكلفة التأسيسية</p>
+                           <p className="text-sm text-slate-500 dark:text-slate-400">التكلفة التأسيسية</p>
                            <p className="text-lg font-semibold text-blue-600 dark:text-blue-400">{formatCurrency(greenhouse.initialCost)}</p>
                         </div>
                      </div>
-                     <div className="flex items-center text-gray-700 dark:text-gray-300">
+                     <div className="flex items-center text-slate-700 dark:text-slate-300">
                         <CycleIcon className="w-6 h-6 text-yellow-500 ml-3 flex-shrink-0" />
                         <div>
-                           <p className="text-sm text-gray-500 dark:text-gray-400">عدد العروات</p>
+                           <p className="text-sm text-slate-500 dark:text-slate-400">عدد العروات</p>
                            <p className="text-lg font-semibold text-yellow-600 dark:text-yellow-400">{cycleCount}</p>
                         </div>
                      </div>
                 </div>
             </div>
-            <div className="flex justify-between items-center mt-4 pt-3 border-t border-gray-100 dark:border-gray-700">
-                <Link to={`/greenhouse/${greenhouse.id}/report`} className="flex items-center px-3 py-1.5 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+            <div className="flex justify-between items-center mt-4 pt-3 border-t border-slate-100 dark:border-slate-700">
+                <Link to={`/greenhouse/${greenhouse.id}/report`} className="flex items-center px-3 py-1.5 text-xs bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-md hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
                     <ReportIcon className="w-4 h-4 ml-1.5"/>
                     <span>عرض التقرير</span>
                 </Link>
                 <div className="flex items-center space-x-1 space-x-reverse">
-                    <button onClick={onEdit} className="p-2 text-gray-400 hover:text-blue-500 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    <button onClick={onEdit} className="p-2 text-slate-400 hover:text-blue-500 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" aria-label={`تعديل الصوبة ${greenhouse.name}`}>
                         <EditIcon className="w-5 h-5"/>
                     </button>
-                    <button onClick={onDelete} className="p-2 text-gray-400 hover:text-red-500 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    <button onClick={onDelete} className="p-2 text-slate-400 hover:text-red-500 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" aria-label={`حذف الصوبة ${greenhouse.name}`}>
                         <DeleteIcon className="w-5 h-5"/>
                     </button>
                 </div>
@@ -113,6 +113,18 @@ const GreenhousePage: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = React.useState(false);
     const [editingGreenhouse, setEditingGreenhouse] = React.useState<Greenhouse | undefined>(undefined);
     const [deletingId, setDeletingId] = React.useState<string | null>(null);
+
+    React.useEffect(() => {
+        const isAnyModalOpen = isModalOpen || !!deletingId;
+        if (isAnyModalOpen) {
+            document.body.classList.add('body-no-scroll');
+        } else {
+            document.body.classList.remove('body-no-scroll');
+        }
+        return () => {
+            document.body.classList.remove('body-no-scroll');
+        };
+    }, [isModalOpen, deletingId]);
 
     const handleSave = (greenhouse: Omit<Greenhouse, 'id'> | Greenhouse) => {
         if ('id' in greenhouse) {
@@ -168,12 +180,12 @@ const GreenhousePage: React.FC = () => {
             );
         }
         return (
-            <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-700">
-                <div className="flex justify-center mb-4 text-gray-400 dark:text-gray-500">
+            <div className="text-center py-16 bg-white dark:bg-slate-800 rounded-lg border-2 border-dashed border-slate-200 dark:border-slate-700">
+                <div className="flex justify-center mb-4 text-slate-400 dark:text-slate-500">
                     <GreenhouseIcon className="w-16 h-16"/>
                 </div>
-                <p className="text-lg font-semibold text-gray-600 dark:text-gray-300">لم تقم بإضافة أي صوب بعد</p>
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">ابدأ بإضافة أول صوبة لإدارة عرواتك.</p>
+                <p className="text-lg font-semibold text-slate-600 dark:text-slate-300">لم تقم بإضافة أي صوب بعد</p>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">ابدأ بإضافة أول صوبة لإدارة عرواتك.</p>
             </div>
         );
     };
@@ -190,9 +202,9 @@ const GreenhousePage: React.FC = () => {
             {renderContent()}
 
             {isModalOpen && (
-                <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4" aria-modal="true" role="dialog">
-                    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-md">
-                        <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">{editingGreenhouse ? 'تعديل الصوبة' : 'إضافة صوبة جديدة'}</h2>
+                <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4" aria-modal="true" role="dialog">
+                    <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-xl w-full max-w-md">
+                        <h2 className="text-2xl font-bold mb-4 text-slate-800 dark:text-white">{editingGreenhouse ? 'تعديل الصوبة' : 'إضافة صوبة جديدة'}</h2>
                         <GreenhouseForm 
                             greenhouse={editingGreenhouse}
                             onSave={handleSave} 

@@ -329,6 +329,18 @@ const CropCyclesPage: React.FC = () => {
     const [closingCycle, setClosingCycle] = React.useState<CropCycle | null>(null);
     const [deletingCycleId, setDeletingCycleId] = React.useState<string | null>(null);
     
+    React.useEffect(() => {
+        const isAnyModalOpen = isModalOpen || !!closingCycle || !!deletingCycleId;
+        if (isAnyModalOpen) {
+            document.body.classList.add('body-no-scroll');
+        } else {
+            document.body.classList.remove('body-no-scroll');
+        }
+        return () => {
+            document.body.classList.remove('body-no-scroll');
+        };
+    }, [isModalOpen, closingCycle, deletingCycleId]);
+
     const handleOpenAddModal = React.useCallback(() => {
         setEditingCycle(null);
         setIsModalOpen(true);
@@ -515,8 +527,8 @@ const CropCyclesPage: React.FC = () => {
             {renderContent()}
 
             {isModalOpen && (
-                <div className={`fixed inset-0 flex items-center justify-center z-50 p-4 transition-opacity duration-300 ease-out ${isAnimatingModal ? 'bg-black bg-opacity-60' : 'bg-black bg-opacity-0'}`} aria-modal="true" role="dialog">
-                    <div className={`bg-slate-50 dark:bg-slate-800 p-6 rounded-lg shadow-xl w-full max-w-lg max-h-full overflow-y-auto transform transition-all duration-300 ease-out ${isAnimatingModal ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
+                <div className={`absolute inset-0 flex items-center justify-center z-50 p-4 transition-opacity duration-300 ease-out ${isAnimatingModal ? 'bg-black bg-opacity-60' : 'bg-black bg-opacity-0'}`} aria-modal="true" role="dialog">
+                    <div className={`bg-slate-50 dark:bg-slate-800 p-6 rounded-lg shadow-xl w-full max-w-lg max-h-full overflow-y-auto transform transition-all duration-300 ease-out modal-scroll-contain ${isAnimatingModal ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
                         <h2 className="text-2xl font-bold mb-4 text-slate-800 dark:text-white">
                             {editingCycle ? 'تعديل العروة' : 'إضافة عروة جديدة'}
                         </h2>

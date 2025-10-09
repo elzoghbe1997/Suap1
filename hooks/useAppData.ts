@@ -1,21 +1,24 @@
 import React from 'react';
 import { ToastContext, ToastContextType } from '../context/ToastContext';
-import { CropCycle, Transaction, Greenhouse, AppSettings, Farmer, FarmerWithdrawal, Alert, BackupData, TransactionType, CropCycleStatus, AlertType, AppContextType, Supplier, SupplierPayment, FertilizationProgram, ExpenseCategorySetting } from '../types';
+import { CropCycle, Transaction, Greenhouse, AppSettings, Farmer, FarmerWithdrawal, Alert, BackupData, TransactionType, CropCycleStatus, AlertType, AppContextType, Supplier, SupplierPayment, FertilizationProgram, ExpenseCategorySetting, Advance } from '../types';
 import * as api from '../api';
+import { INITIAL_SETTINGS } from '../constants';
 
 export const useAppData = (): AppContextType => {
     const { addToast } = React.useContext(ToastContext) as ToastContextType;
     
     const [loading, setLoading] = React.useState(true);
+    const [isDeletingData, setIsDeletingData] = React.useState(false);
     const [cropCycles, setCropCycles] = React.useState<CropCycle[]>([]);
     const [transactions, setTransactions] = React.useState<Transaction[]>([]);
     const [greenhouses, setGreenhouses] = React.useState<Greenhouse[]>([]);
-    const [settings, setSettings] = React.useState<AppSettings>({} as AppSettings);
+    const [settings, setSettings] = React.useState<AppSettings>(INITIAL_SETTINGS);
     const [farmers, setFarmers] = React.useState<Farmer[]>([]);
     const [farmerWithdrawals, setFarmerWithdrawals] = React.useState<FarmerWithdrawal[]>([]);
     const [suppliers, setSuppliers] = React.useState<Supplier[]>([]);
     const [supplierPayments, setSupplierPayments] = React.useState<SupplierPayment[]>([]);
     const [fertilizationPrograms, setFertilizationPrograms] = React.useState<FertilizationProgram[]>([]);
+    const [advances, setAdvances] = React.useState<Advance[]>([]);
     const [alerts, setAlerts] = React.useState<Alert[]>([]);
     
     React.useEffect(() => {
@@ -30,6 +33,7 @@ export const useAppData = (): AppContextType => {
                 setSuppliers(data.suppliers);
                 setSupplierPayments(data.supplierPayments);
                 setFertilizationPrograms(data.fertilizationPrograms);
+                setAdvances(data.advances || []);
             })
             .catch(error => {
                 addToast(error.message || 'فشل تحميل البيانات الأولية.', 'error');
@@ -38,7 +42,7 @@ export const useAppData = (): AppContextType => {
                 setLoading(false);
             });
     }, [addToast]);
-    
+
     // ALERTS LOGIC (no change, depends on state)
     React.useEffect(() => {
         if (loading) return;
@@ -96,13 +100,13 @@ export const useAppData = (): AppContextType => {
 
     // --- Helper for handling optimistic updates ---
     async function handleOptimisticUpdate<T, U>(
+        originalState: T[],
         stateSetter: React.Dispatch<React.SetStateAction<T[]>>,
         optimisticState: T[],
         apiCall: () => Promise<U>,
         successCallback: (result: U) => void,
         errorMessage: string
     ) {
-        const originalState = (stateSetter as any)(); // Hack to get current state without passing it
         stateSetter(optimisticState);
 
         try {
@@ -131,6 +135,7 @@ export const useAppData = (): AppContextType => {
         const optimisticCycle = { ...cycle, id: tempId };
         
         await handleOptimisticUpdate(
+            cropCycles,
             setCropCycles,
             [...cropCycles, optimisticCycle],
             () => api.addCropCycle(cycle),
@@ -145,6 +150,7 @@ export const useAppData = (): AppContextType => {
     const updateCropCycle = async (updatedCycle: CropCycle) => {
         const optimisticState = cropCycles.map(c => c.id === updatedCycle.id ? updatedCycle : c);
         await handleOptimisticUpdate(
+            cropCycles,
             setCropCycles,
             optimisticState,
             () => api.updateCropCycle(updatedCycle),
@@ -163,6 +169,7 @@ export const useAppData = (): AppContextType => {
             // Archive logic
             const optimisticState = cropCycles.map(c => c.id === id ? { ...c, status: CropCycleStatus.ARCHIVED } : c);
             await handleOptimisticUpdate(
+                cropCycles,
                 setCropCycles,
                 optimisticState,
                 () => api.archiveCropCycle(cycleToDelete),
@@ -173,6 +180,7 @@ export const useAppData = (): AppContextType => {
             // Delete logic
             const optimisticState = cropCycles.filter(c => c.id !== id);
             await handleOptimisticUpdate(
+                cropCycles,
                 setCropCycles,
                 optimisticState,
                 () => api.deleteCropCycle(id),
@@ -191,12 +199,12 @@ export const useAppData = (): AppContextType => {
         const optimisticState = [...transactions, optimisticTransaction].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
         await handleOptimisticUpdate(
+            transactions,
             setTransactions,
             optimisticState,
             () => api.addTransaction(transaction),
             (confirmed) => {
-                const finalTransactions = transactions.map(t => t.id === tempId ? confirmed : t);
-                setTransactions([...finalTransactions, confirmed].filter((v,i,a)=>a.findIndex(t=>(t.id === v.id))===i).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+                setTransactions(prev => prev.map(t => t.id === tempId ? confirmed : t).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
                 
                 if (confirmed.type === TransactionType.REVENUE) {
                     const cycle = cropCycles.find(c => c.id === confirmed.cropCycleId);
@@ -216,6 +224,7 @@ export const useAppData = (): AppContextType => {
     const updateTransaction = async (updatedTransaction: Transaction) => {
         const optimisticState = transactions.map(t => t.id === updatedTransaction.id ? updatedTransaction : t);
          await handleOptimisticUpdate(
+            transactions,
             setTransactions,
             optimisticState,
             () => api.updateTransaction(updatedTransaction),
@@ -241,6 +250,7 @@ export const useAppData = (): AppContextType => {
 
         const optimisticState = transactions.filter(t => t.id !== id);
         await handleOptimisticUpdate(
+            transactions,
             setTransactions,
             optimisticState,
             () => api.deleteTransaction(id),
@@ -268,15 +278,21 @@ export const useAppData = (): AppContextType => {
         successMsg: string,
         errorMsg: string
     ) => {
-        const originalState = (stateSetter as any)();
-        const optimisticState = originalState.map((i: T) => i.id === item.id ? item : i);
-        stateSetter(optimisticState);
+        const originalStateRef: { current: T[] | null } = { current: null };
+        
+        stateSetter(prev => {
+            originalStateRef.current = prev;
+            return prev.map((i: T) => i.id === item.id ? item : i);
+        });
+    
         try {
             await apiCall(item);
             addToast(successMsg, 'success');
         } catch (error: any) {
             addToast(error.message || errorMsg, 'error');
-            stateSetter(originalState);
+            if (originalStateRef.current) {
+                stateSetter(originalStateRef.current);
+            }
             throw error;
         }
     };
@@ -290,23 +306,33 @@ export const useAppData = (): AppContextType => {
         sortFn?: (a: T, b: T) => number
     ) => {
         const tempId = `temp-${Date.now()}`;
-// FIX: Cast to 'unknown' first to satisfy TypeScript's stricter type checking.
         const optimisticItem = { ...item, id: tempId } as unknown as T;
-        const originalState = (stateSetter as any)();
-        let optimisticState = [...originalState, optimisticItem];
-        if (sortFn) optimisticState.sort(sortFn);
-        stateSetter(optimisticState);
-
+        const originalStateRef: { current: T[] | null } = { current: null };
+    
+        stateSetter(prev => {
+            originalStateRef.current = prev;
+            const optimisticState = [...prev, optimisticItem];
+            if (sortFn) {
+                optimisticState.sort(sortFn);
+            }
+            return optimisticState;
+        });
+    
         try {
             const confirmedItem = await apiCall(item);
-            const finalState = originalState.map((i: T) => i.id === tempId ? confirmedItem : i);
-            let newState = [...finalState, confirmedItem].filter((v,i,a)=>a.findIndex(t=>(t.id === v.id))===i);
-            if (sortFn) newState.sort(sortFn);
-            stateSetter(newState);
+            stateSetter(prev => {
+                let newState = prev.map(i => (i.id === tempId ? confirmedItem : i));
+                if (sortFn) {
+                    newState.sort(sortFn);
+                }
+                return newState;
+            });
             addToast(successMsg, 'success');
         } catch (error: any) {
             addToast(error.message || errorMsg, 'error');
-            stateSetter(originalState);
+            if (originalStateRef.current) {
+                stateSetter(originalStateRef.current);
+            }
             throw error;
         }
     };
@@ -399,6 +425,11 @@ export const useAppData = (): AppContextType => {
         return simpleAsyncDelete(id, fertilizationPrograms, setFertilizationPrograms, api.deleteFertilizationProgram, "تم حذف البرنامج.", "فشل حذف البرنامج.");
     };
 
+    const advanceSort = (a: Advance, b: Advance) => new Date(b.date).getTime() - new Date(a.date).getTime();
+    const addAdvance = (a: Omit<Advance, 'id'>) => simpleAsyncAdd(a, setAdvances, api.addAdvance, "تمت إضافة السلفة.", "فشل إضافة السلفة.", advanceSort);
+    const updateAdvance = (a: Advance) => simpleAsyncUpdate(a, setAdvances, api.updateAdvance, "تم تحديث السلفة.", "فشل تحديث السلفة.");
+    const deleteAdvance = (id: string) => simpleAsyncDelete(id, advances, setAdvances, api.deleteAdvance, "تم حذف السلفة.", "فشل حذف السلفة.");
+
     const addExpenseCategory = async (category: Omit<ExpenseCategorySetting, 'id'>) => {
         const newCategory = { ...category, id: Date.now().toString() };
         await updateSettings({ expenseCategories: [...(settings.expenseCategories || []), newCategory] });
@@ -428,7 +459,7 @@ export const useAppData = (): AppContextType => {
     };
     
     const loadBackupData = async (data: BackupData) => {
-        const originalState = { greenhouses, cropCycles, transactions, farmers, farmerWithdrawals, settings, suppliers, supplierPayments, fertilizationPrograms };
+        const originalState = { greenhouses, cropCycles, transactions, farmers, farmerWithdrawals, settings, suppliers, supplierPayments, fertilizationPrograms, advances };
         try {
           // Optimistic update
           setGreenhouses(data.greenhouses || []);
@@ -439,6 +470,7 @@ export const useAppData = (): AppContextType => {
           setSuppliers(data.suppliers || []);
           setSupplierPayments(data.supplierPayments || []);
           setFertilizationPrograms(data.fertilizationPrograms || []);
+          setAdvances(data.advances || []);
           setSettings(data.settings);
           localStorage.removeItem('startFresh');
 
@@ -455,27 +487,80 @@ export const useAppData = (): AppContextType => {
     };
     
     const deleteAllData = async () => {
-        await api.deleteAllData();
-        localStorage.removeItem('appInitialized');
-        localStorage.removeItem('startFresh');
-        addToast("تم حذف جميع البيانات. سيتم إعادة تشغيل التطبيق.", "success");
-        setTimeout(() => window.location.reload(), 2000);
+        setIsDeletingData(true);
+        try {
+            await api.deleteAllData();
+            localStorage.removeItem('appInitialized');
+            localStorage.setItem('startFresh', 'true');
+            localStorage.removeItem('settings');
+
+            const freshData = await api.startFresh();
+
+            setCropCycles(freshData.cropCycles);
+            setTransactions(freshData.transactions);
+            setGreenhouses(freshData.greenhouses);
+            setSettings(freshData.settings);
+            setFarmers(freshData.farmers);
+            setFarmerWithdrawals(freshData.farmerWithdrawals);
+            setSuppliers(freshData.suppliers);
+            setSupplierPayments(freshData.supplierPayments);
+            setFertilizationPrograms(freshData.fertilizationPrograms);
+            setAdvances(freshData.advances || []);
+            
+            addToast("تم حذف جميع البيانات بنجاح.", "success");
+        } catch (error: any) {
+            addToast("فشل حذف البيانات.", "error");
+        } finally {
+            setIsDeletingData(false);
+        }
     };
     
     const startFresh = async () => {
-        const data = await api.startFresh();
-        setGreenhouses(data.greenhouses);
-        setCropCycles(data.cropCycles);
-        setTransactions(data.transactions);
-        setFarmers(data.farmers);
-        setFarmerWithdrawals(data.farmerWithdrawals);
-        setSuppliers(data.suppliers);
-        setSupplierPayments(data.supplierPayments);
-        setFertilizationPrograms(data.fertilizationPrograms);
-        setSettings(data.settings);
+        setLoading(true);
+        try {
+            const data = await api.startFresh();
+            setGreenhouses(data.greenhouses);
+            setCropCycles(data.cropCycles);
+            setTransactions(data.transactions);
+            setFarmers(data.farmers);
+            setFarmerWithdrawals(data.farmerWithdrawals);
+            setSuppliers(data.suppliers);
+            setSupplierPayments(data.supplierPayments);
+            setFertilizationPrograms(data.fertilizationPrograms);
+            setAdvances(data.advances || []);
+            setSettings(data.settings);
+            addToast("تم البدء من جديد بنجاح.", "success");
+        } catch (error) {
+            addToast("حدث خطأ أثناء البدء من جديد.", "error");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const loadDemoData = async () => {
+        setLoading(true);
+        try {
+            const data = await api.getDemoData();
+            setGreenhouses(data.greenhouses || []);
+            setCropCycles(data.cropCycles || []);
+            setTransactions(data.transactions || []);
+            setFarmers(data.farmers || []);
+            setFarmerWithdrawals(data.farmerWithdrawals || []);
+            setSuppliers(data.suppliers || []);
+            setSupplierPayments(data.supplierPayments || []);
+            setFertilizationPrograms(data.fertilizationPrograms || []);
+            setAdvances(data.advances || []);
+            setSettings(data.settings);
+            localStorage.removeItem('startFresh');
+            addToast('تم تحميل البيانات التجريبية بنجاح.', 'success');
+        } catch (error: any) {
+            addToast(error.message || 'فشل تحميل البيانات التجريبية.', 'error');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return {
-        loading, cropCycles, transactions, greenhouses, settings, farmers, farmerWithdrawals, alerts, suppliers, supplierPayments, fertilizationPrograms, addCropCycle, updateCropCycle, deleteCropCycle, addTransaction, updateTransaction, deleteTransaction, addGreenhouse, updateGreenhouse, deleteGreenhouse, updateSettings, addFarmer, updateFarmer, deleteFarmer, addFarmerWithdrawal, updateFarmerWithdrawal, deleteFarmerWithdrawal, addSupplier, updateSupplier, deleteSupplier, addSupplierPayment, updateSupplierPayment, deleteSupplierPayment, addFertilizationProgram, updateFertilizationProgram, deleteFertilizationProgram, addExpenseCategory, updateExpenseCategory, deleteExpenseCategory, loadBackupData, deleteAllData, startFresh,
+        loading, isDeletingData, cropCycles, transactions, greenhouses, settings, farmers, farmerWithdrawals, alerts, suppliers, supplierPayments, fertilizationPrograms, advances, addCropCycle, updateCropCycle, deleteCropCycle, addTransaction, updateTransaction, deleteTransaction, addGreenhouse, updateGreenhouse, deleteGreenhouse, updateSettings, addFarmer, updateFarmer, deleteFarmer, addFarmerWithdrawal, updateFarmerWithdrawal, deleteFarmerWithdrawal, addSupplier, updateSupplier, deleteSupplier, addSupplierPayment, updateSupplierPayment, deleteSupplierPayment, addFertilizationProgram, updateFertilizationProgram, deleteFertilizationProgram, addAdvance, updateAdvance, deleteAdvance, addExpenseCategory, updateExpenseCategory, deleteExpenseCategory, loadBackupData, loadDemoData, deleteAllData, startFresh,
     };
 };

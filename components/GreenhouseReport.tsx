@@ -15,19 +15,19 @@ const AnimatedNumber: React.FC<{ value: number; formatter: (val: number) => stri
 });
 
 const StatCard: React.FC<{ title: string; value: number; icon: React.ReactNode; color?: string; description?: string; formatter?: (val: number) => string; }> = React.memo(({ title, value, icon, color, description, formatter = formatCurrency }) => (
-    <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-md p-5 border-r-4 ${color || 'border-gray-300'}`}>
+    <div className={`bg-white dark:bg-slate-800 rounded-lg shadow-md p-5 border-r-4 ${color || 'border-slate-300'}`}>
         <div className="flex items-center">
              <div className="flex-shrink-0">
                 {icon}
             </div>
             <div className="mr-4">
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">{title}</p>
-                <p className="text-2xl font-bold text-gray-800 dark:text-gray-200">
+                <p className="text-sm font-medium text-slate-500 dark:text-slate-400 truncate">{title}</p>
+                <p className="text-2xl font-bold text-slate-800 dark:text-slate-200">
                     <AnimatedNumber value={value} formatter={formatter} />
                 </p>
             </div>
         </div>
-        {description && <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">{description}</p>}
+        {description && <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">{description}</p>}
     </div>
 ));
 
@@ -96,7 +96,7 @@ const GreenhouseReport: React.FC = () => {
     if (!greenhouse || !reportData) {
         return (
             <div className="text-center p-8">
-                <p className="text-xl text-gray-600 dark:text-gray-400">لم يتم العثور على الصوبة المطلوبة.</p>
+                <p className="text-xl text-slate-600 dark:text-slate-400">لم يتم العثور على الصوبة المطلوبة.</p>
                 <Link to="/greenhouse" className="mt-4 inline-flex items-center text-green-600 hover:underline">
                     العودة إلى إدارة الصوب <ArrowRightIcon className="w-4 h-4 mr-2"/>
                 </Link>
@@ -108,10 +108,10 @@ const GreenhouseReport: React.FC = () => {
         <div className="space-y-8">
             <header className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-800 dark:text-white">تقرير الربحية: {greenhouse.name}</h1>
-                    <p className="mt-2 text-lg text-gray-600 dark:text-gray-400">تحليل استثماري شامل لأداء الصوبة منذ إنشائها.</p>
+                    <h1 className="text-3xl font-bold text-slate-800 dark:text-white">تقرير الربحية: {greenhouse.name}</h1>
+                    <p className="mt-2 text-lg text-slate-600 dark:text-slate-400">تحليل استثماري شامل لأداء الصوبة منذ إنشائها.</p>
                 </div>
-                <Link to="/greenhouse" className="flex-shrink-0 inline-flex items-center px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-md shadow-sm hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
+                <Link to="/greenhouse" className="flex-shrink-0 inline-flex items-center px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-md shadow-sm hover:bg-slate-200 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
                     <span>العودة</span>
                     <ArrowRightIcon className="w-5 h-5 mr-2" />
                 </Link>
@@ -120,14 +120,14 @@ const GreenhouseReport: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                  <StatCard title="عائد استثمار المالك (ROI)" value={reportData.roi} formatter={(v) => `${v === Infinity ? '∞' : v.toFixed(1)}%`} icon={<ReportIcon className="h-8 w-8 text-purple-500"/>} color="border-purple-500" description="صافي ربح المالك التشغيلي كنسبة من التكلفة التأسيسية." />
                  <StatCard title="صافي ربح المالك (مدى الحياة)" value={reportData.lifetimeProfit} icon={<ProfitIcon className="h-8 w-8 text-blue-500"/>} color={reportData.lifetimeProfit >= 0 ? "border-blue-500" : "border-orange-500"} description="ربح المالك بعد خصم التكلفة التأسيسية." />
-                 <StatCard title="التكلفة التأسيسية" value={greenhouse.initialCost} icon={<CostIcon className="h-8 w-8 text-gray-500"/>} color="border-gray-500" />
+                 <StatCard title="التكلفة التأسيسية" value={greenhouse.initialCost} icon={<CostIcon className="h-8 w-8 text-slate-500"/>} color="border-slate-500" />
                  <StatCard title="إجمالي الإيرادات" value={reportData.totalRevenue} icon={<RevenueIcon className="h-8 w-8 text-green-500"/>} color="border-green-500" />
                  <StatCard title="إجمالي المصروفات" value={reportData.totalExpense} icon={<ExpenseIcon className="h-8 w-8 text-red-500"/>} color="border-red-500" />
                  <StatCard title="صافي ربح المالك (تشغيلي)" value={reportData.ownerNetProfit} icon={<ProfitIcon className="h-8 w-8 text-teal-500"/>} color={reportData.ownerNetProfit >= 0 ? "border-teal-500" : "border-orange-500"} description="بعد خصم حصص المزارعين." />
             </div>
 
-             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 sm:p-6">
-                <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">أداء العروات داخل الصوبة (ربحية المالك)</h2>
+             <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-4 sm:p-6">
+                <h2 className="text-xl font-semibold mb-4 text-slate-800 dark:text-white">أداء العروات داخل الصوبة (ربحية المالك)</h2>
                 <ResponsiveContainer width="100%" height={400}>
                     <BarChart data={reportData.cyclePerformance} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(128, 128, 128, 0.2)" />

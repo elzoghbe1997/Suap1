@@ -1,21 +1,29 @@
-import { CropCycle, Transaction, CropCycleStatus, TransactionType, Greenhouse, AppSettings, Farmer, FarmerWithdrawal, Supplier, SupplierPayment, FertilizationProgram, ExpenseCategorySetting, BackupData } from './types';
+import { CropCycle, Transaction, CropCycleStatus, TransactionType, Greenhouse, AppSettings, Farmer, FarmerWithdrawal, Supplier, SupplierPayment, FertilizationProgram, ExpenseCategorySetting, BackupData, Advance } from './types';
 
 // This file simulates a backend API. In a real application, these functions would make network requests.
 
 const MOCK_API_DELAY = 500; // ms
 
-function mockRequest<T>(data: T, failChance = 0.05): Promise<T> {
+// FIX: Replaced mockRequest to remove simulated network errors and handle 'undefined' data correctly to prevent JSON parsing errors.
+function mockRequest<T>(data: T): Promise<T> {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
-      if (Math.random() < failChance) {
-        reject(new Error('محاكاة خطأ في الشبكة. الرجاء المحاولة مرة أخرى.'));
-      } else {
+      try {
+        // The `deleteAllData` function passes `undefined`, which doesn't need cloning and causes JSON.parse to fail.
+        if (typeof data === 'undefined') {
+          resolve(data);
+          return;
+        }
         // Deep copy to prevent mutation issues
         resolve(JSON.parse(JSON.stringify(data)));
+      } catch (error) {
+        console.error("Error in mockRequest:", error);
+        reject(error);
       }
     }, MOCK_API_DELAY);
   });
 }
+
 
 // --- Initial Data ---
 const formatDate = (date: Date) => date.toISOString().split('T')[0];
@@ -39,6 +47,8 @@ const INITIAL_SETTINGS: AppSettings = {
   isFarmerSystemEnabled: true,
   isSupplierSystemEnabled: true,
   isAgriculturalProgramsSystemEnabled: true,
+  isTreasurySystemEnabled: true,
+  isAdvancesSystemEnabled: true,
   theme: 'system',
   expenseCategories: INITIAL_EXPENSE_CATEGORIES,
 };
@@ -105,6 +115,11 @@ const INITIAL_SUPPLIER_PAYMENTS: SupplierPayment[] = [
     { id: 'sp3', date: getPastDate(5), amount: 3000, supplierId: 's2', description: 'دفعة أولى من الحساب' },
 ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
+const INITIAL_ADVANCES: Advance[] = [
+    { id: 'adv1', date: getPastDate(10), amount: 5000, description: 'سلفة شخصية' },
+    { id: 'adv2', date: getPastDate(3), amount: 1500, description: 'مصاريف طارئة' },
+];
+
 const DEMO_DATA: BackupData = {
     greenhouses: INITIAL_GREENHOUSES,
     cropCycles: INITIAL_CYCLES,
@@ -114,7 +129,8 @@ const DEMO_DATA: BackupData = {
     settings: INITIAL_SETTINGS,
     suppliers: INITIAL_SUPPLIERS,
     supplierPayments: INITIAL_SUPPLIER_PAYMENTS,
-    fertilizationPrograms: INITIAL_FERTILIZATION_PROGRAMS
+    fertilizationPrograms: INITIAL_FERTILIZATION_PROGRAMS,
+    advances: INITIAL_ADVANCES,
 };
 
 const FRESH_DATA: BackupData = {
@@ -126,14 +142,27 @@ const FRESH_DATA: BackupData = {
     settings: INITIAL_SETTINGS,
     suppliers: [],
     supplierPayments: [],
-    fertilizationPrograms: []
+    fertilizationPrograms: [],
+    advances: [],
 };
 
 // --- API Functions ---
 export const fetchInitialData = (): Promise<BackupData> => {
     const startFreshFlag = localStorage.getItem('startFresh') === 'true';
     const settingsStr = localStorage.getItem('settings');
-    const storedSettings = settingsStr ? JSON.parse(settingsStr) : INITIAL_SETTINGS;
+    
+    let storedSettings = INITIAL_SETTINGS;
+    if (settingsStr && settingsStr !== 'undefined' && settingsStr !== 'null') {
+        try {
+            const parsed = JSON.parse(settingsStr);
+            if (parsed) { // check for null from JSON.parse(null)
+                storedSettings = parsed;
+            }
+        } catch (e) {
+            console.warn("Could not parse settings from localStorage in API, using initial settings.");
+        }
+    }
+
 
     if (!storedSettings.expenseCategories) {
         storedSettings.expenseCategories = INITIAL_EXPENSE_CATEGORIES;
@@ -141,7 +170,7 @@ export const fetchInitialData = (): Promise<BackupData> => {
 
     let data = startFreshFlag ? FRESH_DATA : DEMO_DATA;
     data = { ...data, settings: storedSettings };
-    return mockRequest(data, 0); // Never fail initial load
+    return mockRequest(data); // Never fail initial load
 }
 
 export const addCropCycle = (item: Omit<CropCycle, 'id'>): Promise<CropCycle> => mockRequest({ ...item, id: Date.now().toString() });
@@ -180,6 +209,11 @@ export const addFertilizationProgram = (item: Omit<FertilizationProgram, 'id'>):
 export const updateFertilizationProgram = (item: FertilizationProgram): Promise<FertilizationProgram> => mockRequest(item);
 export const deleteFertilizationProgram = (id: string): Promise<{ id: string }> => mockRequest({ id });
 
+export const addAdvance = (item: Omit<Advance, 'id'>): Promise<Advance> => mockRequest({ ...item, id: Date.now().toString() });
+export const updateAdvance = (item: Advance): Promise<Advance> => mockRequest(item);
+export const deleteAdvance = (id: string): Promise<{ id: string }> => mockRequest({ id });
+
 export const loadBackupData = (data: BackupData): Promise<BackupData> => mockRequest(data);
 export const deleteAllData = (): Promise<void> => mockRequest(undefined);
 export const startFresh = (): Promise<BackupData> => mockRequest(FRESH_DATA);
+export const getDemoData = (): Promise<BackupData> => mockRequest(DEMO_DATA);
