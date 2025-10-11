@@ -18,7 +18,7 @@ import TreasuryPage from './components/TreasuryPage.tsx';
 import TreasuryDetailsPage from './components/TreasuryDetailsPage.tsx';
 import AdvancesPage from './components/AdvancesPage.tsx';
 import { AppContextType } from './types.ts';
-import { useAppData } from './hooks/useAppData.ts';
+import { useAppData } from './hooks/useAppDataSupabase.ts';
 import { ToastProvider } from './context/ToastContext.tsx';
 import ToastContainer from './components/ToastContainer.tsx';
 import { SparklesIcon } from './components/Icons.tsx';
