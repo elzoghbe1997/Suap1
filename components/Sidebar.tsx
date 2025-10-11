@@ -16,9 +16,9 @@ import {
   TreasuryIcon,
   AdvanceIcon,
   ChevronDownIcon,
-} from './Icons';
-import { AppSettings } from '../types';
-import { useAuth } from '../context/AuthContext';
+} from './Icons.tsx';
+import { AppSettings } from '../types.ts';
+import { useAuth } from '../context/AuthContext.tsx';
 
 
 interface SidebarProps {

@@ -1,11 +1,11 @@
 import React from 'react';
-import { AppContext } from '../App';
+import { AppContext } from '../App.tsx';
 // FIX: Imported `AppSettings` type to resolve missing type error.
-import { AppContextType, Theme, BackupData, AppSettings } from '../types';
-import { ToastContext, ToastContextType } from '../context/ToastContext';
-import { SunIcon, MoonIcon, SystemIcon, DownloadIcon, UploadIcon, WarningIcon } from './Icons';
-import ConfirmationModal from './ConfirmationModal';
-import ExpenseCategoryManager from './ExpenseCategoryManager';
+import { AppContextType, Theme, BackupData, AppSettings } from '../types.ts';
+import { ToastContext, ToastContextType } from '../context/ToastContext.tsx';
+import { SunIcon, MoonIcon, SystemIcon, DownloadIcon, UploadIcon, WarningIcon } from './Icons.tsx';
+import ConfirmationModal from './ConfirmationModal.tsx';
+import ExpenseCategoryManager from './ExpenseCategoryManager.tsx';
 
 const SettingsPage: React.FC = () => {
     const context = React.useContext(AppContext) as AppContextType;

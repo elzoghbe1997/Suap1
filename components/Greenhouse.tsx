@@ -1,11 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { AppContext } from '../App';
-import { AppContextType, Greenhouse } from '../types';
-import { ToastContext, ToastContextType } from '../context/ToastContext';
-import { AddIcon, EditIcon, DeleteIcon, CostIcon, GreenhouseIcon, CycleIcon, ReportIcon } from './Icons';
-import ConfirmationModal from './ConfirmationModal';
-import SkeletonCard from './SkeletonCard';
+import { AppContext } from '../App.tsx';
+import { AppContextType, Greenhouse } from '../types.ts';
+import { ToastContext, ToastContextType } from '../context/ToastContext.tsx';
+import { AddIcon, EditIcon, DeleteIcon, CostIcon, GreenhouseIcon, CycleIcon, ReportIcon } from './Icons.tsx';
+import ConfirmationModal from './ConfirmationModal.tsx';
+import SkeletonCard from './SkeletonCard.tsx';
 
 const formInputClass = "mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500";
 

@@ -1,5 +1,5 @@
 // FIX: Replaced circular self-import with an import from the dedicated types.ts file.
-import { AppSettings, ExpenseCategorySetting } from './types';
+import { AppSettings, ExpenseCategorySetting } from './types.ts';
 
 export const INITIAL_EXPENSE_CATEGORIES: ExpenseCategorySetting[] = [
     { id: 'cat1', name: 'بذور', isFoundational: true },

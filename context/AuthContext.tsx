@@ -1,5 +1,6 @@
-import React, { createContext, useState, useContext, ReactNode } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { lovable } from '../lovableClient';
 
 interface AuthContextType {
     isAuthenticated: boolean;
@@ -11,50 +12,67 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => !!localStorage.getItem('isAuthenticated'));
+    const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
     const navigate = useNavigate();
 
-    // Mock login function (UI only)
-    const login = async (email: string, pass: string) => {
-        await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network latency
+    useEffect(() => {
+        const { data: { subscription } } = lovable.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_IN' && session) {
+                setIsAuthenticated(true);
+            } else if (event === 'SIGNED_OUT') {
+                setIsAuthenticated(false);
+                // On logout, always navigate back to login
+                navigate('/login', { replace: true });
+            }
+        });
 
-        // Basic validation for any email/password
-        if (!email.includes('@') || pass.length < 6) {
+        return () => {
+            subscription?.unsubscribe();
+        };
+    }, [navigate]);
+
+    const login = async (email: string, pass: string) => {
+        const { error } = await lovable.auth.signInWithPassword({
+            email,
+            password: pass,
+        });
+
+        if (error) {
             throw new Error('البريد الإلكتروني أو كلمة المرور غير صحيحة.');
         }
-        
-        console.log('Logging in with:', email, pass);
-        localStorage.setItem('isAuthenticated', 'true');
-        setIsAuthenticated(true);
+        // The onAuthStateChange listener will set isAuthenticated and trigger navigation
         navigate('/dashboard');
     };
     
-    // Mock signup function (UI only)
     const signup = async (name: string, email: string, pass: string) => {
-        await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network latency
+        if (!name.trim()) throw new Error('الاسم مطلوب.');
+        if (pass.length < 6) throw new Error('يجب أن تكون كلمة المرور 6 أحرف على الأقل.');
 
-        if (!name.trim()) {
-            throw new Error('الاسم مطلوب.');
+        const { error } = await lovable.auth.signUp({
+            email,
+            password: pass,
+            options: {
+                data: {
+                    full_name: name,
+                }
+            }
+        });
+        
+        if (error) {
+            throw new Error(error.message || 'فشل إنشاء الحساب. قد يكون البريد الإلكتروني مستخدمًا.');
         }
-        if (!email.includes('@')) {
-            throw new Error('صيغة البريد الإلكتروني غير صالحة.');
-        }
-        if (pass.length < 6) {
-            throw new Error('يجب أن تكون كلمة المرور 6 أحرف على الأقل.');
-        }
-
-        console.log('Signing up with:', name, email, pass);
-        // On successful signup, it's a new user, so don't set appInitialized yet
+        // On successful signup, clear onboarding flag
         localStorage.removeItem('appInitialized');
-        localStorage.setItem('isAuthenticated', 'true');
-        setIsAuthenticated(true);
+        // The onAuthStateChange listener will set isAuthenticated and trigger navigation
         navigate('/dashboard');
     };
 
-    const logout = () => {
-        localStorage.removeItem('isAuthenticated');
-        setIsAuthenticated(false);
-        navigate('/login');
+    const logout = async () => {
+        const { error } = await lovable.auth.signOut();
+        if (error) {
+            console.error('Error logging out:', error);
+        }
+        // State and navigation are handled by onAuthStateChange
     };
 
     return (

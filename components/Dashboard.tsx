@@ -1,12 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { AppContext } from '../App';
-import { AppContextType, Transaction, TransactionType, CropCycleStatus, CropCycle } from '../types';
+import { AppContext } from '../App.tsx';
+import { AppContextType, Transaction, TransactionType, CropCycleStatus, CropCycle } from '../types.ts';
 // FIX: Imported `Cell` from recharts to be used in the expense category BarChart.
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, Cell } from 'recharts';
-import { RevenueIcon, ExpenseIcon, ProfitIcon, ActiveCycleIcon, AddIcon, InvoiceIcon, ReceiptIcon, CycleIcon, SparklesIcon, TrophyIcon, GreenhouseIcon, ReportIcon } from './Icons';
-import { useAnimatedCounter } from '../hooks/useAnimatedCounter';
-import DashboardSkeleton from './DashboardSkeleton';
+import { RevenueIcon, ExpenseIcon, ProfitIcon, ActiveCycleIcon, AddIcon, InvoiceIcon, ReceiptIcon, CycleIcon, SparklesIcon, TrophyIcon, GreenhouseIcon, ReportIcon } from './Icons.tsx';
+import { useAnimatedCounter } from '../hooks/useAnimatedCounter.ts';
+import DashboardSkeleton from './DashboardSkeleton.tsx';
 
 const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EGP', maximumFractionDigits: 0 }).format(amount);

@@ -1,6 +1,6 @@
 import React from 'react';
-import { ToastMessage, ToastType } from '../context/ToastContext';
-import { CloseIcon, WarningIcon } from './Icons'; 
+import { ToastMessage, ToastType } from '../context/ToastContext.tsx';
+import { CloseIcon, WarningIcon } from './Icons.tsx'; 
 
 interface ToastProps {
     toast: ToastMessage;

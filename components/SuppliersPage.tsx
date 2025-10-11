@@ -1,11 +1,11 @@
 import React from 'react';
-import { AppContext } from '../App';
-import { AppContextType, TransactionType, Supplier, SupplierPayment, Transaction } from '../types';
-import { SupplierIcon, InvoiceIcon, ExpenseIcon, ProfitIcon, AddIcon, EditIcon, DeleteIcon, ReportIcon, CloseIcon } from './Icons';
-import { ToastContext, ToastContextType } from '../context/ToastContext';
-import ConfirmationModal from './ConfirmationModal';
-import SkeletonCard from './SkeletonCard';
-import Pagination from './Pagination';
+import { AppContext } from '../App.tsx';
+import { AppContextType, TransactionType, Supplier, SupplierPayment, Transaction } from '../types.ts';
+import { SupplierIcon, InvoiceIcon, ExpenseIcon, ProfitIcon, AddIcon, EditIcon, DeleteIcon, ReportIcon, CloseIcon } from './Icons.tsx';
+import { ToastContext, ToastContextType } from '../context/ToastContext.tsx';
+import ConfirmationModal from './ConfirmationModal.tsx';
+import SkeletonCard from './SkeletonCard.tsx';
+import Pagination from './Pagination.tsx';
 
 const formInputClass = "mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500";
 const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EGP' }).format(amount);
@@ -207,58 +207,101 @@ const DetailsModal: React.FC<{ supplier: Supplier; transactions: Transaction[]; 
                 {combinedLedger.length > 0 ? (
                     <>
                         <div className="space-y-3">
-                            {currentLedgerItems.map(item => (
-                                <div key={`${item.type}-${item.id}`} className="p-3 rounded-md border dark:border-slate-700 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-                                    <div className="flex-grow">
-                                        <p className={`font-semibold ${item.type === 'invoice' ? 'text-red-600' : 'text-green-600'}`}>{item.type === 'invoice' ? 'فاتورة مشتريات' : 'دفعة مسددة'}</p>
-                                        <p className="text-sm text-slate-700 dark:text-slate-300">
-                                          {item.description}
-                                          {item.type === 'invoice' && <span className="text-slate-500 dark:text-slate-400"> ({cropCycles.find(c => c.id === item.cropCycleId)?.name || 'عروة محذوفة'})</span>}
-                                        </p>
-                                        <p className="text-xs text-slate-500 dark:text-slate-400">{item.date}</p>
-                                        {item.type === 'payment' && item.linkedInvoices && item.linkedInvoices.length > 0 && (
-                                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 italic">
-                                                يسدد: {item.linkedInvoices.map(inv => inv.description).join(', ')}
-                                            </p>
-                                        )}
-                                        {item.type === 'invoice' && item.paidAmount > 0 && (
-                                            <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-4">
-                                                <span>مدفوع: <span className="font-medium text-green-600">{formatCurrency(item.paidAmount)}</span></span>
-                                                <span>متبقي: <span className="font-medium text-red-600">{formatCurrency(item.remainingAmount)}</span></span>
+                            {currentLedgerItems.map((item) =>
+                                item.type === 'invoice'
+                                ? (
+                                    <div key={`ledger-${item.id}`} className="p-3 bg-red-50 dark:bg-red-900/30 rounded-md">
+                                        <div className="flex justify-between items-center">
+                                            <div>
+                                                <p className="font-semibold text-slate-800 dark:text-white">{item.description}</p>
+                                                <p className="text-xs text-slate-500 dark:text-slate-400">{item.date} - فاتورة مشتريات (من عروة: {cropCycles.find(c => c.id === item.cropCycleId)?.name || 'غير محدد'})</p>
                                             </div>
-                                        )}
+                                            <p className="font-bold text-red-600 dark:text-red-400">-{formatCurrency(item.amount)}</p>
+                                        </div>
+                                        {item.remainingAmount > 0 && <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">المتبقي للدفع من هذه الفاتورة: {formatCurrency(item.remainingAmount)}</p>}
                                     </div>
-                                    <p className={`text-lg font-bold whitespace-nowrap ${item.type === 'invoice' ? 'text-red-600' : 'text-green-600'}`}>
-                                        {item.type === 'invoice' ? '-' : '+'} {formatCurrency(item.amount)}
-                                    </p>
-                                </div>
-                            ))}
+                                )
+                                : ( // payment
+                                    <div key={`ledger-${item.id}`} className="p-3 bg-green-50 dark:bg-green-900/30 rounded-md">
+                                        <div className="flex justify-between items-center">
+                                            <div>
+                                                <p className="font-semibold text-slate-800 dark:text-white">{item.description}</p>
+                                                <p className="text-xs text-slate-500 dark:text-slate-400">{item.date} - دفعة مورد</p>
+                                            </div>
+                                            <p className="font-bold text-green-600 dark:text-green-400">+{formatCurrency(item.amount)}</p>
+                                        </div>
+                                        {item.linkedInvoices && item.linkedInvoices.length > 0 && <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">مرتبطة بفاتورة: {item.linkedInvoices.map(inv => inv.description).join(', ')}</p>}
+                                    </div>
+                                )
+                            )}
                         </div>
-                         <Pagination 
-                           currentPage={currentPage}
-                           totalPages={totalPages}
-                           onPageChange={setCurrentPage}
-                        />
+                        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
                     </>
-                 ) : (
-                    <p className="text-center text-slate-500 dark:text-slate-400 py-16">لا توجد معاملات مسجلة لهذا المورد.</p>
-                 )}
+                ) : (
+                    <p className="text-center py-10 text-slate-500 dark:text-slate-400">لا توجد معاملات لهذا المورد.</p>
+                )}
                 </div>
             </div>
         </div>
     );
 };
 
+// Supplier Card
+const SupplierCard: React.FC<{
+    supplierData: { id: string; name: string; totalInvoices: number; totalPayments: number; balance: number; };
+    onEdit: (supplier: Supplier) => void;
+    onDelete: (id: string) => void;
+    onDetails: (supplier: Supplier) => void;
+}> = ({ supplierData, onEdit, onDelete, onDetails }) => {
+    const { addToast } = React.useContext(ToastContext) as ToastContextType;
+    const { transactions, supplierPayments } = React.useContext(AppContext) as AppContextType;
+    const supplier = {id: supplierData.id, name: supplierData.name};
+    
+    const handleDelete = () => {
+        const hasTransactions = transactions.some(t => t.supplierId === supplier.id) || supplierPayments.some(p => p.supplierId === supplier.id);
+        if (hasTransactions) {
+            addToast("لا يمكن حذف مورد مرتبط بمعاملات. يجب حذف المعاملات أولاً.", "error");
+        } else {
+            onDelete(supplier.id);
+        }
+    };
+    
+    return (
+        <div className="bg-white dark:bg-slate-800 p-5 rounded-lg shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1 flex flex-col justify-between">
+            <div>
+                <div className="flex items-center mb-4">
+                    <div className="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-full mr-3">
+                        <SupplierIcon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-800 dark:text-white">{supplierData.name}</h3>
+                </div>
+                <div className="space-y-3">
+                    <StatCard title="إجمالي الفواتير" value={formatCurrency(supplierData.totalInvoices)} icon={<InvoiceIcon className="w-7 h-7 text-red-500" />} />
+                    <StatCard title="إجمالي المدفوعات" value={formatCurrency(supplierData.totalPayments)} icon={<ExpenseIcon className="w-7 h-7 text-green-500" />} />
+                    <StatCard title="الرصيد المستحق" value={formatCurrency(supplierData.balance)} icon={<ProfitIcon className={`w-7 h-7 ${supplierData.balance > 0 ? 'text-red-500' : 'text-slate-500'}`} />} />
+                </div>
+            </div>
+            <div className="mt-4 border-t border-slate-200 dark:border-slate-700 pt-3 flex justify-between items-center">
+                <button onClick={() => onDetails(supplier)} className="flex items-center px-3 py-1.5 text-xs bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-md hover:bg-slate-200 dark:hover:bg-slate-600">
+                    <ReportIcon className="w-4 h-4 ml-1.5"/><span>كشف حساب</span>
+                </button>
+                <div className="flex items-center space-x-1 space-x-reverse">
+                    <button onClick={() => onEdit(supplier)} className="p-2 text-slate-400 hover:text-blue-500 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700" aria-label={`تعديل ${supplier.name}`}><EditIcon className="w-5 h-5"/></button>
+                    <button onClick={handleDelete} className="p-2 text-slate-400 hover:text-red-500 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700" aria-label={`حذف ${supplier.name}`}><DeleteIcon className="w-5 h-5"/></button>
+                </div>
+            </div>
+        </div>
+    );
+};
 
-// Main Page
+// Main Page Component
 const SuppliersPage: React.FC = () => {
-    const context = React.useContext(AppContext);
-    if (!context) return null;
-    const { loading, settings, suppliers, transactions, supplierPayments, addSupplier, updateSupplier, deleteSupplier, addSupplierPayment, updateSupplierPayment, deleteSupplierPayment } = context;
+    const { loading, suppliers, transactions, supplierPayments, addSupplier, updateSupplier, deleteSupplier, addSupplierPayment, updateSupplierPayment, deleteSupplierPayment, settings } = React.useContext(AppContext) as AppContextType;
 
-    const [modal, setModal] = React.useState<'ADD_SUPPLIER' | 'EDIT_SUPPLIER' | 'ADD_PAYMENT' | 'VIEW_DETAILS' | null>(null);
+    const [modal, setModal] = React.useState<'ADD_SUPPLIER' | 'EDIT_SUPPLIER' | 'ADD_PAYMENT' | 'EDIT_PAYMENT' | 'DETAILS' | null>(null);
     const [selectedSupplier, setSelectedSupplier] = React.useState<Supplier | undefined>(undefined);
-    const [deletingId, setDeletingId] = React.useState<string | null>(null);
+    const [selectedPayment, setSelectedPayment] = React.useState<SupplierPayment | undefined>(undefined);
+    const [deletingId, setDeletingId] = React.useState<{id: string, type: 'supplier' | 'payment'} | null>(null);
 
     React.useEffect(() => {
         const isAnyModalOpen = modal !== null || !!deletingId;
@@ -274,35 +317,31 @@ const SuppliersPage: React.FC = () => {
 
     const supplierAccountData = React.useMemo(() => {
         return suppliers.map(supplier => {
-            const supplierInvoices = transactions.filter(t => t.supplierId === supplier.id && t.type === TransactionType.EXPENSE && (t.category === 'أسمدة ومغذيات' || t.category === 'مبيدات'));
-            const supplierPaymentsList = supplierPayments.filter(p => p.supplierId === supplier.id);
-            
-            const totalInvoices = supplierInvoices.reduce((sum, t) => sum + t.amount, 0);
-            const totalPayments = supplierPaymentsList.reduce((sum, p) => sum + p.amount, 0);
+            const supplierTransactions = transactions.filter(t => t.supplierId === supplier.id && t.type === TransactionType.EXPENSE);
+            const totalInvoices = supplierTransactions.reduce((sum, t) => sum + t.amount, 0);
+            const payments = supplierPayments.filter(p => p.supplierId === supplier.id);
+            const totalPayments = payments.reduce((sum, p) => sum + p.amount, 0);
             const balance = totalInvoices - totalPayments;
-
-            return { ...supplier, totalInvoices, totalPayments, balance, invoices: supplierInvoices, payments: supplierPaymentsList };
+            return { ...supplier, totalInvoices, totalPayments, balance };
         });
     }, [suppliers, transactions, supplierPayments]);
 
-    const handleSaveSupplier = (data: Omit<Supplier, 'id'> | Supplier) => {
-        if ('id' in data) updateSupplier(data);
-        else addSupplier(data);
+    const handleSaveSupplier = (supplier: Omit<Supplier, 'id'> | Supplier) => {
+        if ('id' in supplier) updateSupplier(supplier); else addSupplier(supplier);
         setModal(null);
     };
-
-    const handleSavePayment = (data: Omit<SupplierPayment, 'id'> | SupplierPayment) => {
-        if ('id' in data) updateSupplierPayment(data as SupplierPayment);
-        else addSupplierPayment(data);
+    const handleSavePayment = (payment: Omit<SupplierPayment, 'id'> | SupplierPayment) => {
+        if ('id' in payment) updateSupplierPayment(payment); else addSupplierPayment(payment);
         setModal(null);
     };
-
     const confirmDelete = () => {
-        if (deletingId) deleteSupplier(deletingId);
+        if (!deletingId) return;
+        if (deletingId.type === 'supplier') deleteSupplier(deletingId.id);
+        else deleteSupplierPayment(deletingId.id);
         setDeletingId(null);
     };
-    
-     if (!settings.isSupplierSystemEnabled) {
+
+    if (!settings.isSupplierSystemEnabled) {
         return (
              <div className="text-center p-8 bg-white dark:bg-slate-800 rounded-lg shadow-md">
                 <h2 className="text-2xl font-bold text-slate-800 dark:text-white">نظام الموردين غير مفعل</h2>
@@ -312,72 +351,16 @@ const SuppliersPage: React.FC = () => {
             </div>
         );
     }
-
-    const renderContent = () => {
-        if (loading) return <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">{[...Array(3)].map((_, i) => <SkeletonCard key={i} />)}</div>;
-        if (supplierAccountData.length === 0) return (
-            <div className="text-center py-16 bg-white dark:bg-slate-800 rounded-lg border-2 border-dashed border-slate-200 dark:border-slate-700">
-                <SupplierIcon className="w-16 h-16 mx-auto text-slate-400 dark:text-slate-500 mb-4"/>
-                <p className="text-lg font-semibold text-slate-600 dark:text-slate-300">لا يوجد موردين مسجلين</p>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">ابدأ بإضافة الموردين لتتبع حساباتهم.</p>
-            </div>
-        );
-        return (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {supplierAccountData.map(s => {
-                    const hasFinancials = s.invoices.length > 0 || s.payments.length > 0;
-                    return (
-                        <div key={s.id} className="bg-white dark:bg-slate-800 p-5 rounded-lg shadow-md hover:shadow-xl transition-shadow flex flex-col justify-between">
-                            <div>
-                                <div className="flex items-center mb-4">
-                                    <div className="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-full mr-3"><SupplierIcon className="w-6 h-6 text-blue-600 dark:text-blue-400" /></div>
-                                    <div>
-                                        <h3 className="text-xl font-bold text-slate-800 dark:text-white">{s.name}</h3>
-                                        <p className="text-sm text-slate-500 dark:text-slate-400">مورد أسمدة ومبيدات</p>
-                                    </div>
-                                </div>
-                                <div className="space-y-3">
-                                    <StatCard title="إجمالي الفواتير" value={formatCurrency(s.totalInvoices)} icon={<InvoiceIcon className="w-7 h-7 text-red-500" />} />
-                                    <StatCard title="إجمالي المدفوعات" value={formatCurrency(s.totalPayments)} icon={<ExpenseIcon className="w-7 h-7 text-green-500" />} />
-                                    <StatCard title="الرصيد المتبقي" value={formatCurrency(s.balance)} icon={<ProfitIcon className={`w-7 h-7 ${s.balance > 0 ? 'text-red-500' : (s.balance < 0 ? 'text-blue-500' : 'text-slate-500')}`} />} />
-                                </div>
-                            </div>
-                            <div className="flex justify-between items-center mt-4 border-t border-slate-200 dark:border-slate-700 pt-3">
-                                <button onClick={() => { setSelectedSupplier(s); setModal('VIEW_DETAILS'); }} className="flex items-center px-3 py-1.5 text-xs bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-md hover:bg-slate-200 dark:hover:bg-slate-600">
-                                    <ReportIcon className="w-4 h-4 ml-1.5"/><span>كشف حساب</span>
-                                </button>
-                                <div className="flex items-center space-x-1 space-x-reverse">
-                                    <button onClick={() => { setSelectedSupplier(s); setModal('EDIT_SUPPLIER'); }} className="p-2 text-slate-400 hover:text-blue-500 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700" aria-label={`تعديل المورد ${s.name}`}><EditIcon className="w-5 h-5"/></button>
-                                    <button 
-                                        onClick={() => setDeletingId(s.id)}
-                                        disabled={hasFinancials}
-                                        className={`p-2 text-slate-400 rounded-full transition-colors ${
-                                            hasFinancials
-                                            ? 'cursor-not-allowed text-slate-300 dark:text-slate-600'
-                                            : 'hover:text-red-500 hover:bg-slate-100 dark:hover:bg-slate-700'
-                                        }`}
-                                        aria-label={`حذف المورد ${s.name}`}
-                                    >
-                                        <DeleteIcon className="w-5 h-5"/>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )
-                })}
-            </div>
-        );
-    };
-
+    
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
                 <div>
                     <h1 className="text-3xl font-bold text-slate-800 dark:text-white">حسابات الموردين</h1>
-                    <p className="mt-2 text-lg text-slate-600 dark:text-slate-400">إدارة ومتابعة الفواتير الآجلة والمدفوعات للموردين.</p>
+                    <p className="mt-2 text-lg text-slate-600 dark:text-slate-400">إدارة ومتابعة فواتير الموردين الآجلة والمدفوعات.</p>
                 </div>
                 <div className="flex-shrink-0 flex items-center gap-2">
-                    <button onClick={() => { setSelectedSupplier(undefined); setModal('ADD_SUPPLIER'); }} className="flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-md shadow-sm hover:bg-green-700">
+                    <button onClick={() => setModal('ADD_SUPPLIER')} className="flex items-center justify-center px-4 py-2 bg-emerald-600 text-white rounded-md shadow-sm hover:bg-emerald-700">
                         <AddIcon className="w-5 h-5 ml-2" /><span>إضافة مورد</span>
                     </button>
                      <button onClick={() => setModal('ADD_PAYMENT')} className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md shadow-sm hover:bg-blue-700">
@@ -385,29 +368,29 @@ const SuppliersPage: React.FC = () => {
                     </button>
                 </div>
             </div>
-            {renderContent()}
 
-            {/* Modals */}
-            {(modal === 'ADD_SUPPLIER' || modal === 'EDIT_SUPPLIER') && (
-                <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-xl w-full max-w-md">
-                        <h2 className="text-2xl font-bold mb-4">{modal === 'EDIT_SUPPLIER' ? 'تعديل مورد' : 'إضافة مورد جديد'}</h2>
-                        <SupplierForm supplier={selectedSupplier} onSave={handleSaveSupplier} onCancel={() => setModal(null)} />
-                    </div>
+            {loading ? <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">{[...Array(3)].map((_, i) => <SkeletonCard key={i} />)}</div> : supplierAccountData.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {supplierAccountData.map(s => (
+                        <SupplierCard key={s.id} supplierData={s} 
+                            onEdit={supplier => { setSelectedSupplier(supplier); setModal('EDIT_SUPPLIER'); }}
+                            onDelete={id => setDeletingId({id, type: 'supplier'})}
+                            onDetails={supplier => { setSelectedSupplier(supplier); setModal('DETAILS'); }}
+                        />
+                    ))}
+                </div>
+            ) : (
+                 <div className="text-center py-16 bg-white dark:bg-slate-800 rounded-lg border-2 border-dashed border-slate-200 dark:border-slate-700">
+                    <SupplierIcon className="w-16 h-16 mx-auto text-slate-400 dark:text-slate-500 mb-4"/>
+                    <p className="text-lg font-semibold text-slate-600 dark:text-slate-300">لا يوجد موردين مسجلين</p>
+                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">ابدأ بإضافة مورد جديد لتتبع فواتيره.</p>
                 </div>
             )}
-            {modal === 'ADD_PAYMENT' && (
-                <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-xl w-full max-w-lg max-h-full overflow-y-auto modal-scroll-contain">
-                        <h2 className="text-2xl font-bold mb-4">إضافة دفعة للمورد</h2>
-                        <PaymentForm suppliers={suppliers} onSave={handleSavePayment} onCancel={() => setModal(null)} />
-                    </div>
-                </div>
-            )}
-            {modal === 'VIEW_DETAILS' && selectedSupplier && (
-                <DetailsModal supplier={selectedSupplier} transactions={supplierAccountData.find(s=>s.id === selectedSupplier.id)?.invoices || []} payments={supplierAccountData.find(s=>s.id === selectedSupplier.id)?.payments || []} onClose={() => setModal(null)} />
-            )}
-            <ConfirmationModal isOpen={!!deletingId} onClose={() => setDeletingId(null)} onConfirm={confirmDelete} title="تأكيد حذف المورد" message="هل أنت متأكد من حذف هذا المورد؟ لا يمكن التراجع عن هذا الإجراء." />
+            
+            {(modal === 'ADD_SUPPLIER' || modal === 'EDIT_SUPPLIER') && <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"><div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-xl w-full max-w-md"><h2 className="text-2xl font-bold mb-4">{modal === 'EDIT_SUPPLIER' ? 'تعديل مورد' : 'إضافة مورد جديد'}</h2><SupplierForm supplier={selectedSupplier} onSave={handleSaveSupplier} onCancel={() => setModal(null)} /></div></div>}
+            {(modal === 'ADD_PAYMENT' || modal === 'EDIT_PAYMENT') && <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"><div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-xl w-full max-w-lg max-h-full overflow-y-auto modal-scroll-contain"><h2 className="text-2xl font-bold mb-4">{modal === 'EDIT_PAYMENT' ? 'تعديل دفعة' : 'إضافة دفعة جديدة'}</h2><PaymentForm payment={selectedPayment} suppliers={suppliers} onSave={handleSavePayment} onCancel={() => setModal(null)} /></div></div>}
+            {modal === 'DETAILS' && selectedSupplier && <DetailsModal supplier={selectedSupplier} transactions={transactions.filter(t=>t.supplierId === selectedSupplier.id)} payments={supplierPayments.filter(p=>p.supplierId === selectedSupplier.id)} onClose={() => setModal(null)} />}
+            <ConfirmationModal isOpen={!!deletingId} onClose={() => setDeletingId(null)} onConfirm={confirmDelete} title="تأكيد الحذف" message={`هل أنت متأكد من حذف هذا ${deletingId?.type === 'supplier' ? 'المورد' : 'الدفعة'}؟`} />
         </div>
     );
 };

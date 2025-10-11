@@ -1,11 +1,11 @@
 import React from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
-import { AppContext } from '../App';
-import { AppContextType, CropCycle, CropCycleStatus, TransactionType, Greenhouse, Farmer, Transaction, FarmerWithdrawal } from '../types';
-import { ToastContext, ToastContextType } from '../context/ToastContext';
-import { AddIcon, SeedIcon, GreenhouseIcon, CalendarIcon, CalendarCheckIcon, ReportIcon, CloseIcon, FarmerIcon, DocumentSearchIcon, MenuVerticalIcon, DeleteIcon, EditIcon, ArrowRightIcon } from './Icons';
-import SkeletonCard from './SkeletonCard';
-import ConfirmationModal from './ConfirmationModal';
+import { AppContext } from '../App.tsx';
+import { AppContextType, CropCycle, CropCycleStatus, TransactionType, Greenhouse, Farmer, Transaction, FarmerWithdrawal } from '../types.ts';
+import { ToastContext, ToastContextType } from '../context/ToastContext.tsx';
+import { AddIcon, SeedIcon, GreenhouseIcon, CalendarIcon, CalendarCheckIcon, ReportIcon, CloseIcon, FarmerIcon, DocumentSearchIcon, MenuVerticalIcon, DeleteIcon, EditIcon, ArrowRightIcon } from './Icons.tsx';
+import SkeletonCard from './SkeletonCard.tsx';
+import ConfirmationModal from './ConfirmationModal.tsx';
 
 
 const formInputClass = "mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500";

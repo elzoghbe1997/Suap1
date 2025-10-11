@@ -1,9 +1,9 @@
 import React from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { AppContext } from '../App';
-import { AppContextType, Alert, Theme, AlertType, CropCycle } from '../types';
-import { MenuIcon, AlertIcon, WarningIcon, SunIcon, MoonIcon, SystemIcon } from './Icons';
-import InstallPWAButton from './InstallPWAButton';
+import { AppContext } from '../App.tsx';
+import { AppContextType, Alert, Theme, AlertType, CropCycle } from '../types.ts';
+import { MenuIcon, AlertIcon, WarningIcon, SunIcon, MoonIcon, SystemIcon } from './Icons.tsx';
+import InstallPWAButton from './InstallPWAButton.tsx';
 
 const AlertsDropdown: React.FC<{ alerts: Alert[]; onClose: () => void }> = React.memo(({ alerts, onClose }) => {
     const navigate = useNavigate();

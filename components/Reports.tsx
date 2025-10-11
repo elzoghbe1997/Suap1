@@ -1,8 +1,8 @@
 import React from 'react';
-import { AppContext } from '../App';
-import { AppContextType, TransactionType } from '../types';
+import { AppContext } from '../App.tsx';
+import { AppContextType, TransactionType } from '../types.ts';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import LoadingSpinner from './LoadingSpinner';
+import LoadingSpinner from './LoadingSpinner.tsx';
 
 const ReportsPage: React.FC = () => {
     const { loading, cropCycles, transactions, greenhouses, settings } = React.useContext(AppContext) as AppContextType;

@@ -1,11 +1,11 @@
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { AppContext } from '../App';
-import { AppContextType, TransactionType } from '../types';
+import { AppContext } from '../App.tsx';
+import { AppContextType, TransactionType } from '../types.ts';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
-import { ArrowRightIcon, CostIcon, RevenueIcon, ExpenseIcon, ProfitIcon, ReportIcon } from './Icons';
-import LoadingSpinner from './LoadingSpinner';
-import { useAnimatedCounter } from '../hooks/useAnimatedCounter';
+import { ArrowRightIcon, CostIcon, RevenueIcon, ExpenseIcon, ProfitIcon, ReportIcon } from './Icons.tsx';
+import LoadingSpinner from './LoadingSpinner.tsx';
+import { useAnimatedCounter } from '../hooks/useAnimatedCounter.ts';
 
 const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EGP', maximumFractionDigits: 0 }).format(amount);
 

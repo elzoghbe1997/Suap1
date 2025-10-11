@@ -1,13 +1,13 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { AppContext } from '../App';
-import { AppContextType, TransactionType, Farmer, FarmerWithdrawal, CropCycle, CropCycleStatus, Transaction } from '../types';
-import { FarmerIcon, RevenueIcon, ExpenseIcon, ProfitIcon, AddIcon, EditIcon, DeleteIcon, ReportIcon, CloseIcon } from './Icons';
-import { ToastContext, ToastContextType } from '../context/ToastContext';
-import ConfirmationModal from './ConfirmationModal';
-import SkeletonCard from './SkeletonCard';
-import { useAnimatedCounter } from '../hooks/useAnimatedCounter';
-import WithdrawalForm from './WithdrawalForm';
+import { AppContext } from '../App.tsx';
+import { AppContextType, TransactionType, Farmer, FarmerWithdrawal, CropCycle, CropCycleStatus, Transaction } from '../types.ts';
+import { FarmerIcon, RevenueIcon, ExpenseIcon, ProfitIcon, AddIcon, EditIcon, DeleteIcon, ReportIcon, CloseIcon } from './Icons.tsx';
+import { ToastContext, ToastContextType } from '../context/ToastContext.tsx';
+import ConfirmationModal from './ConfirmationModal.tsx';
+import SkeletonCard from './SkeletonCard.tsx';
+import { useAnimatedCounter } from '../hooks/useAnimatedCounter.ts';
+import WithdrawalForm from './WithdrawalForm.tsx';
 
 const formInputClass = "mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500";
 

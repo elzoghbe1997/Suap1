@@ -1,32 +1,32 @@
 import React from 'react';
 import { HashRouter, Routes, Route, Navigate, useLocation, Outlet } from 'react-router-dom';
-import Sidebar from './components/Sidebar';
-import Header from './components/Header';
-import Dashboard from './components/Dashboard';
-import CropCyclesPage from './components/CropCycles';
-import CropCycleDetailsPage from './components/CropCycleDetailsPage';
-import InvoicesPage from './components/Invoices';
-import ExpensesPage from './components/Expenses';
-import GreenhousePage from './components/Greenhouse';
-import GreenhouseReport from './components/GreenhouseReport';
-import ReportsPage from './components/Reports';
-import SettingsPage from './components/SettingsPage';
-import FarmerAccountsPage from './components/FarmerAccountsPage';
-import SuppliersPage from './components/SuppliersPage';
-import FertilizationProgramsPage from './components/FertilizationProgramsPage';
-import TreasuryPage from './components/TreasuryPage';
-import TreasuryDetailsPage from './components/TreasuryDetailsPage';
-import AdvancesPage from './components/AdvancesPage';
-import { AppContextType } from './types';
-import { useAppData } from './hooks/useAppData';
-import { ToastProvider } from './context/ToastContext';
-import ToastContainer from './components/ToastContainer';
-import { SparklesIcon } from './components/Icons';
-import { AuthProvider, useAuth } from './context/AuthContext';
-import AuthPage from './components/AuthPage';
-import ProtectedRoute from './components/ProtectedRoute';
-import DashboardSkeleton from './components/DashboardSkeleton';
-import PWAInstallBanner from './components/PWAInstallBanner';
+import Sidebar from './components/Sidebar.tsx';
+import Header from './components/Header.tsx';
+import Dashboard from './components/Dashboard.tsx';
+import CropCyclesPage from './components/CropCycles.tsx';
+import CropCycleDetailsPage from './components/CropCycleDetailsPage.tsx';
+import InvoicesPage from './components/InvoicesPage.tsx';
+import ExpensesPage from './components/ExpensesPage.tsx';
+import GreenhousePage from './components/Greenhouse.tsx';
+import GreenhouseReport from './components/GreenhouseReport.tsx';
+import ReportsPage from './components/Reports.tsx';
+import SettingsPage from './components/SettingsPage.tsx';
+import FarmerAccountsPage from './components/FarmerAccountsPage.tsx';
+import SuppliersPage from './components/SuppliersPage.tsx';
+import FertilizationProgramsPage from './components/FertilizationProgramsPage.tsx';
+import TreasuryPage from './components/TreasuryPage.tsx';
+import TreasuryDetailsPage from './components/TreasuryDetailsPage.tsx';
+import AdvancesPage from './components/AdvancesPage.tsx';
+import { AppContextType } from './types.ts';
+import { useAppData } from './hooks/useAppData.ts';
+import { ToastProvider } from './context/ToastContext.tsx';
+import ToastContainer from './components/ToastContainer.tsx';
+import { SparklesIcon } from './components/Icons.tsx';
+import { AuthProvider, useAuth } from './context/AuthContext.tsx';
+import AuthPage from './components/AuthPage.tsx';
+import ProtectedRoute from './components/ProtectedRoute.tsx';
+import DashboardSkeleton from './components/DashboardSkeleton.tsx';
+import PWAInstallBanner from './components/PWAInstallBanner.tsx';
 
 
 export const AppContext = React.createContext<AppContextType | null>(null);
@@ -165,7 +165,7 @@ const AppLayout: React.FC = () => {
 
 const AppContent: React.FC = () => {
   const contextValue = useAppData();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const [showOnboarding, setShowOnboarding] = React.useState(false);
 
   React.useEffect(() => {
@@ -187,6 +187,16 @@ const AppContent: React.FC = () => {
   
   if (contextValue.isDeletingData) {
     return <DeletingDataOverlay />;
+  }
+  
+  if (isLoading) {
+      return (
+        <div className="relative h-screen flex overflow-hidden bg-slate-50 dark:bg-slate-900">
+            <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+                <DashboardSkeleton />
+            </main>
+        </div>
+      );
   }
 
   if (isAuthenticated && showOnboarding) {
