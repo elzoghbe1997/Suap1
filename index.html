@@ -103,18 +103,6 @@
         overscroll-behavior: contain;
       }
     </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react/": "https://aistudiocdn.com/react@^19.1.1/",
-    "react": "https://aistudiocdn.com/react@^19.1.1",
-    "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.9.3",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
-    "recharts": "https://aistudiocdn.com/recharts@^3.2.1",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.21.0"
-  }
-}
-</script>
 <script>
   // Prevents Flash of Incorrect Theme (FOUC)
   (function () {
@@ -130,7 +118,7 @@
     } catch (e) {
       console.warn("Could not parse settings from localStorage for FOUC prevention.");
     }
-    
+
     if (theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
       document.documentElement.classList.add('dark');
     } else {
@@ -138,12 +126,10 @@
     }
   })();
 </script>
-<!-- Add Babel Standalone for in-browser JSX/TSX compilation -->
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
   <body class="bg-slate-50 dark:bg-slate-900">
     <div id="root"></div>
-    <script>
+<script>
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
           navigator.serviceWorker.register("/sw.js").then(
@@ -157,7 +143,6 @@
         });
       }
     </script>
-    <!-- Change script type to text/babel for Babel to transpile it -->
-    <script type="text/babel" data-presets="react,typescript" data-type="module" src="/index.tsx"></script>
+    <script type="module" src="/index.tsx"></script>
   </body>
 </html>
