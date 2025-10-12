@@ -5,6 +5,8 @@ import { ToastContext, ToastContextType } from '../context/ToastContext';
 import { AddIcon, EditIcon, DeleteIcon, ProgramIcon, ReportIcon, CalendarIcon, RevenueIcon, ExpenseIcon, ProfitIcon, CloseIcon, FarmerIcon } from './Icons';
 import ConfirmationModal from './ConfirmationModal';
 import SkeletonCard from './SkeletonCard';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+
 
 const formInputClass = "mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500";
 const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EGP', maximumFractionDigits: 0 }).format(amount);
@@ -72,6 +74,14 @@ const ProgramReportModal: React.FC<{
 }> = ({ program, onClose }) => {
     const { transactions, cropCycles, farmers, settings } = React.useContext(AppContext) as AppContextType;
     
+    const getWeekLabel = (dateStr: string): string => {
+        const date = new Date(dateStr);
+        const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
+        const pastDaysOfYear = (date.getTime() - firstDayOfYear.getTime()) / 86400000;
+        const weekNumber = Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+        return `الأسبوع ${weekNumber}, ${date.getFullYear()}`;
+    };
+
     const reportData = React.useMemo(() => {
         const cycle = cropCycles.find(c => c.id === program.cropCycleId);
         if (!cycle) return null;
@@ -87,19 +97,38 @@ const ProgramReportModal: React.FC<{
             farmerShare = totalRevenue * (cycle.farmerSharePercentage / 100);
         }
         const ownerProfit = totalRevenue - totalExpenses - farmerShare;
+        
+        const weeklyProduction: { [key: string]: number } = {};
+        const revenueTransactionsInPeriod = transactions.filter(t => 
+            t.cropCycleId === program.cropCycleId &&
+            t.type === TransactionType.REVENUE &&
+            new Date(t.date) >= new Date(program.startDate) &&
+            new Date(t.date) <= new Date(program.endDate)
+        );
+        
+        revenueTransactionsInPeriod.forEach(t => {
+            if (t.quantity) {
+                const weekLabel = getWeekLabel(t.date);
+                weeklyProduction[weekLabel] = (weeklyProduction[weekLabel] || 0) + t.quantity;
+            }
+        });
 
-        return { expenses, revenues, totalExpenses, totalRevenue, farmerShare, ownerProfit, cycle };
+        const weeklyProductionData = Object.entries(weeklyProduction)
+            .map(([week, production]) => ({ week, production }))
+            .sort((a,b) => a.week.localeCompare(b.week)); // Sort chronologically
+
+        return { expenses, revenues, totalExpenses, totalRevenue, farmerShare, ownerProfit, cycle, weeklyProductionData };
     }, [program, transactions, cropCycles, settings]);
 
     if (!reportData) {
         return <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"><div className="bg-white p-4 rounded-lg">خطأ في تحميل بيانات التقرير.</div></div>;
     }
 
-    const { expenses, revenues, totalExpenses, totalRevenue, farmerShare, ownerProfit, cycle } = reportData;
+    const { expenses, revenues, totalExpenses, totalRevenue, farmerShare, ownerProfit, cycle, weeklyProductionData } = reportData;
 
     return (
         <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4" onClick={onClose}>
-            <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
                 <div className="flex justify-between items-center mb-4 pb-4 border-b border-slate-200 dark:border-slate-700">
                     <div>
                         <h2 className="text-2xl font-bold text-slate-800 dark:text-white">تقرير البرنامج: {program.name}</h2>
@@ -115,10 +144,32 @@ const ProgramReportModal: React.FC<{
                         <div className="bg-slate-100 dark:bg-slate-700/50 p-4 rounded-lg flex items-center"><ProfitIcon className={`w-7 h-7 ${ownerProfit >= 0 ? 'text-sky-500' : 'text-orange-500'} ml-3`}/><div className="text-right"><p className="text-sm text-slate-500">صافي ربح المالك (من البرنامج)</p><p className="text-xl font-bold">{formatCurrency(ownerProfit)}</p></div></div>
                     </div>
                     {settings.isFarmerSystemEnabled && cycle.farmerId && <div className="bg-slate-100 dark:bg-slate-700/50 p-4 rounded-lg flex items-center"><FarmerIcon className="w-7 h-7 text-indigo-500 ml-3"/><div className="text-right"><p className="text-sm text-slate-500">حصة المزارع ({cycle.farmerSharePercentage}%)</p><p className="text-xl font-bold">{formatCurrency(farmerShare)}</p></div></div>}
-
+                    
+                    <div className="bg-white dark:bg-slate-700/50 rounded-lg p-4">
+                        <h3 className="text-lg font-semibold mb-4 text-slate-800 dark:text-white">الإنتاج الأسبوعي خلال البرنامج (ك.ج)</h3>
+                        {weeklyProductionData.length > 0 ? (
+                            <ResponsiveContainer width="100%" height={250}>
+                                <BarChart data={weeklyProductionData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(128, 128, 128, 0.2)" />
+                                    <XAxis dataKey="week" stroke="#9ca3af" fontSize={12} />
+                                    <YAxis stroke="#9ca3af" fontSize={12} tickFormatter={(value) => `${value} ك.ج`} />
+                                    <Tooltip
+                                        contentStyle={{ backgroundColor: 'rgba(31, 41, 55, 0.9)', border: 'none', borderRadius: '0.5rem' }}
+                                        labelStyle={{ color: '#fff' }}
+                                        itemStyle={{ color: '#fff' }}
+                                        formatter={(value) => [`${value} ك.ج`, "الإنتاج"]}
+                                    />
+                                    <Bar dataKey="production" name="الإنتاج" fill="#10b981" radius={[4, 4, 0, 0]} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <p className="text-center py-10 text-slate-500 dark:text-slate-400">لا يوجد إنتاج مسجل خلال فترة هذا البرنامج.</p>
+                        )}
+                    </div>
+                    
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <div>
-                            <h3 className="text-lg font-semibold mb-2">المصروفات ({expenses.length})</h3>
+                            <h3 className="text-lg font-semibold mb-2">المصروفات المرتبطة بالبرنامج ({expenses.length})</h3>
                             <div className="border rounded-lg dark:border-slate-700 max-h-60 overflow-y-auto">
                                 <table className="w-full text-sm">
                                     <tbody>
@@ -130,7 +181,7 @@ const ProgramReportModal: React.FC<{
                             </div>
                         </div>
                         <div>
-                            <h3 className="text-lg font-semibold mb-2">الإيرادات ({revenues.length})</h3>
+                            <h3 className="text-lg font-semibold mb-2">الإيرادات المرتبطة بالبرنامج ({revenues.length})</h3>
                             <div className="border rounded-lg dark:border-slate-700 max-h-60 overflow-y-auto">
                                 <table className="w-full text-sm">
                                     <tbody>
@@ -207,7 +258,15 @@ const FertilizationProgramsPage: React.FC = () => {
 
         return (
             <div className="space-y-8">
-                {programsByCycle.map(cycle => (
+                {programsByCycle.map(cycle => {
+                    const productionsInCycle = cycle.programs.map(p => {
+                        return transactions
+                            .filter(t => t.fertilizationProgramId === p.id && t.type === TransactionType.REVENUE)
+                            .reduce((sum, t) => sum + (t.quantity || 0), 0);
+                    });
+                    const maxProductionInCycle = Math.max(...productionsInCycle, 1);
+
+                    return (
                     <div key={cycle.id}>
                         <h2 className="text-2xl font-bold mb-4 text-slate-800 dark:text-white">{cycle.name}</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -216,9 +275,12 @@ const FertilizationProgramsPage: React.FC = () => {
                                     .filter(t => t.fertilizationProgramId === program.id && t.type === TransactionType.EXPENSE)
                                     .reduce((sum, t) => sum + t.amount, 0);
                                 
-                                const programRevenues = transactions
-                                    .filter(t => t.fertilizationProgramId === program.id && t.type === TransactionType.REVENUE)
-                                    .reduce((sum, t) => sum + t.amount, 0);
+                                const programRevenueTransactions = transactions
+                                    .filter(t => t.fertilizationProgramId === program.id && t.type === TransactionType.REVENUE);
+                                    
+                                const programRevenues = programRevenueTransactions.reduce((sum, t) => sum + t.amount, 0);
+                                const programProduction = programRevenueTransactions.reduce((sum, t) => sum + (t.quantity || 0), 0);
+                                const productionPercentage = (programProduction / maxProductionInCycle) * 100;
 
                                 let farmerShare = 0;
                                 if (settings.isFarmerSystemEnabled && cycle.farmerId && cycle.farmerSharePercentage) {
@@ -278,6 +340,25 @@ const FertilizationProgramsPage: React.FC = () => {
                                             </div>
                                         </div>
 
+                                        <div className="mt-4">
+                                            <div className="flex justify-between items-center mb-1">
+                                                <span className="text-sm font-medium text-slate-600 dark:text-slate-400">مستوى الإنتاج</span>
+                                                <span className="text-sm font-bold text-sky-600 dark:text-sky-400">
+                                                    {programProduction.toLocaleString()} ك.ج
+                                                </span>
+                                            </div>
+                                            <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2.5">
+                                                <div 
+                                                    className="bg-sky-500 h-2.5 rounded-full transition-all duration-500 ease-out" 
+                                                    style={{ width: `${productionPercentage}%` }}
+                                                    role="progressbar"
+                                                    aria-valuenow={productionPercentage}
+                                                    aria-valuemin={0}
+                                                    aria-valuemax={100}
+                                                ></div>
+                                            </div>
+                                        </div>
+
                                         <div className="mt-4 border-t border-slate-200 dark:border-slate-700 pt-3 grid grid-cols-3 gap-2 text-center">
                                             <div>
                                                 <p className="text-xs text-slate-500 dark:text-slate-400">المصروفات</p>
@@ -310,6 +391,17 @@ const FertilizationProgramsPage: React.FC = () => {
         );
     };
 
+    if (!settings.isAgriculturalProgramsSystemEnabled) {
+        return (
+             <div className="text-center p-8 bg-white dark:bg-slate-800 rounded-lg shadow-md">
+                <h2 className="text-2xl font-bold text-slate-800 dark:text-white">نظام أرباح البرامج غير مفعل</h2>
+                <p className="mt-2 text-slate-600 dark:text-slate-400">
+                    يرجى تفعيل "نظام أرباح البرامج" من صفحة <a href="#/settings" className="text-green-600 hover:underline">الإعدادات</a> لعرض هذه الصفحة.
+                </p>
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-6">
             <div className="flex justify-end">
@@ -336,7 +428,7 @@ const FertilizationProgramsPage: React.FC = () => {
             {modal === 'VIEW_REPORT' && selectedProgram && (
                 <ProgramReportModal program={selectedProgram} onClose={() => setModal(null)} />
             )}
-            <ConfirmationModal isOpen={!!deletingId} onClose={() => setDeletingId(null)} onConfirm={confirmDelete} title="تأكيد حذف البرنامج" message="هل أنت متأكد من حذف هذا البرنامج؟ لا يمكن حذف برنامج مرتبط بمصروفات."/>
+            <ConfirmationModal isOpen={!!deletingId} onClose={() => setDeletingId(null)} onConfirm={confirmDelete} title="تأكيد حذف البرنامج" message="هل أنت متأكد من حذف هذا البرنامج؟ لا يمكن حذف برنامج مرتبط بمعاملات."/>
         </div>
     );
 };
