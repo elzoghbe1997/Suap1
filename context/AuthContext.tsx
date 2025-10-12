@@ -1,10 +1,9 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { lovable } from '../lovableClient';
 
 interface AuthContextType {
     isAuthenticated: boolean;
-    isLoading: boolean;
     login: (email: string, pass: string) => Promise<void>;
     signup: (name: string, email: string, pass: string) => Promise<void>;
     logout: () => void;
@@ -14,24 +13,17 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-    const [isLoading, setIsLoading] = useState<boolean>(true);
     const navigate = useNavigate();
 
     useEffect(() => {
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setIsAuthenticated(!!session);
-            setIsLoading(false);
-        });
-
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-            (async () => {
-                if (event === 'SIGNED_IN' && session) {
-                    setIsAuthenticated(true);
-                } else if (event === 'SIGNED_OUT') {
-                    setIsAuthenticated(false);
-                    navigate('/login', { replace: true });
-                }
-            })();
+        const { data: { subscription } } = lovable.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_IN' && session) {
+                setIsAuthenticated(true);
+            } else if (event === 'SIGNED_OUT') {
+                setIsAuthenticated(false);
+                // On logout, always navigate back to login
+                navigate('/login', { replace: true });
+            }
         });
 
         return () => {
@@ -40,7 +32,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }, [navigate]);
 
     const login = async (email: string, pass: string) => {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { error } = await lovable.auth.signInWithPassword({
             email,
             password: pass,
         });
@@ -48,14 +40,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (error) {
             throw new Error('البريد الإلكتروني أو كلمة المرور غير صحيحة.');
         }
+        // The onAuthStateChange listener will set isAuthenticated and trigger navigation
         navigate('/dashboard');
     };
-
+    
     const signup = async (name: string, email: string, pass: string) => {
         if (!name.trim()) throw new Error('الاسم مطلوب.');
         if (pass.length < 6) throw new Error('يجب أن تكون كلمة المرور 6 أحرف على الأقل.');
 
-        const { error } = await supabase.auth.signUp({
+        const { error } = await lovable.auth.signUp({
             email,
             password: pass,
             options: {
@@ -64,22 +57,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 }
             }
         });
-
+        
         if (error) {
             throw new Error(error.message || 'فشل إنشاء الحساب. قد يكون البريد الإلكتروني مستخدمًا.');
         }
+        // On successful signup, clear onboarding flag
+        localStorage.removeItem('appInitialized');
+        // The onAuthStateChange listener will set isAuthenticated and trigger navigation
         navigate('/dashboard');
     };
 
     const logout = async () => {
-        const { error } = await supabase.auth.signOut();
+        const { error } = await lovable.auth.signOut();
         if (error) {
             console.error('Error logging out:', error);
         }
+        // State and navigation are handled by onAuthStateChange
     };
 
     return (
-        <AuthContext.Provider value={{ isAuthenticated, isLoading, login, signup, logout }}>
+        <AuthContext.Provider value={{ isAuthenticated, login, signup, logout }}>
             {children}
         </AuthContext.Provider>
     );

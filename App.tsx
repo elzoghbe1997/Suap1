@@ -18,7 +18,7 @@ import TreasuryPage from './components/TreasuryPage.tsx';
 import TreasuryDetailsPage from './components/TreasuryDetailsPage.tsx';
 import AdvancesPage from './components/AdvancesPage.tsx';
 import { AppContextType } from './types.ts';
-import { useAppData } from './hooks/useAppDataSupabase.ts';
+import { useAppData } from './hooks/useAppData.ts';
 import { ToastProvider } from './context/ToastContext.tsx';
 import ToastContainer from './components/ToastContainer.tsx';
 import { SparklesIcon } from './components/Icons.tsx';
@@ -169,19 +169,14 @@ const AppContent: React.FC = () => {
   const [showOnboarding, setShowOnboarding] = React.useState(false);
 
   React.useEffect(() => {
-    if (isAuthenticated && !contextValue.loading) {
-      const hasData = contextValue.greenhouses.length > 0 ||
-                      contextValue.cropCycles.length > 0 ||
-                      contextValue.transactions.length > 0;
-
-      if (!hasData) {
-        setShowOnboarding(true);
-      }
+    if (isAuthenticated && !localStorage.getItem('appInitialized') && !contextValue.loading) {
+      setShowOnboarding(true);
     }
-  }, [isAuthenticated, contextValue.loading, contextValue.greenhouses.length, contextValue.cropCycles.length, contextValue.transactions.length]);
+  }, [isAuthenticated, contextValue.loading]);
 
   const handleOnboardingSelect = async (choice: 'demo' | 'fresh') => {
-    setShowOnboarding(false);
+    localStorage.setItem('appInitialized', 'true');
+    setShowOnboarding(false); // Hide modal immediately
 
     if (choice === 'fresh') {
       await contextValue.startFresh();
