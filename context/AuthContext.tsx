@@ -68,7 +68,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (error) {
             throw new Error(error.message || 'فشل إنشاء الحساب. قد يكون البريد الإلكتروني مستخدمًا.');
         }
-        localStorage.removeItem('appInitialized');
         navigate('/dashboard');
     };
 

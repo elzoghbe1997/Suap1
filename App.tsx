@@ -169,14 +169,19 @@ const AppContent: React.FC = () => {
   const [showOnboarding, setShowOnboarding] = React.useState(false);
 
   React.useEffect(() => {
-    if (isAuthenticated && !localStorage.getItem('appInitialized') && !contextValue.loading) {
-      setShowOnboarding(true);
+    if (isAuthenticated && !contextValue.loading) {
+      const hasData = contextValue.greenhouses.length > 0 ||
+                      contextValue.cropCycles.length > 0 ||
+                      contextValue.transactions.length > 0;
+
+      if (!hasData) {
+        setShowOnboarding(true);
+      }
     }
-  }, [isAuthenticated, contextValue.loading]);
+  }, [isAuthenticated, contextValue.loading, contextValue.greenhouses.length, contextValue.cropCycles.length, contextValue.transactions.length]);
 
   const handleOnboardingSelect = async (choice: 'demo' | 'fresh') => {
-    localStorage.setItem('appInitialized', 'true');
-    setShowOnboarding(false); // Hide modal immediately
+    setShowOnboarding(false);
 
     if (choice === 'fresh') {
       await contextValue.startFresh();

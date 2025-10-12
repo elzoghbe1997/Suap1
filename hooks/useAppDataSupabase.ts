@@ -566,7 +566,6 @@ export const useAppData = (): AppContextType => {
             setAdvances([]);
             setSettings(INITIAL_SETTINGS);
 
-            localStorage.removeItem('appInitialized');
             addToast("تم حذف جميع البيانات بنجاح.", "success");
         } catch (error: any) {
             console.error('Error deleting all data:', error);
@@ -582,7 +581,135 @@ export const useAppData = (): AppContextType => {
     };
 
     const loadDemoData = async () => {
-        window.location.reload();
+        try {
+            setLoading(true);
+            addToast('جار تحميل البيانات التجريبية...', 'info');
+
+            const demoData = {
+                greenhouses: [
+                    { name: 'الصوبة الشمالية', creationDate: '2023-01-15', initialCost: 150000 },
+                    { name: 'الصوبة الجنوبية', creationDate: '2023-03-20', initialCost: 185000 }
+                ],
+                farmers: [
+                    { name: 'أحمد محمود' },
+                    { name: 'علي حسن' }
+                ],
+                suppliers: [
+                    { name: 'شركة الأسمدة الحديثة' },
+                    { name: 'مبيدات النصر' }
+                ]
+            };
+
+            const createdGreenhouses = await Promise.all(
+                demoData.greenhouses.map(g => database.greenhouses.create(g))
+            );
+
+            const createdFarmers = await Promise.all(
+                demoData.farmers.map(f => database.farmers.create(f))
+            );
+
+            const createdSuppliers = await Promise.all(
+                demoData.suppliers.map(s => database.suppliers.create(s))
+            );
+
+            const cropCyclesData = [
+                {
+                    name: 'عروة الطماطم الشتوية 2023',
+                    startDate: '2023-10-01',
+                    status: CropCycleStatus.CLOSED,
+                    greenhouseId: createdGreenhouses[0].id,
+                    seedType: 'طماطم شيري',
+                    plantCount: 600,
+                    productionStartDate: '2024-01-10',
+                    farmerId: createdFarmers[0].id,
+                    farmerSharePercentage: 20
+                },
+                {
+                    name: 'عروة الخيار الصيفية 2024',
+                    startDate: '2024-04-15',
+                    status: CropCycleStatus.ACTIVE,
+                    greenhouseId: createdGreenhouses[1].id,
+                    seedType: 'خيار بلدي',
+                    plantCount: 850,
+                    productionStartDate: '2024-06-10',
+                    farmerId: createdFarmers[1].id,
+                    farmerSharePercentage: 25
+                },
+                {
+                    name: 'عروة الفلفل الربيعية 2024',
+                    startDate: '2024-03-01',
+                    status: CropCycleStatus.ACTIVE,
+                    greenhouseId: createdGreenhouses[0].id,
+                    seedType: 'فلفل ألوان',
+                    plantCount: 700,
+                    productionStartDate: null,
+                    farmerId: null,
+                    farmerSharePercentage: null
+                }
+            ];
+
+            const createdCropCycles = await Promise.all(
+                cropCyclesData.map(c => database.cropCycles.create(c))
+            );
+
+            const transactionsData = [
+                {
+                    date: '2023-10-01',
+                    description: 'شراء بذور طماطم',
+                    type: TransactionType.EXPENSE,
+                    category: 'بذور',
+                    amount: 2500,
+                    cropCycleId: createdCropCycles[0].id
+                },
+                {
+                    date: '2024-01-10',
+                    description: 'بيع أول دفعة محصول طماطم',
+                    type: TransactionType.REVENUE,
+                    category: 'أخرى',
+                    amount: 15000,
+                    cropCycleId: createdCropCycles[0].id,
+                    quantity: 500,
+                    priceItems: [{ quantity: 500, price: 30 }]
+                }
+            ];
+
+            await Promise.all(
+                transactionsData.map(t => database.transactions.create(t))
+            );
+
+            await database.farmerWithdrawals.create({
+                cropCycleId: createdCropCycles[0].id,
+                date: '2024-01-20',
+                amount: 2000,
+                description: 'سلفة أولى'
+            });
+
+            await database.supplierPayments.create({
+                date: '2024-06-12',
+                amount: 2000,
+                supplierId: createdSuppliers[0].id,
+                description: 'دفعة من حساب الأسمدة'
+            });
+
+            await database.fertilizationPrograms.create({
+                name: 'برنامج الأسبوع 1 - خيار 2024',
+                startDate: '2024-05-16',
+                endDate: '2024-05-22',
+                cropCycleId: createdCropCycles[1].id
+            });
+
+            await database.advances.create({
+                date: '2024-06-05',
+                amount: 5000,
+                description: 'سلفة شخصية'
+            });
+
+            await fetchAllData();
+            addToast('تم تحميل البيانات التجريبية بنجاح!', 'success');
+        } catch (error: any) {
+            console.error('Error loading demo data:', error);
+            addToast(error.message || 'فشل تحميل البيانات التجريبية.', 'error');
+        }
     };
 
     return {
