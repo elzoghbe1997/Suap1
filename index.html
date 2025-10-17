@@ -122,24 +122,24 @@
     "react": "https://aistudiocdn.com/react@^19.1.1",
     "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.9.3",
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
-    "recharts": "https://aistudiocdn.com/recharts@^3.2.1"
+    "recharts": "https://aistudiocdn.com/recharts@^3.2.1",
+    "@supabase/supabase-js": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm"
   }
 }
 </script>
 <script>
   // Prevents Flash of Incorrect Theme (FOUC)
+  // This part remains tricky without a backend to store user preferences before the app loads.
+  // We'll rely on a small localStorage check here, but the main source of truth will be the DB.
   (function () {
     let theme = 'system';
     try {
-      const settingsStr = localStorage.getItem('settings');
-      if (settingsStr && settingsStr !== 'undefined' && settingsStr !== 'null') {
-        const settings = JSON.parse(settingsStr);
-        if (settings && settings.theme) {
-          theme = settings.theme;
-        }
+      const settingsStr = localStorage.getItem('theme-preference'); // Use a dedicated key
+      if (settingsStr) {
+        theme = JSON.parse(settingsStr);
       }
     } catch (e) {
-      console.warn("Could not parse settings from localStorage for FOUC prevention.");
+      console.warn("Could not parse theme preference from localStorage for FOUC prevention.");
     }
     
     if (theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {

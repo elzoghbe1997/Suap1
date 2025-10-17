@@ -19,4 +19,5 @@ export const INITIAL_SETTINGS: AppSettings = {
   isAdvancesSystemEnabled: true,
   theme: 'system',
   expenseCategories: INITIAL_EXPENSE_CATEGORIES,
+  appInitialized: false,
 };

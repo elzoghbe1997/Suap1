@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { lovable } from '../lovableClient';
+import { supabase } from '../supabaseClient.ts';
 
 interface AuthContextType {
     isAuthenticated: boolean;
@@ -18,8 +18,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const navigate = useNavigate();
 
     useEffect(() => {
-        const { data: { subscription } } = lovable.auth.onAuthStateChange((event, session) => {
-            if (event === 'SIGNED_IN' && session) {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+            if (event === 'INITIAL_SESSION') {
+                setIsAuthenticated(!!session);
+            } else if (event === 'SIGNED_IN') {
                 setIsAuthenticated(true);
             } else if (event === 'SIGNED_OUT') {
                 setIsAuthenticated(false);
@@ -29,13 +31,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             setIsLoading(false);
         });
 
+        // Check initial session
+        const checkSession = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            setIsAuthenticated(!!session);
+            setIsLoading(false);
+        }
+        checkSession();
+
         return () => {
             subscription?.unsubscribe();
         };
     }, [navigate]);
 
     const login = async (email: string, pass: string) => {
-        const { error } = await lovable.auth.signInWithPassword({
+        const { error } = await supabase.auth.signInWithPassword({
             email,
             password: pass,
         });
@@ -52,7 +62,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (!name.trim()) throw new Error('الاسم مطلوب.');
         if (pass.length < 6) throw new Error('يجب أن تكون كلمة المرور 6 أحرف على الأقل.');
 
-        const { error } = await lovable.auth.signUp({
+        const { error } = await supabase.auth.signUp({
             email,
             password: pass,
             options: {
@@ -65,15 +75,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (error) {
             throw new Error(error.message || 'فشل إنشاء الحساب. قد يكون البريد الإلكتروني مستخدمًا.');
         }
-        // On successful signup, clear onboarding flag for the new user.
-        localStorage.removeItem('appInitialized');
+        
         // Manually set auth state to prevent race condition
         setIsAuthenticated(true);
         navigate('/dashboard');
     };
 
     const logout = async () => {
-        const { error } = await lovable.auth.signOut();
+        const { error } = await supabase.auth.signOut();
         if (error) {
             console.error('Error logging out:', error);
         }

@@ -102,12 +102,21 @@ const AppLayout: FC = () => {
     useEffect(() => {
         if (!contextValue || contextValue.loading) return;
         const root = window.document.documentElement;
+        const newTheme = contextValue.settings.theme;
 
-        if (contextValue.settings.theme === 'light') {
+        // Persist theme choice for FOUC prevention on next load
+        try {
+            localStorage.setItem('theme-preference', JSON.stringify(newTheme));
+        } catch(e) {
+            console.warn("Could not save theme preference to localStorage.");
+        }
+
+
+        if (newTheme === 'light') {
             root.classList.remove('dark');
             return; 
         }
-        if (contextValue.settings.theme === 'dark') {
+        if (newTheme === 'dark') {
             root.classList.add('dark');
             return;
         }
@@ -165,21 +174,19 @@ const AppLayout: FC = () => {
 
 const AppContent: FC = () => {
   const contextValue = useAppData();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
-    // Show onboarding if the user is authenticated, data is loaded, but the 'appInitialized' flag is not set.
-    if (isAuthenticated && !contextValue.loading && !isLoading && !localStorage.getItem('appInitialized')) {
+    // Show onboarding if the user is authenticated, data is loaded, but the 'appInitialized' flag in settings is false.
+    if (isAuthenticated && !contextValue.loading && !isAuthLoading && !contextValue.settings.appInitialized) {
       setShowOnboarding(true);
     }
-  }, [isAuthenticated, contextValue.loading, isLoading]);
+  }, [isAuthenticated, contextValue.loading, isAuthLoading, contextValue.settings.appInitialized]);
 
   const handleOnboardingSelect = async (choice: 'demo' | 'fresh') => {
-    // Set the flag immediately to prevent the modal from reappearing on reload.
-    localStorage.setItem('appInitialized', 'true');
     setShowOnboarding(false);
-
+    // The functions now handle setting the appInitialized flag in the DB.
     if (choice === 'fresh') {
       await contextValue.startFresh();
     } else {
@@ -192,7 +199,7 @@ const AppContent: FC = () => {
   }
   
   // Show a skeleton loader while auth state or initial data is loading.
-  if (isLoading || (isAuthenticated && contextValue.loading && !showOnboarding)) {
+  if (isAuthLoading || (isAuthenticated && contextValue.loading && !showOnboarding)) {
       return (
         <div className="relative h-screen flex overflow-hidden bg-slate-50 dark:bg-slate-900">
             <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
@@ -201,7 +208,7 @@ const AppContent: FC = () => {
         </div>
       );
   }
-
+  
   if (isAuthenticated && showOnboarding) {
     return <OnboardingModal onSelect={handleOnboardingSelect} />;
   }

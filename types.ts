@@ -41,6 +41,7 @@ export interface AppSettings {
   isAdvancesSystemEnabled?: boolean;
   theme: Theme;
   expenseCategories: ExpenseCategorySetting[];
+  appInitialized?: boolean; // Added for onboarding
 }
 
 export interface Person {
