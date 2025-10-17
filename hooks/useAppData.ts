@@ -57,6 +57,20 @@ export const useAppData = (): AppContextType => {
     const [people, setPeople] = React.useState<Person[]>([]);
     const [alerts, setAlerts] = React.useState<Alert[]>([]);
 
+    const updateSettings = async (newSettings: Partial<AppSettings>) => {
+        const updated = { ...settings, ...newSettings };
+        const { data, error } = await supabase.auth.updateUser({
+            data: { app_settings: toSnakeCase(updated) }
+        });
+        
+        if (error) {
+            console.error(error);
+            addToast(`خطأ في حفظ الإعدادات: ${error.message}`, 'error');
+        } else if (data.user?.user_metadata.app_settings) {
+            setSettings(toCamelCase(data.user.user_metadata.app_settings));
+        }
+    };
+
     const loadDataFromServer = React.useCallback(async () => {
         setLoading(true);
         const { data: { user } } = await supabase.auth.getUser();
@@ -65,42 +79,80 @@ export const useAppData = (): AppContextType => {
             return;
         }
 
-        // Fetch settings first
-        let { data: userSettings, error: settingsError } = await supabase
-            .from('settings')
-            .select('*')
-            .eq('user_id', user.id)
-            .single();
-            
-        if (settingsError || !userSettings) {
-            // No settings found, create initial settings for the user
-            const { data: newSettings, error: insertError } = await supabase
-                .from('settings')
-                .insert({ user_id: user.id, ...toSnakeCase(INITIAL_SETTINGS) })
-                .select()
-                .single();
-            if (insertError) console.error("Error creating initial settings:", insertError);
-            userSettings = newSettings;
-        }
+        // 1. Get settings from user_metadata
+        let loadedSettings: AppSettings | null = user.user_metadata.app_settings
+            ? toCamelCase(user.user_metadata.app_settings)
+            : null;
 
-        if (userSettings) {
-             const formattedSettings: AppSettings = toCamelCase(userSettings);
-            // Ensure expenseCategories is always an array
-            if (!formattedSettings.expenseCategories) {
-                formattedSettings.expenseCategories = INITIAL_SETTINGS.expenseCategories;
-            }
-            setSettings(formattedSettings);
+        let needsSettingsUpdate = false;
+        // 2. If no settings, initialize them.
+        if (!loadedSettings) {
+            loadedSettings = { ...INITIAL_SETTINGS };
+            needsSettingsUpdate = true;
         } else {
-             setSettings(INITIAL_SETTINGS);
+            // Ensure all keys from INITIAL_SETTINGS exist for forward compatibility
+            let settingsChanged = false;
+            for (const key in INITIAL_SETTINGS) {
+                if (!(key in loadedSettings)) {
+                    (loadedSettings as any)[key] = (INITIAL_SETTINGS as any)[key];
+                    settingsChanged = true;
+                }
+            }
+            if (settingsChanged) {
+                needsSettingsUpdate = true;
+            }
         }
-
+        
+        // 3. Handle defaults for expenseCategories which was a common issue.
+        if (!loadedSettings.expenseCategories || loadedSettings.expenseCategories.length === 0) {
+            loadedSettings.expenseCategories = INITIAL_SETTINGS.expenseCategories;
+            needsSettingsUpdate = true;
+        }
+    
+        // 4. Fetch core data needed for migration check
+        const [greenhousesRes, cropCyclesRes] = await Promise.all([
+             supabase.from('greenhouses').select('*').eq('user_id', user.id),
+             supabase.from('crop_cycles').select('*').eq('user_id', user.id)
+        ]);
+        const greenhousesData = toCamelCase(greenhousesRes.data || []);
+        const cropCyclesData = toCamelCase(cropCyclesRes.data || []);
+    
+        // 5. Check if user is an old user needing migration
+        const isOldUserWithData = !loadedSettings.appInitialized && (greenhousesData.length > 0 || cropCyclesData.length > 0);
+    
+        if (isOldUserWithData) {
+            loadedSettings.appInitialized = true;
+            needsSettingsUpdate = true;
+        }
+        
+        // 6. If settings were changed, update them in Supabase Auth
+        if (needsSettingsUpdate) {
+            const { data: updatedUserData, error: updateError } = await supabase.auth.updateUser({
+                data: { app_settings: toSnakeCase(loadedSettings) }
+            });
+            if (updateError) {
+                console.error("Error saving initial/migrated settings to user_metadata:", updateError);
+                addToast('فشل في تحديث إعدادات الحساب الأولية.', 'error');
+            } else if (updatedUserData.user?.user_metadata.app_settings) {
+                // Re-assign loadedSettings from the authoritative server response
+                // to ensure we have the most up-to-date data before setting state.
+                loadedSettings = toCamelCase(updatedUserData.user.user_metadata.app_settings);
+            }
+        }
+        
+        // 7. NOW set settings state. This makes the UI behave correctly immediately.
+        setSettings(loadedSettings);
+        setGreenhouses(greenhousesData);
+        setCropCycles(cropCyclesData);
+    
+        // 8. Fetch the rest of the data.
+        const remainingTables = ['transactions', 'farmers', 'farmer_withdrawals', 'suppliers', 'supplier_payments', 'fertilization_programs', 'advances', 'people'];
         const [
-            greenhousesRes, cropCyclesRes, transactionsRes, farmersRes, farmerWithdrawalsRes,
+            transactionsRes, farmersRes, farmerWithdrawalsRes,
             suppliersRes, supplierPaymentsRes, fertilizationProgramsRes, advancesRes, peopleRes
-        ] = await Promise.all(TABLES.map(table => supabase.from(table).select('*').eq('user_id', user.id)));
-
-        setGreenhouses(toCamelCase(greenhousesRes.data || []));
-        setCropCycles(toCamelCase(cropCyclesRes.data || []));
+        ] = await Promise.all(remainingTables.map(table => supabase.from(table).select('*').eq('user_id', user.id)));
+    
+        // 9. Set all remaining state
         setTransactions(toCamelCase(transactionsRes.data || []).sort((a: Transaction, b: Transaction) => new Date(b.date).getTime() - new Date(a.date).getTime()));
         setFarmers(toCamelCase(farmersRes.data || []));
         setFarmerWithdrawals(toCamelCase(farmerWithdrawalsRes.data || []).sort((a: FarmerWithdrawal, b: FarmerWithdrawal) => new Date(b.date).getTime() - new Date(a.date).getTime()));
@@ -109,9 +161,10 @@ export const useAppData = (): AppContextType => {
         setFertilizationPrograms(toCamelCase(fertilizationProgramsRes.data || []));
         setAdvances(toCamelCase(advancesRes.data || []).sort((a: Advance, b: Advance) => new Date(b.date).getTime() - new Date(a.date).getTime()));
         setPeople(toCamelCase(peopleRes.data || []));
-
+    
+        // 10. Finish loading
         setLoading(false);
-    }, []);
+    }, [addToast]);
 
     React.useEffect(() => {
         if (isAuthenticated) {
@@ -185,13 +238,6 @@ export const useAppData = (): AppContextType => {
     const addGreenhouse = async (g: Omit<Greenhouse, 'id'>) => { await createItem('greenhouses', g, setGreenhouses); addToast("تمت إضافة الصوبة.", 'success'); };
     const updateGreenhouse = async (g: Greenhouse) => { await updateItem('greenhouses', g, setGreenhouses); addToast("تم تحديث الصوبة.", 'success'); };
     const deleteGreenhouse = async (id: string) => { /* ... (check logic remains the same) ... */ await deleteItem('greenhouses', id, setGreenhouses); addToast("تم حذف الصوبة.", 'success'); };
-    const updateSettings = async (newSettings: Partial<AppSettings>) => {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-        const updated = { ...settings, ...newSettings };
-        const { data, error } = await supabase.from('settings').update(toSnakeCase(updated)).eq('user_id', user.id).select().single();
-        if (error) { console.error(error); } else if (data) { setSettings(toCamelCase(data)); }
-    };
     
     //... Other CRUD functions following the same pattern ...
     
@@ -230,6 +276,10 @@ export const useAppData = (): AppContextType => {
         
         await Promise.all(TABLES.map(table => supabase.from(table).delete().eq('user_id', user.id)));
         
+        // Reset settings to initial but keep appInitialized true so onboarding doesn't show
+        const resetSettings = { ...INITIAL_SETTINGS, appInitialized: true };
+        await updateSettings(resetSettings);
+
         addToast("تم حذف جميع البيانات بنجاح. سيتم إعادة تشغيل التطبيق.", "success");
         setTimeout(() => window.location.reload(), 1500);
     };
