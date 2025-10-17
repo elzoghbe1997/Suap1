@@ -334,8 +334,8 @@ const SuppliersPage: React.FC = () => {
     const [selectedSupplier, setSelectedSupplier] = useState<Supplier | undefined>(undefined);
     const [selectedPayment, setSelectedPayment] = useState<SupplierPayment | undefined>(undefined);
     // FIX: Untyped function calls may not accept type arguments.
-    // Rewrote useState call to use type assertion on the initial value instead of a generic type argument to work around a potential tooling issue.
-    const [deletingId, setDeletingId] = useState(null as {id: string, type: 'supplier' | 'payment'} | null);
+    // The previous syntax using `as` type assertion can be problematic with some tooling. Switched to standard generic argument for `useState`.
+    const [deletingId, setDeletingId] = useState<{id: string, type: 'supplier' | 'payment'} | null>(null);
     const modalRef = useRef<HTMLDivElement>(null);
 
 

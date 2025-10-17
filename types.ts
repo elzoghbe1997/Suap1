@@ -87,7 +87,7 @@ export interface Transaction {
   amount: number;
   cropCycleId: string;
   quantity?: number;
-  priceItems?: { quantity: number; price: number }[];
+  price_items?: { quantity: number; price: number }[];
   discount?: number;
   supplierId?: string | null;
   fertilizationProgramId?: string | null;

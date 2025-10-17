@@ -46,8 +46,8 @@ const InvoiceForm: React.FC<{
     const [fertilizationProgramId, setFertilizationProgramId] = React.useState(invoice?.fertilizationProgramId || '');
     
     const getInitialItems = () => {
-        if (invoice?.priceItems && invoice.priceItems.length > 0) {
-            return invoice.priceItems.map(p => ({ 
+        if (invoice?.price_items && invoice.price_items.length > 0) {
+            return invoice.price_items.map(p => ({ 
                 quantity: p.quantity.toString(), 
                 price: p.price.toString() 
             }));
@@ -128,14 +128,14 @@ const InvoiceForm: React.FC<{
             return;
         }
 
-        const priceItems = items
+        const price_items = items
             .map(item => ({
                 quantity: Number(item.quantity) || 0,
                 price: Number(item.price) || 0
             }))
             .filter(item => item.quantity > 0 || item.price > 0);
 
-        if (priceItems.length === 0) {
+        if (price_items.length === 0) {
             addToast('يرجى إدخال بيانات بند واحد على الأقل.', 'error');
             return;
         }
@@ -151,7 +151,7 @@ const InvoiceForm: React.FC<{
             category: 'أخرى',
             amount: calculatedAmount,
             quantity: totalQuantity,
-            priceItems,
+            price_items,
             discount: Number(discount),
             fertilizationProgramId: fertilizationProgramId || null,
         };
