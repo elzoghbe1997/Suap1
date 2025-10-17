@@ -30,45 +30,6 @@ import TransactionListPage from './components/TransactionListPage.tsx';
 
 export const AppContext = createContext<AppContextType | null>(null);
 
-const OnboardingModal: FC<{ onSelect: (choice: 'demo' | 'fresh') => void }> = ({ onSelect }) => {
-  const [isAnimating, setIsAnimating] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setIsAnimating(true), 10);
-    return () => clearTimeout(timer);
-  }, []);
-
-  return (
-    <div className={`absolute inset-0 bg-slate-100 dark:bg-slate-900 z-50 flex items-center justify-center p-4 transition-opacity duration-500 ${isAnimating ? 'opacity-100' : 'opacity-0'}`}>
-      <div className={`w-full max-w-2xl mx-auto bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8 sm:p-12 text-center transform transition-all duration-500 ease-out ${isAnimating ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
-        <SparklesIcon className="w-16 h-16 text-emerald-500 mx-auto mb-6" />
-        <h1 className="text-3xl sm:text-4xl font-bold text-slate-800 dark:text-white mb-4">
-          أهلاً بك في المحاسب للصوب الزراعية
-        </h1>
-        <p className="text-lg text-slate-600 dark:text-slate-400 mb-8">
-          اختر كيف تود أن تبدأ تجربتك.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <button
-            onClick={() => onSelect('demo')}
-            className="flex-1 px-6 py-4 text-lg font-semibold text-white bg-emerald-600 rounded-lg shadow-md hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all transform hover:scale-105"
-          >
-            البدء ببيانات تجريبية
-            <span className="block text-sm font-normal opacity-80"> لاستكشاف إمكانيات التطبيق </span>
-          </button>
-          <button
-            onClick={() => onSelect('fresh')}
-            className="flex-1 px-6 py-4 text-lg font-semibold text-slate-800 dark:text-slate-200 bg-slate-200 dark:bg-slate-700 rounded-lg shadow-md hover:bg-slate-300 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-400 transition-all transform hover:scale-105"
-          >
-            البدء من الصفر
-            <span className="block text-sm font-normal opacity-80">لتسجيل بياناتك الفعلية فوراً</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 const DeletingDataOverlay: FC = () => (
     <div className="absolute inset-0 bg-slate-900 z-50 flex flex-col items-center justify-center text-white">
         <svg className="animate-spin h-10 w-10 text-white mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -175,31 +136,13 @@ const AppLayout: FC = () => {
 const AppContent: FC = () => {
   const contextValue = useAppData();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
-  const [showOnboarding, setShowOnboarding] = useState(false);
-
-  useEffect(() => {
-    // Show onboarding if the user is authenticated, data is loaded, but the 'appInitialized' flag in settings is false.
-    if (isAuthenticated && !contextValue.loading && !isAuthLoading && !contextValue.settings.appInitialized) {
-      setShowOnboarding(true);
-    }
-  }, [isAuthenticated, contextValue.loading, isAuthLoading, contextValue.settings.appInitialized]);
-
-  const handleOnboardingSelect = async (choice: 'demo' | 'fresh') => {
-    setShowOnboarding(false);
-    // The functions now handle setting the appInitialized flag in the DB.
-    if (choice === 'fresh') {
-      await contextValue.startFresh();
-    } else {
-      await contextValue.loadDemoData();
-    }
-  };
   
   if (contextValue.isDeletingData) {
     return <DeletingDataOverlay />;
   }
   
   // Show a skeleton loader while auth state or initial data is loading.
-  if (isAuthLoading || (isAuthenticated && contextValue.loading && !showOnboarding)) {
+  if (isAuthLoading || (isAuthenticated && contextValue.loading)) {
       return (
         <div className="relative h-screen flex overflow-hidden bg-slate-50 dark:bg-slate-900">
             <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
@@ -207,10 +150,6 @@ const AppContent: FC = () => {
             </main>
         </div>
       );
-  }
-  
-  if (isAuthenticated && showOnboarding) {
-    return <OnboardingModal onSelect={handleOnboardingSelect} />;
   }
   
   return (

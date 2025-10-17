@@ -36,6 +36,7 @@ const toSnakeCase = (obj: any): any => {
 
 
 const TABLES = ['greenhouses', 'crop_cycles', 'transactions', 'farmers', 'farmer_withdrawals', 'suppliers', 'supplier_payments', 'fertilization_programs', 'advances', 'people'];
+const dateSort = <T extends { date: string }>(a: T, b: T) => new Date(b.date).getTime() - new Date(a.date).getTime();
 
 export const useAppData = (): AppContextType => {
     const { addToast } = React.useContext(ToastContext) as ToastContextType;
@@ -78,91 +79,72 @@ export const useAppData = (): AppContextType => {
             setLoading(false);
             return;
         }
-
-        // 1. Get settings from user_metadata
+    
+        // 1. Get settings from user_metadata.
         let loadedSettings: AppSettings | null = user.user_metadata.app_settings
             ? toCamelCase(user.user_metadata.app_settings)
             : null;
-
+    
         let needsSettingsUpdate = false;
-        // 2. If no settings, initialize them.
+        // 2. If no settings or settings are missing keys, initialize/merge them.
         if (!loadedSettings) {
             loadedSettings = { ...INITIAL_SETTINGS };
             needsSettingsUpdate = true;
         } else {
-            // Ensure all keys from INITIAL_SETTINGS exist for forward compatibility
-            let settingsChanged = false;
+            // Ensure all keys from INITIAL_SETTINGS exist for forward compatibility.
             for (const key in INITIAL_SETTINGS) {
                 if (!(key in loadedSettings)) {
                     (loadedSettings as any)[key] = (INITIAL_SETTINGS as any)[key];
-                    settingsChanged = true;
+                    needsSettingsUpdate = true;
                 }
             }
-            if (settingsChanged) {
+            // Also handle the expense categories specifically, as it was a common issue.
+            if (!loadedSettings.expenseCategories || loadedSettings.expenseCategories.length === 0) {
+                loadedSettings.expenseCategories = INITIAL_SETTINGS.expenseCategories;
                 needsSettingsUpdate = true;
             }
         }
         
-        // 3. Handle defaults for expenseCategories which was a common issue.
-        if (!loadedSettings.expenseCategories || loadedSettings.expenseCategories.length === 0) {
-            loadedSettings.expenseCategories = INITIAL_SETTINGS.expenseCategories;
-            needsSettingsUpdate = true;
-        }
-    
-        // 4. Fetch core data needed for migration check
-        const [greenhousesRes, cropCyclesRes] = await Promise.all([
-             supabase.from('greenhouses').select('*').eq('user_id', user.id),
-             supabase.from('crop_cycles').select('*').eq('user_id', user.id)
-        ]);
-        const greenhousesData = toCamelCase(greenhousesRes.data || []);
-        const cropCyclesData = toCamelCase(cropCyclesRes.data || []);
-    
-        // 5. Check if user is an old user needing migration
-        const isOldUserWithData = !loadedSettings.appInitialized && (greenhousesData.length > 0 || cropCyclesData.length > 0);
-    
-        if (isOldUserWithData) {
-            loadedSettings.appInitialized = true;
-            needsSettingsUpdate = true;
-        }
-        
-        // 6. If settings were changed, update them in Supabase Auth
+        // 3. If settings were changed, update them in Supabase Auth.
         if (needsSettingsUpdate) {
             const { data: updatedUserData, error: updateError } = await supabase.auth.updateUser({
                 data: { app_settings: toSnakeCase(loadedSettings) }
             });
             if (updateError) {
-                console.error("Error saving initial/migrated settings to user_metadata:", updateError);
+                console.error("Error saving initial settings to user_metadata:", updateError);
                 addToast('فشل في تحديث إعدادات الحساب الأولية.', 'error');
             } else if (updatedUserData.user?.user_metadata.app_settings) {
-                // Re-assign loadedSettings from the authoritative server response
-                // to ensure we have the most up-to-date data before setting state.
+                // Re-assign from the authoritative server response.
                 loadedSettings = toCamelCase(updatedUserData.user.user_metadata.app_settings);
             }
         }
         
-        // 7. NOW set settings state. This makes the UI behave correctly immediately.
-        setSettings(loadedSettings);
-        setGreenhouses(greenhousesData);
-        setCropCycles(cropCyclesData);
+        // 4. Set settings state.
+        setSettings(loadedSettings!);
     
-        // 8. Fetch the rest of the data.
-        const remainingTables = ['transactions', 'farmers', 'farmer_withdrawals', 'suppliers', 'supplier_payments', 'fertilization_programs', 'advances', 'people'];
+        // 5. Fetch all data tables in parallel.
+        const responses = await Promise.all(
+            TABLES.map(table => supabase.from(table).select('*').eq('user_id', user.id))
+        );
+    
         const [
-            transactionsRes, farmersRes, farmerWithdrawalsRes,
+            greenhousesRes, cropCyclesRes, transactionsRes, farmersRes, farmerWithdrawalsRes,
             suppliersRes, supplierPaymentsRes, fertilizationProgramsRes, advancesRes, peopleRes
-        ] = await Promise.all(remainingTables.map(table => supabase.from(table).select('*').eq('user_id', user.id)));
+        ] = responses;
     
-        // 9. Set all remaining state
-        setTransactions(toCamelCase(transactionsRes.data || []).sort((a: Transaction, b: Transaction) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+        // 6. Set state for all data.
+        setGreenhouses(toCamelCase(greenhousesRes.data || []));
+        setCropCycles(toCamelCase(cropCyclesRes.data || []));
+        setTransactions(toCamelCase(transactionsRes.data || []).sort(dateSort));
         setFarmers(toCamelCase(farmersRes.data || []));
-        setFarmerWithdrawals(toCamelCase(farmerWithdrawalsRes.data || []).sort((a: FarmerWithdrawal, b: FarmerWithdrawal) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+        setFarmerWithdrawals(toCamelCase(farmerWithdrawalsRes.data || []).sort(dateSort));
         setSuppliers(toCamelCase(suppliersRes.data || []));
-        setSupplierPayments(toCamelCase(supplierPaymentsRes.data || []).sort((a: SupplierPayment, b: SupplierPayment) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+        setSupplierPayments(toCamelCase(supplierPaymentsRes.data || []).sort(dateSort));
         setFertilizationPrograms(toCamelCase(fertilizationProgramsRes.data || []));
-        setAdvances(toCamelCase(advancesRes.data || []).sort((a: Advance, b: Advance) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+        setAdvances(toCamelCase(advancesRes.data || []).sort(dateSort));
         setPeople(toCamelCase(peopleRes.data || []));
-    
-        // 10. Finish loading
+        
+        // 7. Finish loading.
         setLoading(false);
     }, [addToast]);
 
@@ -227,8 +209,6 @@ export const useAppData = (): AppContextType => {
         return farmerWithdrawals.filter(w => associatedCycleIds.has(w.cropCycleId));
     }, [cropCycles, farmerWithdrawals]);
 
-    const dateSort = <T extends { date: string }>(a: T, b: T) => new Date(b.date).getTime() - new Date(a.date).getTime();
-
     const addCropCycle = async (cycle: Omit<CropCycle, 'id'>) => { await createItem('crop_cycles', cycle, setCropCycles); addToast("تمت إضافة العروة بنجاح.", 'success'); };
     const updateCropCycle = async (updatedCycle: CropCycle) => { await updateItem('crop_cycles', updatedCycle, setCropCycles); addToast("تم تحديث العروة بنجاح.", 'success'); };
     const archiveOrDeleteCropCycle = async (id: string) => { /* ... (logic remains mostly the same, but calls updateItem or deleteItem) ... */ };
@@ -276,16 +256,15 @@ export const useAppData = (): AppContextType => {
         
         await Promise.all(TABLES.map(table => supabase.from(table).delete().eq('user_id', user.id)));
         
-        // Reset settings to initial but keep appInitialized true so onboarding doesn't show
-        const resetSettings = { ...INITIAL_SETTINGS, appInitialized: true };
-        await updateSettings(resetSettings);
+        // Reset settings to initial
+        await updateSettings(INITIAL_SETTINGS);
 
         addToast("تم حذف جميع البيانات بنجاح. سيتم إعادة تشغيل التطبيق.", "success");
         setTimeout(() => window.location.reload(), 1500);
     };
 
     const startFresh = async () => {
-        await updateSettings({ appInitialized: true });
+        // This function is now effectively a no-op but kept for context signature consistency
     };
 
     const loadDemoData = async () => {
@@ -310,7 +289,7 @@ export const useAppData = (): AppContextType => {
              supabase.from('people').insert(dataWithUser(demoData.people)),
         ]);
 
-        await updateSettings({ ...demoData.settings, appInitialized: true });
+        await updateSettings({ ...demoData.settings });
         addToast('تم تحميل البيانات التجريبية بنجاح.', 'success');
         await loadDataFromServer(); // Reload all data from server
     };
