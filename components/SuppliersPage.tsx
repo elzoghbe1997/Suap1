@@ -330,10 +330,9 @@ const SupplierCard: React.FC<{
 const SuppliersPage: React.FC = () => {
     const { loading, suppliers, transactions, supplierPayments, cropCycles, addSupplier, updateSupplier, deleteSupplier, addSupplierPayment, updateSupplierPayment, deleteSupplierPayment, settings } = useContext(AppContext) as AppContextType;
 
-    const [modal, setModal] = useState<'ADD_SUPPLIER' | 'EDIT_SUPPLIER' | 'ADD_PAYMENT' | 'EDIT_PAYMENT' | 'DETAILS' | null>(null);
-    const [selectedSupplier, setSelectedSupplier] = useState<Supplier | undefined>(undefined);
-    const [selectedPayment, setSelectedPayment] = useState<SupplierPayment | undefined>(undefined);
-    // FIX: Using `React.useState` directly resolves the "Untyped function calls may not accept type arguments" error by ensuring the correctly typed generic function from the React namespace is used, avoiding potential shadowing or toolchain issues with the destructured import.
+    const [modal, setModal] = React.useState<'ADD_SUPPLIER' | 'EDIT_SUPPLIER' | 'ADD_PAYMENT' | 'EDIT_PAYMENT' | 'DETAILS' | null>(null);
+    const [selectedSupplier, setSelectedSupplier] = React.useState<Supplier | undefined>(undefined);
+    const [selectedPayment, setSelectedPayment] = React.useState<SupplierPayment | undefined>(undefined);
     const [deletingId, setDeletingId] = React.useState<{id: string, type: 'supplier' | 'payment'} | null>(null);
     const modalRef = useRef<HTMLDivElement>(null);
 
