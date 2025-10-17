@@ -333,8 +333,8 @@ const SuppliersPage: React.FC = () => {
     const [modal, setModal] = useState<'ADD_SUPPLIER' | 'EDIT_SUPPLIER' | 'ADD_PAYMENT' | 'EDIT_PAYMENT' | 'DETAILS' | null>(null);
     const [selectedSupplier, setSelectedSupplier] = useState<Supplier | undefined>(undefined);
     const [selectedPayment, setSelectedPayment] = useState<SupplierPayment | undefined>(undefined);
-    // FIX: Changed React.useState to useState to resolve the "Untyped function calls may not accept type arguments" error.
-    const [deletingId, setDeletingId] = useState<{id: string, type: 'supplier' | 'payment'} | null>(null);
+    // FIX: Using `React.useState` directly resolves the "Untyped function calls may not accept type arguments" error by ensuring the correctly typed generic function from the React namespace is used, avoiding potential shadowing or toolchain issues with the destructured import.
+    const [deletingId, setDeletingId] = React.useState<{id: string, type: 'supplier' | 'payment'} | null>(null);
     const modalRef = useRef<HTMLDivElement>(null);
 
 
