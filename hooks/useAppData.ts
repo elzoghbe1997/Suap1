@@ -26,11 +26,6 @@ const toSnakeCase = (obj: any): any => {
         return obj.map(v => toSnakeCase(v));
     } else if (obj !== null && typeof obj === 'object' && obj.constructor === Object) {
         return Object.keys(obj).reduce((acc, key) => {
-            // Avoid converting properties that might be JSON objects like priceItems
-            if (key === 'priceItems' || key === 'expenseCategories') {
-                acc[key] = obj[key];
-                return acc;
-            }
             const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
             acc[snakeKey] = toSnakeCase(obj[key]);
             return acc;
