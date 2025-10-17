@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>المحاسب للصوب الزراعية</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" integrity="sha512-NhSC1YmyruXifcj/KFRWoC561YpHpc5JtzgvbuzxVy-yV6fuindyMVpxfzTCpGm1OMsaGbYbprfqhNscAUY+aQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="manifest" href="manifest.json" />
     <meta name="theme-color" content="#0f172a" />
     <script>
@@ -16,10 +17,21 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border-width: 0;
+      }
       body {
         font-family: 'Cairo', sans-serif;
       }
-      .body-no-scroll main {
+      .body-no-scroll main, .body-no-scroll {
         overflow-y: hidden;
       }
       @keyframes pageFadeIn {
@@ -110,8 +122,7 @@
     "react": "https://aistudiocdn.com/react@^19.1.1",
     "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.9.3",
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
-    "recharts": "https://aistudiocdn.com/recharts@^3.2.1",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.21.0"
+    "recharts": "https://aistudiocdn.com/recharts@^3.2.1"
   }
 }
 </script>
@@ -142,22 +153,44 @@
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
   <body class="bg-slate-50 dark:bg-slate-900">
-    <div id="root"></div>
-    <script>
-      if ("serviceWorker" in navigator) {
-        window.addEventListener("load", () => {
-          navigator.serviceWorker.register("/sw.js").then(
-            (registration) => {
-              console.log("ServiceWorker registration successful with scope: ", registration.scope);
-            },
-            (error) => {
-              console.log("ServiceWorker registration failed: ", error);
+    <div id="root">
+      <style>
+        .initial-loader-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            width: 100vw;
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
+        .initial-loader-spinner {
+            animation: spin 1s linear infinite;
+            height: 56px;
+            width: 56px;
+            color: #10b981;
+        }
+        .dark .initial-loader-spinner {
+            color: #34d399;
+        }
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
             }
-          );
-        });
-      }
-    </script>
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+    <div class="initial-loader-container">
+        <svg class="initial-loader-spinner" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+    </div>
+    </div>
     <!-- Change script type to text/babel for Babel to transpile it -->
-    <script type="text/babel" data-presets="react,typescript" data-type="module" src="/index.tsx"></script>
+    <script type="text/babel" data-presets="react,typescript" data-type="module" src="index.tsx"></script>
   </body>
 </html>

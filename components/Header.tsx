@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { FC, memo, useContext, useState, useEffect, MouseEvent } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { AppContext } from '../App.tsx';
 import { AppContextType, Alert, Theme, AlertType, CropCycle } from '../types.ts';
 import { MenuIcon, AlertIcon, WarningIcon, SunIcon, MoonIcon, SystemIcon } from './Icons.tsx';
 import InstallPWAButton from './InstallPWAButton.tsx';
 
-const AlertsDropdown: React.FC<{ alerts: Alert[]; onClose: () => void }> = React.memo(({ alerts, onClose }) => {
+const AlertsDropdown: FC<{ alerts: Alert[]; onClose: () => void }> = memo(({ alerts, onClose }) => {
     const navigate = useNavigate();
 
     const handleAlertClick = (alert: Alert) => {
@@ -63,9 +63,9 @@ const AlertsDropdown: React.FC<{ alerts: Alert[]; onClose: () => void }> = React
     );
 });
 
-const ThemeSwitcher: React.FC = React.memo(() => {
-    const { settings, updateSettings } = React.useContext(AppContext) as AppContextType;
-    const [isThemeOpen, setIsThemeOpen] = React.useState(false);
+const ThemeSwitcher: FC = memo(() => {
+    const { settings, updateSettings } = useContext(AppContext) as AppContextType;
+    const [isThemeOpen, setIsThemeOpen] = useState(false);
 
     const themeIcons = {
         light: <SunIcon className="h-5 w-5" />,
@@ -84,7 +84,7 @@ const ThemeSwitcher: React.FC = React.memo(() => {
         setIsThemeOpen(false);
     };
 
-    React.useEffect(() => {
+    useEffect(() => {
         const close = () => setIsThemeOpen(false);
         if (isThemeOpen) {
             window.addEventListener('click', close);
@@ -127,10 +127,10 @@ const ThemeSwitcher: React.FC = React.memo(() => {
     );
 });
 
-const DynamicTitle: React.FC = () => {
+const DynamicTitle: FC = () => {
     const location = useLocation();
     const params = useParams();
-    const { cropCycles } = React.useContext(AppContext) as AppContextType;
+    const { cropCycles } = useContext(AppContext) as AppContextType;
 
     const getPageTitle = () => {
         const path = location.pathname;
@@ -144,13 +144,13 @@ const DynamicTitle: React.FC = () => {
             const cycle = cropCycles.find(c => c.id === cropCycleId);
             return cycle ? `صندوق: ${cycle.name}` : 'تفاصيل الصندوق';
         }
-        if (path.startsWith('/invoices')) return 'إدارة الفواتير';
-        if (path.startsWith('/expenses')) return 'إدارة المصروفات';
         if (path.startsWith('/greenhouse/') && path.endsWith('/report')) return 'تقرير الصوبة';
         
         switch (path) {
           case '/dashboard': return 'لوحة التحكم';
           case '/cycles': return 'إدارة العروات';
+          case '/invoices': return 'إدارة الفواتير';
+          case '/expenses': return 'إدارة المصروفات';
           case '/advances': return 'إدارة السلف الشخصية';
           case '/programs': return 'أرباح البرامج الزراعية';
           case '/farmer-accounts': return 'ادارة حساب المزارع';
@@ -171,16 +171,16 @@ interface HeaderProps {
     toggleSidebar: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
-  const { alerts } = React.useContext(AppContext) as AppContextType;
-  const [isAlertsOpen, setIsAlertsOpen] = React.useState(false);
+const Header: FC<HeaderProps> = ({ toggleSidebar }) => {
+  const { alerts } = useContext(AppContext) as AppContextType;
+  const [isAlertsOpen, setIsAlertsOpen] = useState(false);
   
-    const handleAlertsToggle = (e: React.MouseEvent) => {
+    const handleAlertsToggle = (e: MouseEvent) => {
         e.stopPropagation();
         setIsAlertsOpen(prev => !prev);
     };
     
-    React.useEffect(() => {
+    useEffect(() => {
         const close = () => setIsAlertsOpen(false);
         if (isAlertsOpen) {
             window.addEventListener('click', close);

@@ -29,10 +29,19 @@ const WithdrawalForm: React.FC<{
 
     const availableCycles = React.useMemo(() => {
         if (!selectedFarmerId) return [];
-        return cycles.filter(c =>
-            c.farmerId === selectedFarmerId &&
-            (c.status === CropCycleStatus.ACTIVE || c.status === CropCycleStatus.CLOSED || c.id === withdrawal?.cropCycleId)
+        
+        const availableForFarmer = cycles.filter(
+            c => c.farmerId === selectedFarmerId && (c.status === CropCycleStatus.ACTIVE || c.status === CropCycleStatus.CLOSED)
         );
+        
+        if (withdrawal?.cropCycleId) {
+            const existingCycle = cycles.find(c => c.id === withdrawal.cropCycleId);
+            if (existingCycle && existingCycle.farmerId === selectedFarmerId && !availableForFarmer.some(ac => ac.id === existingCycle.id)) {
+                 return [...availableForFarmer, existingCycle].sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
+            }
+        }
+        
+        return availableForFarmer.sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
     }, [selectedFarmerId, cycles, withdrawal]);
 
     React.useEffect(() => {

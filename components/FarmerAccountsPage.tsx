@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useRef, useContext, FC, FormEvent, memo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AppContext } from '../App.tsx';
 import { AppContextType, TransactionType, Farmer, FarmerWithdrawal, CropCycle, CropCycleStatus, Transaction } from '../types.ts';
@@ -8,13 +8,14 @@ import ConfirmationModal from './ConfirmationModal.tsx';
 import SkeletonCard from './SkeletonCard.tsx';
 import { useAnimatedCounter } from '../hooks/useAnimatedCounter.ts';
 import WithdrawalForm from './WithdrawalForm.tsx';
+import Pagination from './Pagination.tsx';
 
 const formInputClass = "mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500";
 
-const FarmerForm: React.FC<{ farmer?: Farmer; onSave: (farmer: Omit<Farmer, 'id'> | Farmer) => void; onCancel: () => void }> = ({ farmer, onSave, onCancel }) => {
-    const [name, setName] = React.useState(farmer?.name || '');
+const FarmerForm: FC<{ farmer?: Farmer; onSave: (farmer: Omit<Farmer, 'id'> | Farmer) => void; onCancel: () => void }> = ({ farmer, onSave, onCancel }) => {
+    const [name, setName] = useState(farmer?.name || '');
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
         const data = { name };
         if (farmer) {
@@ -40,12 +41,12 @@ const FarmerForm: React.FC<{ farmer?: Farmer; onSave: (farmer: Omit<Farmer, 'id'
 
 const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EGP', maximumFractionDigits: 0 }).format(amount);
 
-const AnimatedNumber: React.FC<{ value: number }> = React.memo(({ value }) => {
+const AnimatedNumber: FC<{ value: number }> = memo(({ value }) => {
     const count = useAnimatedCounter(value);
     return <>{formatCurrency(count)}</>;
 });
 
-const FarmerStatCard: React.FC<{ title: string; value: number; icon: React.ReactNode; }> = ({ title, value, icon }) => (
+const FarmerStatCard: FC<{ title: string; value: number; icon: React.ReactNode; }> = memo(({ title, value, icon }) => (
     <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-4">
         <div className="flex items-center">
             {icon}
@@ -57,100 +58,183 @@ const FarmerStatCard: React.FC<{ title: string; value: number; icon: React.React
             </div>
         </div>
     </div>
-);
+));
 
-const WithdrawalsReportModal: React.FC<{ farmer: Farmer; withdrawals: FarmerWithdrawal[]; onClose: () => void; onEdit: (w: FarmerWithdrawal) => void; onDelete: (id: string) => void; }> = ({ farmer, withdrawals, onClose, onEdit, onDelete }) => {
-    const { cropCycles } = React.useContext(AppContext) as AppContextType;
+const WithdrawalsReportModal: FC<{ farmer: Farmer; withdrawals: FarmerWithdrawal[]; onClose: () => void; onEdit: (w: FarmerWithdrawal) => void; onDelete: (id: string) => void; }> = ({ farmer, withdrawals, onClose, onEdit, onDelete }) => {
+    const { cropCycles } = useContext(AppContext) as AppContextType;
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 5;
+
+    const totalPages = Math.ceil(withdrawals.length / ITEMS_PER_PAGE);
+    const currentWithdrawals = withdrawals.slice(
+        (currentPage - 1) * ITEMS_PER_PAGE,
+        currentPage * ITEMS_PER_PAGE
+    );
+
 
     return (
         <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4" onClick={onClose}>
-            <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto modal-scroll-contain" onClick={e => e.stopPropagation()}>
+            <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
                 <div className="flex justify-between items-center mb-4 pb-4 border-b border-slate-200 dark:border-slate-700">
                     <h2 className="text-2xl font-bold text-slate-800 dark:text-white">تقرير سحوبات: {farmer.name}</h2>
                     <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700">
                         <CloseIcon className="w-6 h-6" />
                     </button>
                 </div>
-                {withdrawals.length > 0 ? (
-                    <div>
-                        {/* Desktop Table View */}
-                        <div className="hidden md:block overflow-x-auto">
-                            <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700 text-sm">
-                                <thead className="bg-slate-50 dark:bg-slate-700/50">
-                                    <tr>
-                                        {['التاريخ', 'الوصف', 'العروة', 'المبلغ', 'الإجراءات'].map(h => 
-                                        <th key={h} className="py-3 px-4 text-right font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">{h}</th>)}
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-                                    {withdrawals.map(w => (
-                                        <tr key={w.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                                            <td className="py-3 px-4 whitespace-nowrap">{w.date}</td>
-                                            <td className="py-3 px-4 whitespace-nowrap">{w.description}</td>
-                                            <td className="py-3 px-4 whitespace-nowrap text-slate-500 dark:text-slate-400">{cropCycles.find(c => c.id === w.cropCycleId)?.name ?? 'غير محدد'}</td>
-                                            <td className="py-3 px-4 whitespace-nowrap font-medium text-indigo-600">{formatCurrency(w.amount)}</td>
-                                            <td className="py-3 px-4 whitespace-nowrap">
-                                                <div className="flex items-center space-x-2 space-x-reverse">
-                                                    <button onClick={() => onEdit(w)} className="text-blue-500 hover:text-blue-700 p-1 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/50" aria-label={`تعديل السحب ${w.description}`}><EditIcon className="w-5 h-5"/></button>
-                                                    <button onClick={() => onDelete(w.id)} className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50" aria-label={`حذف السحب ${w.description}`}><DeleteIcon className="w-5 h-5"/></button>
-                                                </div>
-                                            </td>
+                <div className="flex-grow overflow-y-auto modal-scroll-contain">
+                    {withdrawals.length > 0 ? (
+                        <div>
+                            {/* Desktop Table View */}
+                            <div className="hidden md:block overflow-x-auto">
+                                <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700 text-sm">
+                                    <thead className="bg-slate-50 dark:bg-slate-700/50">
+                                        <tr>
+                                            {['التاريخ', 'الوصف', 'العروة', 'المبلغ', 'الإجراءات'].map(h => 
+                                            <th key={h} className="py-3 px-4 text-right font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">{h}</th>)}
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                         {/* Mobile Card View */}
-                        <div className="md:hidden space-y-4">
-                             {withdrawals.map(w => (
-                                <div key={w.id} className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-4 space-y-3">
-                                    <div className="flex justify-between items-start">
-                                        <p className="font-bold text-slate-800 dark:text-white flex-1 pr-2">{w.description}</p>
-                                        <p className="font-semibold text-indigo-600 dark:text-indigo-400 whitespace-nowrap">{formatCurrency(w.amount)}</p>
-                                    </div>
-                                    <div className="text-sm text-slate-600 dark:text-slate-400">
-                                        <p><strong className="font-medium text-slate-700 dark:text-slate-300">العروة:</strong> {cropCycles.find(c => c.id === w.cropCycleId)?.name ?? 'غير محدد'}</p>
-                                    </div>
-                                    <div className="flex justify-between items-center border-t border-slate-200 dark:border-slate-700 pt-3 mt-3">
-                                        <p className="text-xs text-slate-500 dark:text-slate-400">{w.date}</p>
-                                        <div className="flex items-center space-x-2 space-x-reverse">
-                                            <button onClick={() => onEdit(w)} className="text-blue-500 hover:text-blue-700 p-1 rounded-full" aria-label={`تعديل السحب ${w.description}`}><EditIcon className="w-5 h-5"/></button>
-                                            <button onClick={() => onDelete(w.id)} className="text-red-500 hover:text-red-700 p-1 rounded-full" aria-label={`حذف السحب ${w.description}`}><DeleteIcon className="w-5 h-5"/></button>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                                        {currentWithdrawals.map(w => (
+                                            <tr key={w.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                                                <td className="py-3 px-4 whitespace-nowrap">{w.date}</td>
+                                                <td className="py-3 px-4 whitespace-nowrap">{w.description}</td>
+                                                <td className="py-3 px-4 whitespace-nowrap text-slate-500 dark:text-slate-400">{cropCycles.find(c => c.id === w.cropCycleId)?.name ?? 'غير محدد'}</td>
+                                                <td className="py-3 px-4 whitespace-nowrap font-medium text-indigo-600">{formatCurrency(w.amount)}</td>
+                                                <td className="py-3 px-4 whitespace-nowrap">
+                                                    <div className="flex items-center space-x-2 space-x-reverse">
+                                                        <button onClick={() => onEdit(w)} className="text-blue-500 hover:text-blue-700 p-1 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/50" aria-label={`تعديل السحب ${w.description}`}><EditIcon className="w-5 h-5"/></button>
+                                                        <button onClick={() => onDelete(w.id)} className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50" aria-label={`حذف السحب ${w.description}`}><DeleteIcon className="w-5 h-5"/></button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                             {/* Mobile Card View */}
+                            <div className="md:hidden space-y-4">
+                                 {currentWithdrawals.map(w => (
+                                    <div key={w.id} className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-4 space-y-3">
+                                        <div className="flex justify-between items-start">
+                                            <p className="font-bold text-slate-800 dark:text-white flex-1 pr-2">{w.description}</p>
+                                            <p className="font-semibold text-indigo-600 dark:text-indigo-400 whitespace-nowrap">{formatCurrency(w.amount)}</p>
+                                        </div>
+                                        <div className="text-sm text-slate-600 dark:text-slate-400">
+                                            <p><strong className="font-medium text-slate-700 dark:text-slate-300">العروة:</strong> {cropCycles.find(c => c.id === w.cropCycleId)?.name ?? 'غير محدد'}</p>
+                                        </div>
+                                        <div className="flex justify-between items-center border-t border-slate-200 dark:border-slate-700 pt-3 mt-3">
+                                            <p className="text-xs text-slate-500 dark:text-slate-400">{w.date}</p>
+                                            <div className="flex items-center space-x-2 space-x-reverse">
+                                                <button onClick={() => onEdit(w)} className="text-blue-500 hover:text-blue-700 p-1 rounded-full" aria-label={`تعديل السحب ${w.description}`}><EditIcon className="w-5 h-5"/></button>
+                                                <button onClick={() => onDelete(w.id)} className="text-red-500 hover:text-red-700 p-1 rounded-full" aria-label={`حذف السحب ${w.description}`}><DeleteIcon className="w-5 h-5"/></button>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
+                                ))}
+                            </div>
+                            <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
                         </div>
-                    </div>
-                ) : (
-                    <p className="text-center text-slate-500 dark:text-slate-400 py-8">لا توجد سحوبات مسجلة لهذا المزارع.</p>
-                )}
+                    ) : (
+                        <p className="text-center text-slate-500 dark:text-slate-400 py-8">لا توجد سحوبات مسجلة لهذا المزارع.</p>
+                    )}
+                </div>
             </div>
         </div>
     );
 };
 
 
-const FarmerAccountsPage: React.FC = () => {
-    const { loading, settings, farmers, cropCycles, transactions, farmerWithdrawals, addFarmer, updateFarmer, deleteFarmer, addFarmerWithdrawal, updateFarmerWithdrawal, deleteFarmerWithdrawal } = React.useContext(AppContext) as AppContextType;
+const FarmerCard: FC<{
+    farmer: Farmer;
+    highlighted: boolean;
+    onEdit: (farmer: Farmer) => void;
+    onDelete: (id: string) => void;
+    onReport: (farmer: Farmer) => void;
+    onAddWithdrawal: (farmerId: string) => void;
+    totalShare: number;
+    totalWithdrawals: number;
+    balance: number;
+    cycleCount: number;
+    isDeletable: boolean;
+}> = memo(({ farmer, highlighted, onEdit, onDelete, onReport, onAddWithdrawal, totalShare, totalWithdrawals, balance, cycleCount, isDeletable }) => {
+    return (
+        <div
+            id={`farmer-card-${farmer.id}`}
+            className={`bg-white dark:bg-slate-800 p-5 rounded-lg shadow-md transition-all duration-300 flex flex-col justify-between ${
+                highlighted ? 'ring-2 ring-green-500 shadow-lg' : 'hover:shadow-xl'
+            }`}
+        >
+            <div>
+                <div className="flex items-center mb-4">
+                    <div className="p-2 bg-indigo-100 dark:bg-indigo-900/50 rounded-full mr-3">
+                        <FarmerIcon className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+                    </div>
+                    <div>
+                        <h3 className="text-xl font-bold text-slate-800 dark:text-white">{farmer.name}</h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">يعمل على {cycleCount} عروة</p>
+                    </div>
+                </div>
+                <div className="space-y-3">
+                    <FarmerStatCard title="إجمالي الحصة" value={totalShare} icon={<RevenueIcon className="w-7 h-7 text-emerald-500" />} />
+                    <FarmerStatCard title="إجمالي المسحوبات" value={totalWithdrawals} icon={<ExpenseIcon className="w-7 h-7 text-rose-500" />} />
+                    <FarmerStatCard title="الرصيد المتبقي" value={balance} icon={<ProfitIcon className={`w-7 h-7 ${balance >= 0 ? 'text-sky-500' : 'text-orange-500'}`} />} />
+                </div>
+            </div>
+            <div className="mt-4 border-t border-slate-200 dark:border-slate-700 pt-3 space-y-2">
+                <div className="flex justify-between items-center">
+                    <button onClick={() => onReport(farmer)} className="flex items-center px-3 py-1.5 text-xs bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-md hover:bg-slate-200 dark:hover:bg-slate-600">
+                        <ReportIcon className="w-4 h-4 ml-1.5"/><span>كشف السحوبات</span>
+                    </button>
+                    <div className="flex items-center space-x-1 space-x-reverse">
+                        <button onClick={() => onEdit(farmer)} className="p-2 text-slate-400 hover:text-blue-500 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700" aria-label={`تعديل المزارع ${farmer.name}`}><EditIcon className="w-5 h-5"/></button>
+                        <button
+                            onClick={() => onDelete(farmer.id)}
+                            disabled={!isDeletable}
+                            className={`p-2 text-slate-400 rounded-full transition-colors ${
+                                !isDeletable
+                                ? 'cursor-not-allowed text-slate-300 dark:text-slate-600'
+                                : 'hover:text-red-500 hover:bg-slate-100 dark:hover:bg-slate-700'
+                            }`}
+                            title={!isDeletable ? 'لا يمكن الحذف لوجود عروات نشطة أو رصيد غير صفري' : 'حذف المزارع'}
+                            aria-label={`حذف المزارع ${farmer.name}`}
+                        >
+                            <DeleteIcon className="w-5 h-5"/>
+                        </button>
+                    </div>
+                </div>
+                <button onClick={() => onAddWithdrawal(farmer.id)} className="w-full flex items-center justify-center px-3 py-1.5 text-xs bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-300 rounded-md hover:bg-indigo-200 dark:hover:bg-indigo-900">
+                    <AddIcon className="w-4 h-4 ml-1.5"/><span>إضافة سحب سريع</span>
+                </button>
+            </div>
+        </div>
+    );
+});
+
+
+const FarmerAccountsPage: FC = () => {
+    const { loading, settings, farmers, cropCycles, transactions, farmerWithdrawals, addFarmer, updateFarmer, deleteFarmer, addFarmerWithdrawal, updateFarmerWithdrawal, deleteFarmerWithdrawal, getWithdrawalsForFarmer } = useContext(AppContext) as AppContextType;
     
     const location = useLocation();
     const navigate = useNavigate();
 
-    const [isFarmerFormOpen, setIsFarmerFormOpen] = React.useState(false);
-    const [isWithdrawalModalOpen, setIsWithdrawalModalOpen] = React.useState(false);
+    const [isFarmerFormOpen, setIsFarmerFormOpen] = useState(false);
+    const [isWithdrawalModalOpen, setIsWithdrawalModalOpen] = useState(false);
 
-    const [editingFarmer, setEditingFarmer] = React.useState<Farmer | undefined>(undefined);
-    const [editingWithdrawal, setEditingWithdrawal] = React.useState<FarmerWithdrawal | undefined>(undefined);
+    const [editingFarmer, setEditingFarmer] = useState<Farmer | undefined>(undefined);
+    const [editingWithdrawal, setEditingWithdrawal] = useState<FarmerWithdrawal | undefined>(undefined);
     
-    const [deletingFarmerId, setDeletingFarmerId] = React.useState<string | null>(null);
-    const [deletingWithdrawalId, setDeletingWithdrawalId] = React.useState<string | null>(null);
+    const [deletingFarmerId, setDeletingFarmerId] = useState<string | null>(null);
+    const [deletingWithdrawalId, setDeletingWithdrawalId] = useState<string | null>(null);
 
-    const [reportingFarmer, setReportingFarmer] = React.useState<Farmer | undefined>(undefined);
-    const [highlightedFarmerId, setHighlightedFarmerId] = React.useState<string | null>(null);
-    const [preselectedFarmerId, setPreselectedFarmerId] = React.useState<string>('');
+    const [reportingFarmer, setReportingFarmer] = useState<Farmer | undefined>(undefined);
+    const [highlightedFarmerId, setHighlightedFarmerId] = useState<string | null>(null);
+    const [preselectedFarmerId, setPreselectedFarmerId] = useState<string>('');
+    
+    const farmerFormModalRef = useRef<HTMLDivElement>(null);
+    const withdrawalFormModalRef = useRef<HTMLDivElement>(null);
 
-    React.useEffect(() => {
+
+    useEffect(() => {
         const isAnyModalOpen = isFarmerFormOpen || isWithdrawalModalOpen || !!deletingFarmerId || !!deletingWithdrawalId || !!reportingFarmer;
         if (isAnyModalOpen) {
             document.body.classList.add('body-no-scroll');
@@ -161,8 +245,57 @@ const FarmerAccountsPage: React.FC = () => {
             document.body.classList.remove('body-no-scroll');
         };
     }, [isFarmerFormOpen, isWithdrawalModalOpen, deletingFarmerId, deletingWithdrawalId, reportingFarmer]);
+    
+    // Focus Trap and Escape key handler for Farmer Form
+    useEffect(() => {
+        if (!isFarmerFormOpen) return;
+        const modalNode = farmerFormModalRef.current;
+        if (!modalNode) return;
 
-    React.useEffect(() => {
+        const focusableElements = modalNode.querySelectorAll<HTMLElement>('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+        if (focusableElements.length === 0) return;
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') setIsFarmerFormOpen(false);
+            if (e.key === 'Tab') {
+                if (e.shiftKey) { if (document.activeElement === firstElement) { lastElement.focus(); e.preventDefault(); }
+                } else { if (document.activeElement === lastElement) { firstElement.focus(); e.preventDefault(); } }
+            }
+        };
+        document.addEventListener('keydown', handleKeyDown);
+        firstElement?.focus();
+        
+        return () => document.removeEventListener('keydown', handleKeyDown);
+    }, [isFarmerFormOpen]);
+    
+     // Focus Trap and Escape key handler for Withdrawal Form
+    useEffect(() => {
+        if (!isWithdrawalModalOpen) return;
+        const modalNode = withdrawalFormModalRef.current;
+        if (!modalNode) return;
+
+        const focusableElements = modalNode.querySelectorAll<HTMLElement>('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+        if (focusableElements.length === 0) return;
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') setIsWithdrawalModalOpen(false);
+            if (e.key === 'Tab') {
+                if (e.shiftKey) { if (document.activeElement === firstElement) { lastElement.focus(); e.preventDefault(); }
+                } else { if (document.activeElement === lastElement) { firstElement.focus(); e.preventDefault(); } }
+            }
+        };
+        document.addEventListener('keydown', handleKeyDown);
+        firstElement?.focus();
+        
+        return () => document.removeEventListener('keydown', handleKeyDown);
+    }, [isWithdrawalModalOpen]);
+
+
+    useEffect(() => {
         const state = location.state as { action?: string, highlightFarmerId?: string };
 
         if (state?.action === 'add-withdrawal') {
@@ -184,40 +317,12 @@ const FarmerAccountsPage: React.FC = () => {
         }
     }, [location, navigate]);
 
-    React.useEffect(() => {
+    useEffect(() => {
         if (highlightedFarmerId) {
             const element = document.getElementById(`farmer-card-${highlightedFarmerId}`);
             element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
     }, [highlightedFarmerId]);
-
-
-    const farmerAccountData = React.useMemo(() => {
-        return farmers.map(farmer => {
-            const associatedCycles = cropCycles.filter(c => c.farmerId === farmer.id);
-            const associatedCycleIds = new Set(associatedCycles.map(c => c.id));
-            
-            let totalShare = 0;
-            
-            associatedCycles.forEach(cycle => {
-                const revenue = transactions
-                    .filter(t => t.cropCycleId === cycle.id && t.type === TransactionType.REVENUE)
-                    .reduce((sum, t) => sum + t.amount, 0);
-                
-                if (cycle.farmerSharePercentage != null) {
-                    totalShare += revenue * (cycle.farmerSharePercentage / 100);
-                }
-            });
-
-            const totalWithdrawals = farmerWithdrawals
-                .filter(w => associatedCycleIds.has(w.cropCycleId))
-                .reduce((sum, w) => sum + w.amount, 0);
-
-            const balance = totalShare - totalWithdrawals;
-
-            return { ...farmer, totalShare, totalWithdrawals, balance, cycleCount: associatedCycles.length };
-        });
-    }, [farmers, cropCycles, transactions, farmerWithdrawals]);
 
     // Farmer handlers
     const handleSaveFarmer = (farmer: Omit<Farmer, 'id'> | Farmer) => {
@@ -225,10 +330,6 @@ const FarmerAccountsPage: React.FC = () => {
         else addFarmer(farmer);
         setIsFarmerFormOpen(false);
         setEditingFarmer(undefined);
-    };
-    const handleEditFarmer = (farmer: Farmer) => {
-        setEditingFarmer(farmer);
-        setIsFarmerFormOpen(true);
     };
     const confirmDeleteFarmer = () => {
         if (deletingFarmerId) deleteFarmer(deletingFarmerId);
@@ -255,19 +356,69 @@ const FarmerAccountsPage: React.FC = () => {
         if (deletingWithdrawalId) deleteFarmerWithdrawal(deletingWithdrawalId);
         setDeletingWithdrawalId(null);
     };
-
-    const getWithdrawalsForFarmer = (farmerId: string) => {
-        const farmerCycleIds = new Set(cropCycles.filter(c => c.farmerId === farmerId).map(c => c.id));
-        return farmerWithdrawals
-            .filter(w => farmerCycleIds.has(w.cropCycleId))
-            .sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    };
-
-    const handleQuickAddWithdrawal = (farmerId: string) => {
+    
+    const handleEditFarmer = useCallback((farmer: Farmer) => {
+        setEditingFarmer(farmer);
+        setIsFarmerFormOpen(true);
+    }, []);
+    
+    const handleQuickAddWithdrawal = useCallback((farmerId: string) => {
         setPreselectedFarmerId(farmerId);
         setEditingWithdrawal(undefined);
         setIsWithdrawalModalOpen(true);
-    };
+    }, []);
+
+    const handleDeleteFarmer = useCallback((id: string) => setDeletingFarmerId(id), []);
+    const handleReport = useCallback((farmer: Farmer) => setReportingFarmer(farmer), []);
+
+    const farmerAccountData = useMemo(() => {
+        const cyclesByFarmerId = new Map<string, CropCycle[]>();
+        cropCycles.forEach(c => {
+            if (c.farmerId) {
+                if (!cyclesByFarmerId.has(c.farmerId)) {
+                    cyclesByFarmerId.set(c.farmerId, []);
+                }
+                cyclesByFarmerId.get(c.farmerId)!.push(c);
+            }
+        });
+
+        const revenueByCycleId = new Map<string, number>();
+        transactions.forEach(t => {
+            if (t.type === TransactionType.REVENUE) {
+                revenueByCycleId.set(t.cropCycleId, (revenueByCycleId.get(t.cropCycleId) || 0) + t.amount);
+            }
+        });
+
+        return farmers.map(farmer => {
+            const associatedCycles = cyclesByFarmerId.get(farmer.id) || [];
+            
+            let totalShare = 0;
+            associatedCycles.forEach(cycle => {
+                const revenue = revenueByCycleId.get(cycle.id) || 0;
+                if (cycle.farmerSharePercentage != null) {
+                    totalShare += revenue * (cycle.farmerSharePercentage / 100);
+                }
+            });
+
+            const associatedCycleIds = new Set(associatedCycles.map(c => c.id));
+            const totalWithdrawals = farmerWithdrawals
+                .filter(w => associatedCycleIds.has(w.cropCycleId))
+                .reduce((sum, w) => sum + w.amount, 0);
+
+            const balance = totalShare - totalWithdrawals;
+            const hasActiveCycles = associatedCycles.some(c => c.status === CropCycleStatus.ACTIVE);
+            const isDeletable = !hasActiveCycles && Math.abs(balance) < 0.01;
+
+            return { 
+                ...farmer,
+                totalShare, 
+                totalWithdrawals, 
+                balance, 
+                cycleCount: associatedCycles.length, 
+                isDeletable 
+            };
+        });
+    }, [farmers, cropCycles, transactions, farmerWithdrawals]);
 
     if (!settings.isFarmerSystemEnabled) {
         return (
@@ -288,66 +439,25 @@ const FarmerAccountsPage: React.FC = () => {
                 </div>
             );
         }
-        if (farmerAccountData.length > 0) {
+        if (farmers.length > 0) {
             return (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                    {farmerAccountData.map(farmer => {
-                        const associatedCycles = cropCycles.filter(c => c.farmerId === farmer.id);
-                        const associatedCycleIds = new Set(associatedCycles.map(c => c.id));
-                        const hasFinancials = transactions.some(t => associatedCycleIds.has(t.cropCycleId)) || farmerWithdrawals.some(w => associatedCycleIds.has(w.cropCycleId));
-
-                        return (
-                            <div
-                                key={farmer.id}
-                                id={`farmer-card-${farmer.id}`}
-                                className={`bg-white dark:bg-slate-800 p-5 rounded-lg shadow-md transition-all duration-300 flex flex-col justify-between ${
-                                    highlightedFarmerId === farmer.id ? 'ring-2 ring-green-500 shadow-lg' : 'hover:shadow-xl'
-                                }`}
-                            >
-                                <div>
-                                    <div className="flex items-center mb-4">
-                                        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/50 rounded-full mr-3">
-                                            <FarmerIcon className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
-                                        </div>
-                                        <div>
-                                            <h3 className="text-xl font-bold text-slate-800 dark:text-white">{farmer.name}</h3>
-                                            <p className="text-sm text-slate-500 dark:text-slate-400">يعمل على {farmer.cycleCount} عروة</p>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-3">
-                                        <FarmerStatCard title="إجمالي الحصة" value={farmer.totalShare} icon={<RevenueIcon className="w-7 h-7 text-emerald-500" />} />
-                                        <FarmerStatCard title="إجمالي المسحوبات" value={farmer.totalWithdrawals} icon={<ExpenseIcon className="w-7 h-7 text-rose-500" />} />
-                                        <FarmerStatCard title="الرصيد المتبقي" value={farmer.balance} icon={<ProfitIcon className={`w-7 h-7 ${farmer.balance >= 0 ? 'text-sky-500' : 'text-orange-500'}`} />} />
-                                    </div>
-                                </div>
-                                <div className="mt-4 border-t border-slate-200 dark:border-slate-700 pt-3 space-y-2">
-                                    <div className="flex justify-between items-center">
-                                        <button onClick={() => setReportingFarmer(farmer)} className="flex items-center px-3 py-1.5 text-xs bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-md hover:bg-slate-200 dark:hover:bg-slate-600">
-                                            <ReportIcon className="w-4 h-4 ml-1.5"/><span>كشف السحوبات</span>
-                                        </button>
-                                        <div className="flex items-center space-x-1 space-x-reverse">
-                                            <button onClick={() => handleEditFarmer(farmer)} className="p-2 text-slate-400 hover:text-blue-500 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700" aria-label={`تعديل المزارع ${farmer.name}`}><EditIcon className="w-5 h-5"/></button>
-                                            <button
-                                                onClick={() => setDeletingFarmerId(farmer.id)}
-                                                disabled={hasFinancials}
-                                                className={`p-2 text-slate-400 rounded-full transition-colors ${
-                                                    hasFinancials
-                                                    ? 'cursor-not-allowed text-slate-300 dark:text-slate-600'
-                                                    : 'hover:text-red-500 hover:bg-slate-100 dark:hover:bg-slate-700'
-                                                }`}
-                                                title={hasFinancials ? 'لا يمكن حذف مزارع مرتبط بمعاملات' : 'حذف المزارع'}
-                                                aria-label={`حذف المزارع ${farmer.name}`}
-                                            >
-                                                <DeleteIcon className="w-5 h-5"/>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <button onClick={() => handleQuickAddWithdrawal(farmer.id)} className="w-full flex items-center justify-center px-3 py-1.5 text-xs bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-300 rounded-md hover:bg-indigo-200 dark:hover:bg-indigo-900">
-                                        <AddIcon className="w-4 h-4 ml-1.5"/><span>إضافة سحب سريع</span>
-                                    </button>
-                                </div>
-                            </div>
-                        )})}
+                    {farmerAccountData.map(farmerData => (
+                        <FarmerCard
+                            key={farmerData.id}
+                            farmer={farmerData}
+                            highlighted={highlightedFarmerId === farmerData.id}
+                            onEdit={handleEditFarmer}
+                            onDelete={handleDeleteFarmer}
+                            onReport={handleReport}
+                            onAddWithdrawal={handleQuickAddWithdrawal}
+                            totalShare={farmerData.totalShare}
+                            totalWithdrawals={farmerData.totalWithdrawals}
+                            balance={farmerData.balance}
+                            cycleCount={farmerData.cycleCount}
+                            isDeletable={farmerData.isDeletable}
+                        />
+                    ))}
                 </div>
             );
         }
@@ -379,18 +489,26 @@ const FarmerAccountsPage: React.FC = () => {
             {renderContent()}
 
             {isFarmerFormOpen && (
-                <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-xl w-full max-w-md">
-                        <h2 className="text-2xl font-bold mb-4">{editingFarmer ? 'تعديل مزارع' : 'إضافة مزارع جديد'}</h2>
-                        <FarmerForm farmer={editingFarmer} onSave={handleSaveFarmer} onCancel={() => setIsFarmerFormOpen(false)} />
+                <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4" onClick={() => { setIsFarmerFormOpen(false); setEditingFarmer(undefined); }}>
+                    <div ref={farmerFormModalRef} className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-md max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+                        <div className="p-6 pb-4 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
+                            <h2 className="text-2xl font-bold mb-4">{editingFarmer ? 'تعديل مزارع' : 'إضافة مزارع جديد'}</h2>
+                        </div>
+                        <div className="p-6 flex-grow overflow-y-auto modal-scroll-contain">
+                            <FarmerForm farmer={editingFarmer} onSave={handleSaveFarmer} onCancel={() => { setIsFarmerFormOpen(false); setEditingFarmer(undefined); }} />
+                        </div>
                     </div>
                 </div>
             )}
             {isWithdrawalModalOpen && (
-                 <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-xl w-full max-w-lg max-h-full overflow-y-auto modal-scroll-contain">
-                        <h2 className="text-2xl font-bold mb-4">{editingWithdrawal ? 'تعديل سحب' : 'إضافة سحب جديد'}</h2>
-                        <WithdrawalForm withdrawal={editingWithdrawal} onSave={handleSaveWithdrawal} onCancel={() => setIsWithdrawalModalOpen(false)} cycles={cropCycles} farmers={farmers} preselectedFarmerId={preselectedFarmerId} />
+                 <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4" onClick={() => { setIsWithdrawalModalOpen(false); setEditingWithdrawal(undefined); setPreselectedFarmerId(''); }}>
+                    <div ref={withdrawalFormModalRef} className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+                        <div className="p-6 pb-4 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
+                            <h2 className="text-2xl font-bold mb-4">{editingWithdrawal ? 'تعديل سحب' : 'إضافة سحب جديد'}</h2>
+                        </div>
+                        <div className="p-6 flex-grow overflow-y-auto modal-scroll-contain">
+                            <WithdrawalForm withdrawal={editingWithdrawal} onSave={handleSaveWithdrawal} onCancel={() => { setIsWithdrawalModalOpen(false); setEditingWithdrawal(undefined); setPreselectedFarmerId(''); }} cycles={cropCycles} farmers={farmers} preselectedFarmerId={preselectedFarmerId} />
+                        </div>
                     </div>
                 </div>
             )}
@@ -403,7 +521,7 @@ const FarmerAccountsPage: React.FC = () => {
                     onDelete={handleDeleteWithdrawal}
                 />
             )}
-            <ConfirmationModal isOpen={!!deletingFarmerId} onClose={() => setDeletingFarmerId(null)} onConfirm={confirmDeleteFarmer} title="تأكيد حذف المزارع" message="هل أنت متأكد من حذف هذا المزارع؟ لا يمكن حذف مزارع مرتبط بمعاملات." />
+            <ConfirmationModal isOpen={!!deletingFarmerId} onClose={() => setDeletingFarmerId(null)} onConfirm={confirmDeleteFarmer} title="تأكيد حذف المزارع" message="هل أنت متأكد من حذف هذا المزارع؟ لا يمكن حذف مزارع مرتبط بعروات." />
             <ConfirmationModal isOpen={!!deletingWithdrawalId} onClose={() => setDeletingWithdrawalId(null)} onConfirm={confirmDeleteWithdrawal} title="تأكيد حذف السحب" message="هل أنت متأكد من حذف عملية السحب هذه؟" />
         </div>
     );

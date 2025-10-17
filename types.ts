@@ -43,11 +43,18 @@ export interface AppSettings {
   expenseCategories: ExpenseCategorySetting[];
 }
 
+export interface Person {
+  id: string;
+  name: string;
+}
+
 export interface Advance {
   id: string;
   date: string;
   amount: number;
   description: string;
+  cropCycleId: string;
+  personId: string;
 }
 
 export interface Greenhouse {
@@ -80,13 +87,10 @@ export interface Transaction {
   cropCycleId: string;
   quantity?: number;
   priceItems?: { quantity: number; price: number }[];
-  quantityGrade1?: number;
-  priceGrade1?: number;
-  quantityGrade2?: number;
-  priceGrade2?: number;
   discount?: number;
   supplierId?: string | null;
   fertilizationProgramId?: string | null;
+  market?: string;
 }
 
 export enum AlertType {
@@ -114,6 +118,7 @@ export interface SupplierPayment {
   supplierId: string;
   description: string;
   linkedExpenseIds?: string[];
+  cropCycleId: string;
 }
 
 export interface FertilizationProgram {
@@ -135,6 +140,7 @@ export interface BackupData {
   supplierPayments: SupplierPayment[];
   fertilizationPrograms: FertilizationProgram[];
   advances: Advance[];
+  people: Person[];
 }
 
 
@@ -152,9 +158,10 @@ export interface AppContextType {
   supplierPayments: SupplierPayment[];
   fertilizationPrograms: FertilizationProgram[];
   advances: Advance[];
+  people: Person[];
   addCropCycle: (cycle: Omit<CropCycle, 'id'>) => Promise<void>;
   updateCropCycle: (updatedCycle: CropCycle) => Promise<void>;
-  deleteCropCycle: (id: string) => Promise<void>;
+  archiveOrDeleteCropCycle: (id: string) => Promise<void>;
   addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<void>;
   updateTransaction: (updatedTransaction: Transaction) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
@@ -180,9 +187,14 @@ export interface AppContextType {
   addAdvance: (advance: Omit<Advance, 'id'>) => Promise<void>;
   updateAdvance: (updatedAdvance: Advance) => Promise<void>;
   deleteAdvance: (id: string) => Promise<void>;
+  addPerson: (person: Omit<Person, 'id'>) => Promise<void>;
+  updatePerson: (updatedPerson: Person) => Promise<void>;
+  deletePerson: (id: string) => Promise<void>;
   addExpenseCategory: (category: Omit<ExpenseCategorySetting, 'id'>) => Promise<void>;
   updateExpenseCategory: (updatedCategory: ExpenseCategorySetting) => Promise<void>;
   deleteExpenseCategory: (id: string) => Promise<void>;
+  // FIX: Added `getWithdrawalsForFarmer` to provide a centralized way to fetch withdrawals for a specific farmer.
+  getWithdrawalsForFarmer: (farmerId: string) => FarmerWithdrawal[];
   loadBackupData: (data: BackupData) => Promise<void>;
   loadDemoData: () => Promise<void>;
   deleteAllData: () => Promise<void>;

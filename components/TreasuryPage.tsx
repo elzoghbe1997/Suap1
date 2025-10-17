@@ -7,7 +7,7 @@ import { TreasuryIcon, ArrowRightIcon } from './Icons';
 const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EGP', maximumFractionDigits: 0 }).format(amount);
 
 const TreasuryCard: React.FC<{ cycle: CropCycle }> = ({ cycle }) => {
-    const { transactions, settings, farmerWithdrawals } = React.useContext(AppContext) as AppContextType;
+    const { transactions, settings, farmerWithdrawals, supplierPayments, advances } = React.useContext(AppContext) as AppContextType;
 
     const treasuryBalance = React.useMemo(() => {
         const cycleTransactions = transactions.filter(t => t.cropCycleId === cycle.id);
@@ -15,16 +15,24 @@ const TreasuryCard: React.FC<{ cycle: CropCycle }> = ({ cycle }) => {
         
         const foundationalCategories = new Set(settings.expenseCategories.filter(c => c.isFoundational).map(c => c.name));
         
-        const operationalExpenses = cycleTransactions
-            .filter(t => t.type === TransactionType.EXPENSE && !foundationalCategories.has(t.category))
+        const cashOperationalExpenses = cycleTransactions
+            .filter(t => t.type === TransactionType.EXPENSE && !foundationalCategories.has(t.category) && !t.supplierId)
             .reduce((sum, t) => sum + t.amount, 0);
+
+        const totalSupplierPaymentsForCycle = supplierPayments
+            .filter(p => p.cropCycleId === cycle.id)
+            .reduce((sum, p) => sum + p.amount, 0);
         
         const totalWithdrawals = farmerWithdrawals
             .filter(w => w.cropCycleId === cycle.id)
             .reduce((sum, w) => sum + w.amount, 0);
 
-        return revenue - operationalExpenses - totalWithdrawals;
-    }, [transactions, cycle.id, settings.expenseCategories, farmerWithdrawals]);
+        const totalPersonalAdvances = advances
+            .filter(a => a.cropCycleId === cycle.id)
+            .reduce((sum, a) => sum + a.amount, 0);
+
+        return revenue - cashOperationalExpenses - totalSupplierPaymentsForCycle - totalWithdrawals - totalPersonalAdvances;
+    }, [transactions, supplierPayments, cycle.id, settings.expenseCategories, farmerWithdrawals, advances]);
 
     return (
         <Link 
@@ -34,7 +42,9 @@ const TreasuryCard: React.FC<{ cycle: CropCycle }> = ({ cycle }) => {
             <div className="p-5">
                 <div className="flex justify-between items-start">
                     <div>
-                        <h3 className="text-xl font-bold text-slate-800 dark:text-white">صندوق: {cycle.name}</h3>
+                        <h3 className="text-xl font-bold text-slate-800 dark:text-white flex items-center">
+                            <span>صندوق: {cycle.name}</span>
+                        </h3>
                         <p className="text-sm text-slate-500 dark:text-slate-400">الرصيد الفعلي</p>
                     </div>
                      <div className="p-2 bg-emerald-100 dark:bg-emerald-900/50 rounded-full">
@@ -60,26 +70,27 @@ const TreasuryPage: React.FC = () => {
     const { cropCycles } = React.useContext(AppContext) as AppContextType;
     
     const activeCycles = React.useMemo(() => 
-        cropCycles.filter(c => c.status === CropCycleStatus.ACTIVE),
-    [cropCycles]);
+        cropCycles
+            .filter(c => c.status === CropCycleStatus.ACTIVE)
+            .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime()),
+        [cropCycles]
+    );
     
     return (
         <div className="space-y-8">
             <header>
-                <h1 className="text-3xl font-bold text-slate-800 dark:text-white">صناديق العروات</h1>
+                <h1 className="text-3xl font-bold text-slate-800 dark:text-white">خزنة العروات النشطة</h1>
                 <p className="mt-2 text-lg text-slate-600 dark:text-slate-400">
-                    نظرة عامة على السيولة النقدية المتاحة لكل عروة من العروات النشطة.
+                    نظرة سريعة على الأرصدة النقدية لكل عروة حالية.
                 </p>
             </header>
 
             {activeCycles.length > 0 ? (
-                 <div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                        {activeCycles.map(cycle => (
-                            <TreasuryCard key={cycle.id} cycle={cycle} />
-                        ))}
-                    </div>
-                 </div>
+                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {activeCycles.map(cycle => (
+                        <TreasuryCard key={cycle.id} cycle={cycle} />
+                    ))}
+                </div>
             ) : (
                 <div className="text-center py-16 bg-white dark:bg-slate-800 rounded-lg border-2 border-dashed border-slate-200 dark:border-slate-700">
                     <TreasuryIcon className="w-16 h-16 text-slate-400 dark:text-slate-500 mx-auto mb-6" />

@@ -1,5 +1,5 @@
-import React from 'react';
-import { AppContext } from '../App.tsx';
+import React, { FC, useContext, useRef, useState, ReactNode, ChangeEvent } from 'react';
+import { AppContext } from '../App';
 // FIX: Imported `AppSettings` type to resolve missing type error.
 import { AppContextType, Theme, BackupData, AppSettings } from '../types.ts';
 import { ToastContext, ToastContextType } from '../context/ToastContext.tsx';
@@ -7,14 +7,15 @@ import { SunIcon, MoonIcon, SystemIcon, DownloadIcon, UploadIcon, WarningIcon } 
 import ConfirmationModal from './ConfirmationModal.tsx';
 import ExpenseCategoryManager from './ExpenseCategoryManager.tsx';
 
-const SettingsPage: React.FC = () => {
-    const context = React.useContext(AppContext) as AppContextType;
+const SettingsPage: FC = () => {
+    const context = useContext(AppContext) as AppContextType;
     const { settings, updateSettings, loadBackupData, deleteAllData } = context;
-    const { addToast } = React.useContext(ToastContext) as ToastContextType;
-    const restoreInputRef = React.useRef<HTMLInputElement>(null);
-    const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
-    const [isCategoryManagerOpen, setIsCategoryManagerOpen] = React.useState(false);
-    const [activeTab, setActiveTab] = React.useState<'general' | 'appearance' | 'data'>('general');
+    const { addToast } = useContext(ToastContext) as ToastContextType;
+    const restoreInputRef = useRef<HTMLInputElement>(null);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
+    const [isCategoryManagerOpen, setIsCategoryManagerOpen] = useState(false);
+    const [activeTab, setActiveTab] = useState<'general' | 'appearance' | 'data'>('general');
 
     const handleToggle = (key: keyof AppSettings) => {
         updateSettings({ [key]: !settings[key] });
@@ -24,7 +25,7 @@ const SettingsPage: React.FC = () => {
         updateSettings({ theme });
     };
     
-    const themeOptions: { value: Theme; label: string; icon: React.ReactNode }[] = [
+    const themeOptions: { value: Theme; label: string; icon: ReactNode }[] = [
         { value: 'light', label: 'فاتح', icon: <SunIcon className="w-5 h-5"/> },
         { value: 'dark', label: 'داكن', icon: <MoonIcon className="w-5 h-5"/> },
         { value: 'system', label: 'النظام', icon: <SystemIcon className="w-5 h-5"/> },
@@ -32,6 +33,7 @@ const SettingsPage: React.FC = () => {
     
     const handleBackup = () => {
         try {
+            // FIX: Added the missing 'people' property to the backupData object to ensure all data is backed up.
             const backupData: BackupData = {
               greenhouses: context.greenhouses,
               cropCycles: context.cropCycles,
@@ -43,6 +45,7 @@ const SettingsPage: React.FC = () => {
               supplierPayments: context.supplierPayments,
               fertilizationPrograms: context.fertilizationPrograms,
               advances: context.advances,
+              people: context.people,
             };
 
             const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
@@ -63,15 +66,18 @@ const SettingsPage: React.FC = () => {
     };
     
     const handleRestoreClick = () => {
+        setIsRestoreModalOpen(true);
+    };
+
+    const handleConfirmRestore = () => {
+        setIsRestoreModalOpen(false);
         restoreInputRef.current?.click();
     };
 
-    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
-        if (!file) return;
-
-        if (!confirm("هل أنت متأكد أنك تريد استعادة البيانات من هذا الملف؟ سيتم استبدال جميع بياناتك الحالية. لا يمكن التراجع عن هذا الإجراء.")) {
-            if(restoreInputRef.current) restoreInputRef.current.value = "";
+        if (!file) {
+            if (restoreInputRef.current) restoreInputRef.current.value = "";
             return;
         }
 
@@ -89,6 +95,10 @@ const SettingsPage: React.FC = () => {
                  if(restoreInputRef.current) restoreInputRef.current.value = "";
             }
         };
+        reader.onerror = () => {
+            addToast("حدث خطأ أثناء قراءة الملف.", "error");
+            if (restoreInputRef.current) restoreInputRef.current.value = "";
+        };
         reader.readAsText(file);
     };
 
@@ -104,7 +114,7 @@ const SettingsPage: React.FC = () => {
             : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 dark:text-slate-400 dark:hover:text-slate-300 dark:hover:border-slate-600'
         }`;
 
-    const ToggleSwitch: React.FC<{ id: string; checked: boolean; onChange: () => void; title: string; description: string; disabled?: boolean; }> = ({ id, checked, onChange, title, description, disabled = false }) => (
+    const ToggleSwitch: FC<{ id: string; checked: boolean; onChange: () => void; title: ReactNode; description: string; disabled?: boolean; }> = ({ id, checked, onChange, title, description, disabled = false }) => (
          <div className="flex items-center justify-between pt-4 first:pt-0">
             <div className={`${disabled ? 'opacity-50' : ''}`}>
                 <span className="font-medium text-slate-700 dark:text-slate-300">{title}</span>
@@ -150,13 +160,25 @@ const SettingsPage: React.FC = () => {
                                     checked={settings.isTreasurySystemEnabled ?? false}
                                     onChange={() => {
                                         const newValue = !(settings.isTreasurySystemEnabled ?? false);
-                                        updateSettings({
-                                            isTreasurySystemEnabled: newValue,
-                                            isAdvancesSystemEnabled: newValue
-                                        });
+                                        if (!newValue) { // If turning OFF
+                                            updateSettings({
+                                                isTreasurySystemEnabled: false,
+                                                isAdvancesSystemEnabled: false,
+                                            });
+                                        } else { // If turning ON
+                                            updateSettings({ isTreasurySystemEnabled: true });
+                                        }
                                     }}
                                     title="نظام الخزنة"
-                                    description="تفعيل نظام الخزنة لتتبع السيولة النقدية والسلف الشخصية."
+                                    description="تفعيل نظام الخزنة لتتبع السيولة النقدية للعروات."
+                                />
+                                 <ToggleSwitch 
+                                    id="advances-system-toggle"
+                                    checked={settings.isAdvancesSystemEnabled ?? false}
+                                    onChange={() => handleToggle('isAdvancesSystemEnabled')}
+                                    title="نظام السلف الشخصية"
+                                    description="تفعيل نظام السلف الشخصية التي تخصم من الخزنة. (يعتمد على تفعيل نظام الخزنة)"
+                                    disabled={!(settings.isTreasurySystemEnabled ?? false)}
                                 />
                                 <ToggleSwitch 
                                     id="farmer-system-toggle"
@@ -258,9 +280,6 @@ const SettingsPage: React.FC = () => {
                                     className="hidden"
                                 />
                             </div>
-                            <p className="mt-4 text-xs text-yellow-600 dark:text-yellow-400">
-                                تحذير: استعادة نسخة احتياطية سيقوم بحذف جميع البيانات الحالية واستبدالها ببيانات الملف.
-                            </p>
                         </div>
 
                         <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 rounded-r-lg p-6">
@@ -303,6 +322,16 @@ const SettingsPage: React.FC = () => {
                 onConfirm={handleConfirmDeleteAll}
                 title="تأكيد حذف جميع البيانات"
                 message="هل أنت متأكد تمامًا؟ سيتم حذف جميع بيانات التطبيق بشكل نهائي ولا يمكن التراجع عن هذا الإجراء."
+            />
+
+            <ConfirmationModal
+                isOpen={isRestoreModalOpen}
+                onClose={() => setIsRestoreModalOpen(false)}
+                onConfirm={handleConfirmRestore}
+                title="تأكيد استعادة البيانات"
+                message="هل أنت متأكد أنك تريد استعادة البيانات من ملف؟ سيتم استبدال جميع بياناتك الحالية. لا يمكن التراجع عن هذا الإجراء."
+                confirmText="نعم، استعادة"
+                confirmColor="yellow"
             />
         </div>
     );

@@ -30,9 +30,10 @@ const PWAInstallBanner: React.FC = () => {
         if (!installPrompt) {
             return;
         }
+
         installPrompt.prompt();
-        const { outcome } = await installPrompt.userChoice;
-        console.log(`User response to the install prompt: ${outcome}`);
+        // The userChoice property returns a Promise that resolves to an object with an outcome property.
+        await installPrompt.userChoice;
         // Hide the banner after prompt
         setIsVisible(false);
         setInstallPrompt(null);

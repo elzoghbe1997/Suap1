@@ -1,17 +1,17 @@
-import React from 'react';
+import React, { FC, useContext, useMemo } from 'react';
 import { AppContext } from '../App.tsx';
 import { AppContextType, TransactionType } from '../types.ts';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import LoadingSpinner from './LoadingSpinner.tsx';
 
-const ReportsPage: React.FC = () => {
-    const { loading, cropCycles, transactions, greenhouses, settings } = React.useContext(AppContext) as AppContextType;
+const ReportsPage: FC = () => {
+    const { loading, cropCycles, transactions, greenhouses, settings } = useContext(AppContext) as AppContextType;
 
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EGP', maximumFractionDigits: 0 }).format(amount);
     };
 
-    const cyclesPerformanceData = React.useMemo(() => {
+    const cyclesPerformanceData = useMemo(() => {
         return cropCycles.map(cycle => {
             const cycleTransactions = transactions.filter(t => t.cropCycleId === cycle.id);
             const revenue = cycleTransactions.filter(t => t.type === TransactionType.REVENUE).reduce((sum, t) => sum + t.amount, 0);
@@ -30,7 +30,7 @@ const ReportsPage: React.FC = () => {
         }).sort((a, b) => b['صافي ربح المالك'] - a['صافي ربح المالك']);
     }, [cropCycles, transactions, settings.isFarmerSystemEnabled]);
 
-    const expenseByGreenhouseData = React.useMemo(() => {
+    const expenseByGreenhouseData = useMemo(() => {
         const data: { [key: string]: number } = {};
         
         transactions

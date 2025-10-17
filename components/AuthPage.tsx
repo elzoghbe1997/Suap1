@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { LogoIcon, MailIcon, LockIcon } from './Icons';
+import { LogoIcon, MailIcon, LockIcon, FarmerIcon } from './Icons.tsx';
 import LoadingSpinner from './LoadingSpinner';
 
 const AuthPage: React.FC = () => {
@@ -65,12 +65,17 @@ const AuthPage: React.FC = () => {
                 <form onSubmit={handleSubmit} className="space-y-6">
                     {!isLogin && (
                         <div>
+                             <label htmlFor="name" className="sr-only">الاسم الكامل</label>
                             <div className={inputWrapperClass}>
+                                 <span className={iconClass}>
+                                    <FarmerIcon className="h-5 w-5 text-slate-400" />
+                                </span>
                                  <input type="text" id="name" value={name} onChange={handleInputChange(setName)} required className={inputClass} placeholder="الاسم الكامل" />
                             </div>
                         </div>
                     )}
                      <div>
+                        <label htmlFor="email" className="sr-only">البريد الإلكتروني</label>
                         <div className={inputWrapperClass}>
                             <span className={iconClass}>
                                 <MailIcon className="h-5 w-5 text-slate-400" />
@@ -79,6 +84,7 @@ const AuthPage: React.FC = () => {
                         </div>
                     </div>
                     <div>
+                        <label htmlFor="password" className="sr-only">كلمة المرور</label>
                         <div className={inputWrapperClass}>
                              <span className={iconClass}>
                                 <LockIcon className="h-5 w-5 text-slate-400" />

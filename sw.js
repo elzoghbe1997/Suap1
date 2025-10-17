@@ -2,14 +2,13 @@ const CACHE_VERSION = 'v2';
 const CACHE_NAME = `greenhouse-accountant-${CACHE_VERSION}`;
 const APP_SHELL_URLS = [
     '/',
-    '/index.html',
+    'index.html',
 ];
 
 self.addEventListener('install', event => {
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then(cache => {
-                console.log('Opened cache');
                 return cache.addAll(APP_SHELL_URLS);
             })
     );
@@ -21,7 +20,6 @@ self.addEventListener('activate', event => {
             return Promise.all(
                 cacheNames.map(cacheName => {
                     if (cacheName !== CACHE_NAME) {
-                        console.log('Deleting old cache:', cacheName);
                         return caches.delete(cacheName);
                     }
                 })
@@ -46,7 +44,7 @@ self.addEventListener('fetch', event => {
                 })
                 .catch(() => {
                     return caches.match(request).then(response => {
-                        return response || caches.match('/index.html');
+                        return response || caches.match('index.html');
                     });
                 })
         );
@@ -70,7 +68,7 @@ self.addEventListener('fetch', event => {
 
                 return networkResponse;
             }).catch(error => {
-                console.error('Fetching failed:', error);
+                // Fetching failed, do nothing.
             });
         })
     );

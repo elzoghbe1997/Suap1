@@ -1,12 +1,10 @@
-import React from 'react';
+import React, { useEffect, useState, useCallback, useContext, createContext, FC } from 'react';
 import { HashRouter, Routes, Route, Navigate, useLocation, Outlet } from 'react-router-dom';
 import Sidebar from './components/Sidebar.tsx';
 import Header from './components/Header.tsx';
 import Dashboard from './components/Dashboard.tsx';
 import CropCyclesPage from './components/CropCycles.tsx';
 import CropCycleDetailsPage from './components/CropCycleDetailsPage.tsx';
-import InvoicesPage from './components/InvoicesPage.tsx';
-import ExpensesPage from './components/ExpensesPage.tsx';
 import GreenhousePage from './components/Greenhouse.tsx';
 import GreenhouseReport from './components/GreenhouseReport.tsx';
 import ReportsPage from './components/Reports.tsx';
@@ -27,14 +25,15 @@ import AuthPage from './components/AuthPage.tsx';
 import ProtectedRoute from './components/ProtectedRoute.tsx';
 import DashboardSkeleton from './components/DashboardSkeleton.tsx';
 import PWAInstallBanner from './components/PWAInstallBanner.tsx';
+import TransactionListPage from './components/TransactionListPage.tsx';
 
 
-export const AppContext = React.createContext<AppContextType | null>(null);
+export const AppContext = createContext<AppContextType | null>(null);
 
-const OnboardingModal: React.FC<{ onSelect: (choice: 'demo' | 'fresh') => void }> = ({ onSelect }) => {
-  const [isAnimating, setIsAnimating] = React.useState(false);
+const OnboardingModal: FC<{ onSelect: (choice: 'demo' | 'fresh') => void }> = ({ onSelect }) => {
+  const [isAnimating, setIsAnimating] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const timer = setTimeout(() => setIsAnimating(true), 10);
     return () => clearTimeout(timer);
   }, []);
@@ -55,7 +54,7 @@ const OnboardingModal: React.FC<{ onSelect: (choice: 'demo' | 'fresh') => void }
             className="flex-1 px-6 py-4 text-lg font-semibold text-white bg-emerald-600 rounded-lg shadow-md hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all transform hover:scale-105"
           >
             البدء ببيانات تجريبية
-            <span className="block text-sm font-normal opacity-80">لاستكشاف إمكانيات التطبيق</span>
+            <span className="block text-sm font-normal opacity-80"> لاستكشاف إمكانيات التطبيق </span>
           </button>
           <button
             onClick={() => onSelect('fresh')}
@@ -70,7 +69,7 @@ const OnboardingModal: React.FC<{ onSelect: (choice: 'demo' | 'fresh') => void }
   );
 };
 
-const DeletingDataOverlay: React.FC = () => (
+const DeletingDataOverlay: FC = () => (
     <div className="absolute inset-0 bg-slate-900 z-50 flex flex-col items-center justify-center text-white">
         <svg className="animate-spin h-10 w-10 text-white mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -82,17 +81,17 @@ const DeletingDataOverlay: React.FC = () => (
 );
 
 
-const AppLayout: React.FC = () => {
-    const contextValue = React.useContext(AppContext) as AppContextType;
+const AppLayout: FC = () => {
+    const contextValue = useContext(AppContext) as AppContextType;
     const location = useLocation();
-    const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     
     // FIX: Wrapped toggleSidebar in useCallback for performance optimization to prevent unnecessary re-renders of the Header component.
-    const toggleSidebar = React.useCallback(() => {
+    const toggleSidebar = useCallback(() => {
         setIsSidebarOpen(prevIsOpen => !prevIsOpen);
     }, []);
 
-    React.useEffect(() => {
+    useEffect(() => {
         const mediaQuery = window.matchMedia('(min-width: 768px)');
         setIsSidebarOpen(mediaQuery.matches);
         const handler = (e: MediaQueryListEvent) => setIsSidebarOpen(e.matches);
@@ -100,7 +99,7 @@ const AppLayout: React.FC = () => {
         return () => mediaQuery.removeEventListener('change', handler);
     }, []);
 
-    React.useEffect(() => {
+    useEffect(() => {
         if (!contextValue || contextValue.loading) return;
         const root = window.document.documentElement;
 
@@ -156,6 +155,7 @@ const AppLayout: React.FC = () => {
                     <Outlet />
                 </main>
             </div>
+            
             <ToastContainer />
             <PWAInstallBanner />
         </div>
@@ -163,20 +163,22 @@ const AppLayout: React.FC = () => {
 };
 
 
-const AppContent: React.FC = () => {
+const AppContent: FC = () => {
   const contextValue = useAppData();
   const { isAuthenticated, isLoading } = useAuth();
-  const [showOnboarding, setShowOnboarding] = React.useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
-  React.useEffect(() => {
-    if (isAuthenticated && !localStorage.getItem('appInitialized') && !contextValue.loading) {
+  useEffect(() => {
+    // Show onboarding if the user is authenticated, data is loaded, but the 'appInitialized' flag is not set.
+    if (isAuthenticated && !contextValue.loading && !isLoading && !localStorage.getItem('appInitialized')) {
       setShowOnboarding(true);
     }
-  }, [isAuthenticated, contextValue.loading]);
+  }, [isAuthenticated, contextValue.loading, isLoading]);
 
   const handleOnboardingSelect = async (choice: 'demo' | 'fresh') => {
+    // Set the flag immediately to prevent the modal from reappearing on reload.
     localStorage.setItem('appInitialized', 'true');
-    setShowOnboarding(false); // Hide modal immediately
+    setShowOnboarding(false);
 
     if (choice === 'fresh') {
       await contextValue.startFresh();
@@ -189,7 +191,8 @@ const AppContent: React.FC = () => {
     return <DeletingDataOverlay />;
   }
   
-  if (isLoading) {
+  // Show a skeleton loader while auth state or initial data is loading.
+  if (isLoading || (isAuthenticated && contextValue.loading && !showOnboarding)) {
       return (
         <div className="relative h-screen flex overflow-hidden bg-slate-50 dark:bg-slate-900">
             <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
@@ -212,8 +215,8 @@ const AppContent: React.FC = () => {
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/cycles" element={<CropCyclesPage />} />
                 <Route path="/cycles/:cropCycleId" element={<CropCycleDetailsPage />} />
-                <Route path="/invoices" element={<InvoicesPage />} />
-                <Route path="/expenses" element={<ExpensesPage />} />
+                <Route path="/invoices" element={<TransactionListPage type="invoice" />} />
+                <Route path="/expenses" element={<TransactionListPage type="expense" />} />
                 {contextValue.settings.isAgriculturalProgramsSystemEnabled && <Route path="/programs" element={<FertilizationProgramsPage />} />}
                 {contextValue.settings.isFarmerSystemEnabled && <Route path="/farmer-accounts" element={<FarmerAccountsPage />} />}
                 {contextValue.settings.isSupplierSystemEnabled && <Route path="/suppliers" element={<SuppliersPage />} />}
@@ -234,7 +237,29 @@ const AppContent: React.FC = () => {
 };
 
 
-const App: React.FC = () => {
+const App: FC = () => {
+  useEffect(() => {
+    // FIX: Refactored ServiceWorker registration to reliably occur after the 'load' event, preventing "invalid state" errors.
+    if ('serviceWorker' in navigator) {
+      const handleServiceWorkerRegistration = () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(registration => {
+            console.log('ServiceWorker registration successful with scope: ', registration.scope);
+          })
+          .catch(error => {
+            console.error('ServiceWorker registration failed:', error);
+          });
+      };
+      
+      // The 'load' event is the most reliable point to register a service worker.
+      window.addEventListener('load', handleServiceWorkerRegistration);
+      
+      return () => {
+        window.removeEventListener('load', handleServiceWorkerRegistration);
+      };
+    }
+  }, []);
+  
   return (
     <ToastProvider>
       <HashRouter>

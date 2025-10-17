@@ -18,6 +18,7 @@ const TransactionCard: React.FC<{
         <div className="flex-grow">
             <p className="font-semibold text-slate-800 dark:text-white">{t.description}</p>
             <p className="text-sm text-slate-500 dark:text-slate-400">{t.date} - {t.category}</p>
+            {t.type === TransactionType.REVENUE && t.market && <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">السوق: {t.market}</p>}
         </div>
         <div className="flex-shrink-0 flex w-full justify-between items-center sm:w-auto sm:flex-col sm:items-end sm:justify-start gap-2">
             <p className={`text-lg font-bold ${t.type === TransactionType.REVENUE ? 'text-emerald-600' : 'text-rose-600'}`}>{formatCurrency(t.amount)}</p>
@@ -42,12 +43,16 @@ const TransactionFormModal: React.FC<{
 }> = ({ type, transaction, cycle, onSave, onClose, ...props}) => {
     const isRevenue = type === 'REVENUE';
     return (
-        <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4" onClick={onClose}>
-            <div className="bg-slate-50 dark:bg-slate-900 p-6 rounded-lg shadow-xl w-full max-w-lg max-h-full overflow-y-auto modal-scroll-contain" onClick={e=>e.stopPropagation()}>
-                <h2 className="text-2xl font-bold mb-6 text-slate-800 dark:text-white">{transaction ? 'تعديل' : 'إضافة'} {isRevenue ? 'فاتورة' : 'مصروف'}</h2>
-                {isRevenue ? 
-                    <InvoiceForm invoice={transaction} onSave={onSave} onCancel={onClose} cycles={[cycle]} fertilizationPrograms={props.fertilizationPrograms} initialCycleId={cycle.id} /> : 
-                    <ExpenseForm expense={transaction} onSave={onSave} onCancel={onClose} cycles={[cycle]} {...props} initialCycleId={cycle.id} />}
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4" onClick={onClose}>
+            <div className="bg-slate-50 dark:bg-slate-900 rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col" onClick={e=>e.stopPropagation()}>
+                <div className="p-6 pb-4 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
+                    <h2 className="text-2xl font-bold text-slate-800 dark:text-white">{transaction ? 'تعديل' : 'إضافة'} {isRevenue ? 'فاتورة' : 'مصروف'}</h2>
+                </div>
+                <div className="p-6 flex-grow overflow-y-auto modal-scroll-contain">
+                    {isRevenue ? 
+                        <InvoiceForm invoice={transaction} onSave={onSave} onCancel={onClose} cycles={[cycle]} fertilizationPrograms={props.fertilizationPrograms} initialCycleId={cycle.id} /> : 
+                        <ExpenseForm expense={transaction} onSave={onSave} onCancel={onClose} cycles={[cycle]} {...props} initialCycleId={cycle.id} />}
+                </div>
             </div>
         </div>
     )

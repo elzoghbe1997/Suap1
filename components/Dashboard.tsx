@@ -1,10 +1,9 @@
-import React from 'react';
+import React, { FC, memo, ReactNode, useContext, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { AppContext } from '../App.tsx';
 import { AppContextType, Transaction, TransactionType, CropCycleStatus, CropCycle } from '../types.ts';
-// FIX: Imported `Cell` from recharts to be used in the expense category BarChart.
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, Cell } from 'recharts';
-import { RevenueIcon, ExpenseIcon, ProfitIcon, ActiveCycleIcon, AddIcon, InvoiceIcon, ReceiptIcon, CycleIcon, SparklesIcon, TrophyIcon, GreenhouseIcon, ReportIcon } from './Icons.tsx';
+import { RevenueIcon, ExpenseIcon, ProfitIcon, ActiveCycleIcon, AddIcon, InvoiceIcon, ReceiptIcon, CycleIcon, SparklesIcon, TrophyIcon, GreenhouseIcon, ReportIcon, FarmerIcon } from './Icons.tsx';
 import { useAnimatedCounter } from '../hooks/useAnimatedCounter.ts';
 import DashboardSkeleton from './DashboardSkeleton.tsx';
 
@@ -12,12 +11,12 @@ const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EGP', maximumFractionDigits: 0 }).format(amount);
 };
 
-const AnimatedNumber: React.FC<{ value: number; formatter: (val: number) => string; }> = React.memo(({ value, formatter }) => {
+const AnimatedNumber: FC<{ value: number; formatter: (val: number) => string; }> = memo(({ value, formatter }) => {
     const count = useAnimatedCounter(value);
     return <>{formatter(count)}</>;
 });
 
-type StatCardColor = 'emerald' | 'rose' | 'sky' | 'amber' | 'orange' | 'slate';
+type StatCardColor = 'emerald' | 'rose' | 'sky' | 'amber' | 'orange' | 'slate' | 'indigo' | 'purple';
 const colorMap: Record<StatCardColor, { hex: string; border: string }> = {
     emerald: { hex: '#10b981', border: 'border-emerald-500' },
     rose: { hex: '#f43f5e', border: 'border-rose-500' },
@@ -25,9 +24,11 @@ const colorMap: Record<StatCardColor, { hex: string; border: string }> = {
     amber: { hex: '#f59e0b', border: 'border-amber-500' },
     orange: { hex: '#f97316', border: 'border-orange-500' },
     slate: { hex: '#64748b', border: 'border-slate-500' },
+    indigo: { hex: '#6366f1', border: 'border-indigo-500' },
+    purple: { hex: '#8b5cf6', border: 'border-purple-500' },
 };
 
-const StatCard: React.FC<{ title: string; value: number; icon: React.ReactNode; colorName: StatCardColor; sparklineData?: { value: number }[] }> = React.memo(({ title, value, icon, colorName, sparklineData }) => {
+const StatCard: FC<{ title: string; value: number; icon: ReactNode; colorName: StatCardColor; sparklineData?: { value: number }[] }> = memo(({ title, value, icon, colorName, sparklineData }) => {
     const theme = colorMap[colorName];
 
     return (
@@ -64,13 +65,13 @@ const StatCard: React.FC<{ title: string; value: number; icon: React.ReactNode; 
 });
 
 
-const HighlightCard: React.FC<{
+const HighlightCard: FC<{
     title: string;
     name: string;
     value: number;
     prefix: string;
-    icon: React.ReactNode;
-}> = React.memo(({ title, name, value, prefix, icon }) => (
+    icon: ReactNode;
+}> = memo(({ title, name, value, prefix, icon }) => (
     <div className="bg-slate-100 dark:bg-slate-800/50 rounded-lg p-4 flex items-center space-x-4 space-x-reverse border border-slate-200 dark:border-slate-700">
         <div className="flex-shrink-0">{icon}</div>
         <div className="flex-1 min-w-0">
@@ -84,14 +85,14 @@ const HighlightCard: React.FC<{
 ));
 
 
-const QuickActionButton: React.FC<{ to: string; title: string; icon: React.ReactNode; color: string; state?: object; }> = React.memo(({ to, title, icon, color, state }) => (
+const QuickActionButton: FC<{ to: string; title: string; icon: ReactNode; color: string; state?: object; }> = memo(({ to, title, icon, color, state }) => (
     <Link to={to} state={state} className={`flex items-center p-4 rounded-lg shadow-sm transition-all duration-200 ease-in-out transform hover:-translate-y-1 ${color}`}>
         {icon}
         <span className="mr-3 font-semibold text-white">{title}</span>
     </Link>
 ));
 
-const DashboardEmptyState: React.FC = React.memo(() => {
+const DashboardEmptyState: FC = memo(() => {
   return (
     <div className="text-center py-16 px-6 bg-white dark:bg-slate-800 rounded-lg border-2 border-dashed border-slate-200 dark:border-slate-700">
       <SparklesIcon className="w-16 h-16 text-emerald-500 mx-auto mb-6" />
@@ -111,7 +112,7 @@ const DashboardEmptyState: React.FC = React.memo(() => {
   );
 });
 
-const LastClosedCycleSummary: React.FC<{ cycle: CropCycle; stats: { revenue: number; expense: number; profit: number } }> = React.memo(({ cycle, stats }) => {
+const LastClosedCycleSummary: FC<{ cycle: CropCycle; stats: { revenue: number; expense: number; profit: number } }> = memo(({ cycle, stats }) => {
     return (
         <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-5 border-l-4 border-slate-500 animate-fadeInSlideUp">
             <h2 className="text-xl font-semibold mb-4 text-slate-800 dark:text-white">ملخص آخر عروة مغلقة</h2>
@@ -147,7 +148,7 @@ const LastClosedCycleSummary: React.FC<{ cycle: CropCycle; stats: { revenue: num
 });
 
 
-const ActiveDashboardEmptyState: React.FC = React.memo(() => {
+const ActiveDashboardEmptyState: FC = memo(() => {
   return (
     <div className="text-center py-16 px-6 bg-white dark:bg-slate-800 rounded-lg border-2 border-dashed border-slate-200 dark:border-slate-700">
       <CycleIcon className="w-16 h-16 text-emerald-500 mx-auto mb-6" />
@@ -164,10 +165,13 @@ const ActiveDashboardEmptyState: React.FC = React.memo(() => {
   );
 });
 
-const RecentTransactionRow = React.memo(({ t }: { t: Transaction }) => (
+const RecentTransactionRow = memo(({ t }: { t: Transaction }) => (
     <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors duration-200">
         <td className="py-4 px-4 whitespace-nowrap">{t.date}</td>
-        <td className="py-4 px-4 whitespace-nowrap">{t.description}</td>
+        <td className="py-4 px-4 whitespace-nowrap">
+            {t.description}
+            {t.type === TransactionType.REVENUE && t.market && <span className="text-xs text-slate-500 dark:text-slate-400 block">السوق: {t.market}</span>}
+        </td>
         <td className="py-4 px-4 whitespace-nowrap">
             <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${t.type === TransactionType.REVENUE ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300' : 'bg-rose-100 text-rose-800 dark:bg-rose-900/50 dark:text-rose-300'}`}>
                 {t.type}
@@ -177,11 +181,12 @@ const RecentTransactionRow = React.memo(({ t }: { t: Transaction }) => (
     </tr>
 ));
 
-const RecentTransactionCard: React.FC<{ t: Transaction }> = React.memo(({ t }) => (
+const RecentTransactionCard: FC<{ t: Transaction }> = memo(({ t }) => (
     <div className="bg-slate-50/50 dark:bg-slate-800/50 p-4 rounded-lg flex justify-between items-center">
         <div>
             <p className="font-semibold text-slate-800 dark:text-white">{t.description}</p>
             <p className="text-sm text-slate-500 dark:text-slate-400">{t.date}</p>
+            {t.type === TransactionType.REVENUE && t.market && <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">السوق: {t.market}</p>}
         </div>
         <div className="text-left">
              <p className={`font-medium text-lg ${t.type === TransactionType.REVENUE ? 'text-emerald-600' : 'text-rose-600'}`}>{formatCurrency(t.amount)}</p>
@@ -192,20 +197,20 @@ const RecentTransactionCard: React.FC<{ t: Transaction }> = React.memo(({ t }) =
     </div>
 ));
 
-const Dashboard: React.FC = () => {
-    const { cropCycles, transactions, loading, settings, greenhouses } = React.useContext(AppContext) as AppContextType;
+const Dashboard: FC = () => {
+    const { cropCycles, transactions, loading, settings, greenhouses } = useContext(AppContext) as AppContextType;
 
-    const activeCycleIds = React.useMemo(() => 
+    const activeCycleIds = useMemo(() => 
         new Set(cropCycles.filter(c => c.status === CropCycleStatus.ACTIVE).map(c => c.id)), 
         [cropCycles]
     );
 
-    const activeTransactions = React.useMemo(() => 
+    const activeTransactions = useMemo(() => 
         transactions.filter(t => activeCycleIds.has(t.cropCycleId)),
         [transactions, activeCycleIds]
     );
 
-    const { totalRevenue, totalExpenses, totalProfit, activeCyclesCount } = React.useMemo(() => {
+    const { totalRevenue, totalExpenses, totalProfit, totalFarmerShare, activeCyclesCount } = useMemo(() => {
         const totalRevenue = activeTransactions
             .filter(t => t.type === TransactionType.REVENUE)
             .reduce((sum, t) => sum + t.amount, 0);
@@ -230,11 +235,12 @@ const Dashboard: React.FC = () => {
             totalRevenue,
             totalExpenses,
             totalProfit: totalRevenue - totalExpenses - totalFarmerShare,
+            totalFarmerShare,
             activeCyclesCount
         };
     }, [activeTransactions, cropCycles, settings.isFarmerSystemEnabled, activeCycleIds]);
 
-    const sevenDaysSparklineData = React.useMemo(() => {
+    const sevenDaysSparklineData = useMemo(() => {
         const today = new Date();
         const dailyData: { [key: string]: { revenue: number; expense: number; profit: number } } = {};
         const dailyFarmerShare: { [key: string]: number } = {};
@@ -275,11 +281,12 @@ const Dashboard: React.FC = () => {
         const revenue = Object.values(dailyData).map(d => ({ value: d.revenue }));
         const expense = Object.values(dailyData).map(d => ({ value: d.expense }));
         const profit = Object.values(dailyData).map(d => ({ value: d.profit }));
+        const farmerShare = Object.values(dailyFarmerShare).map(value => ({ value }));
 
-        return { revenue, expense, profit };
+        return { revenue, expense, profit, farmerShare };
     }, [activeTransactions, cropCycles, settings.isFarmerSystemEnabled]);
 
-    const monthlyData = React.useMemo(() => {
+    const monthlyData = useMemo(() => {
         const data: { [key: string]: { month: string; إيرادات: number; مصروفات: number } } = {};
         activeTransactions.forEach(t => {
             const month = new Date(t.date).toLocaleString('ar-EG', { month: 'short', year: 'numeric' });
@@ -295,7 +302,7 @@ const Dashboard: React.FC = () => {
         return Object.values(data).reverse();
     }, [activeTransactions]);
     
-    const expenseCategoryData = React.useMemo(() => {
+    const expenseCategoryData = useMemo(() => {
         const data: { [key: string]: number } = {};
         activeTransactions
             .filter(t => t.type === TransactionType.EXPENSE)
@@ -307,7 +314,7 @@ const Dashboard: React.FC = () => {
             .sort((a, b) => b.value - a.value);
     }, [activeTransactions]);
 
-    const kpis = React.useMemo(() => {
+    const kpis = useMemo(() => {
         if (loading || activeTransactions.length === 0) {
             return { starCycle: null, topGreenhouse: null, topExpense: null };
         }
@@ -347,7 +354,7 @@ const Dashboard: React.FC = () => {
         };
     }, [loading, activeTransactions, cropCycles, greenhouses, expenseCategoryData, settings.isFarmerSystemEnabled, activeCycleIds]);
     
-    const lastClosedCycle = React.useMemo(() => {
+    const lastClosedCycle = useMemo(() => {
         const closedCycles = cropCycles.filter(c => c.status === CropCycleStatus.CLOSED);
         if (closedCycles.length === 0) return null;
 
@@ -364,7 +371,7 @@ const Dashboard: React.FC = () => {
         return cyclesWithLastDate[0].cycle;
     }, [cropCycles, transactions]);
 
-    const lastClosedCycleStats = React.useMemo(() => {
+    const lastClosedCycleStats = useMemo(() => {
         if (!lastClosedCycle) return null;
 
         const cycleTransactions = transactions.filter(t => t.cropCycleId === lastClosedCycle.id);
@@ -383,10 +390,10 @@ const Dashboard: React.FC = () => {
 
     const COLORS = ['#10b981', '#0ea5e9', '#f97316', '#f43f5e', '#8b5cf6', '#f59e0b', '#6366f1'];
     
-    // FIX: Replaced unstable hashing with a stable color map based on all available expense categories from settings.
-    const categoryColorMap = React.useMemo(() => {
+    const categoryColorMap = useMemo(() => {
         const map = new Map<string, string>();
-        settings.expenseCategories.forEach((category, index) => {
+        const sortedCategories = [...settings.expenseCategories].sort((a, b) => a.name.localeCompare(b.name));
+        sortedCategories.forEach((category, index) => {
             map.set(category.name, COLORS[index % COLORS.length]);
         });
         return map;
@@ -419,10 +426,13 @@ const Dashboard: React.FC = () => {
                 </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+            <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 ${settings.isFarmerSystemEnabled ? 'xl:grid-cols-5' : 'lg:grid-cols-3'} gap-6`}>
                 <StatCard title="إجمالي الإيرادات" value={totalRevenue} icon={<RevenueIcon className="h-8 w-8 text-emerald-500"/>} colorName="emerald" sparklineData={sevenDaysSparklineData.revenue} />
                 <StatCard title="إجمالي المصروفات" value={totalExpenses} icon={<ExpenseIcon className="h-8 w-8 text-rose-500"/>} colorName="rose" sparklineData={sevenDaysSparklineData.expense} />
                 <StatCard title="صافي ربح المالك" value={totalProfit} icon={<ProfitIcon className="h-8 w-8 text-sky-500"/>} colorName={totalProfit >= 0 ? "sky" : "orange"} sparklineData={sevenDaysSparklineData.profit} />
+                {settings.isFarmerSystemEnabled && (
+                    <StatCard title="إجمالي حصة المزارع" value={totalFarmerShare} icon={<FarmerIcon className="h-8 w-8 text-purple-500"/>} colorName="purple" sparklineData={sevenDaysSparklineData.farmerShare} />
+                )}
                 <StatCard title="العروات النشطة" value={activeCyclesCount} icon={<ActiveCycleIcon className="h-8 w-8 text-amber-500"/>} colorName="amber" />
             </div>
 
@@ -510,32 +520,38 @@ const Dashboard: React.FC = () => {
             </div>
             
             <div className="bg-white dark:bg-slate-800 rounded-lg shadow border border-slate-200 dark:border-slate-700">
-                <h2 className="text-xl font-semibold p-4 sm:p-6 text-slate-800 dark:text-white">أحدث المعاملات (لكل العروات)</h2>
-                {/* Desktop Table */}
-                <div className="hidden md:block overflow-x-auto">
-                    <table className="min-w-full text-sm">
-                        <thead className="bg-slate-50 dark:bg-slate-700/50">
-                            <tr>
-                                <th className="py-3 px-4 text-right font-medium text-slate-500 dark:text-slate-300">التاريخ</th>
-                                <th className="py-3 px-4 text-right font-medium text-slate-500 dark:text-slate-300">الوصف</th>
-                                <th className="py-3 px-4 text-right font-medium text-slate-500 dark:text-slate-300">النوع</th>
-                                <th className="py-3 px-4 text-right font-medium text-slate-500 dark:text-slate-300">المبلغ</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-                            {transactions.slice(0, 5).map(t => (
-                               <RecentTransactionRow key={t.id} t={t} />
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                <h2 className="text-xl font-semibold p-4 sm:p-6 text-slate-800 dark:text-white">أحدث المعاملات (للعروات النشطة)</h2>
+                {activeTransactions.length > 0 ? (
+                    <>
+                        {/* Desktop Table */}
+                        <div className="hidden md:block overflow-x-auto">
+                            <table className="min-w-full text-sm">
+                                <thead className="bg-slate-50 dark:bg-slate-700/50">
+                                    <tr>
+                                        <th className="py-3 px-4 text-right font-medium text-slate-500 dark:text-slate-300">التاريخ</th>
+                                        <th className="py-3 px-4 text-right font-medium text-slate-500 dark:text-slate-300">الوصف</th>
+                                        <th className="py-3 px-4 text-right font-medium text-slate-500 dark:text-slate-300">النوع</th>
+                                        <th className="py-3 px-4 text-right font-medium text-slate-500 dark:text-slate-300">المبلغ</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                                    {activeTransactions.slice(0, 5).map(t => (
+                                       <RecentTransactionRow key={t.id} t={t} />
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
 
-                {/* Mobile Cards */}
-                <div className="md:hidden p-4 space-y-3">
-                     {transactions.slice(0, 5).map(t => (
-                        <RecentTransactionCard key={t.id} t={t} />
-                    ))}
-                </div>
+                        {/* Mobile Cards */}
+                        <div className="md:hidden p-4 space-y-3">
+                             {activeTransactions.slice(0, 5).map(t => (
+                                <RecentTransactionCard key={t.id} t={t} />
+                            ))}
+                        </div>
+                    </>
+                ) : (
+                    <p className="px-4 sm:px-6 pb-6 text-center text-slate-500 dark:text-slate-400">لا توجد معاملات مسجلة للعروات النشطة بعد.</p>
+                )}
             </div>
         </div>
     );

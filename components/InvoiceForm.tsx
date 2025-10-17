@@ -17,45 +17,42 @@ const InvoiceForm: React.FC<{
     const { addToast } = React.useContext(ToastContext) as ToastContextType;
     const { settings } = React.useContext(AppContext) as AppContextType;
     
-    const activeCycles = cycles.filter(c => c.status === CropCycleStatus.ACTIVE);
-
+    const selectableCycles = React.useMemo(() => {
+        const available = cycles.filter(
+            c => c.status === CropCycleStatus.ACTIVE || c.status === CropCycleStatus.CLOSED
+        );
+        if (invoice?.cropCycleId) {
+            const existingCycle = cycles.find(c => c.id === invoice.cropCycleId);
+            if (existingCycle && !available.some(ac => ac.id === existingCycle.id)) {
+                return [...available, existingCycle].sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
+            }
+        }
+        return available.sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
+    }, [cycles, invoice]);
+    
     const determineInitialCycleId = () => {
         if (invoice?.cropCycleId) return invoice.cropCycleId;
         if (initialCycleId) return initialCycleId;
-        if (activeCycles.length === 1) return activeCycles[0].id;
+        if (selectableCycles.length === 1) return selectableCycles[0].id;
         return '';
     };
 
     const [date, setDate] = React.useState(invoice?.date || new Date().toISOString().split('T')[0]);
     const [description, setDescription] = React.useState(invoice?.description || '');
     const [cropCycleId, setCropCycleId] = React.useState(determineInitialCycleId());
+    const [market, setMarket] = React.useState(invoice?.market || 'العبور');
     const [discount, setDiscount] = React.useState(invoice?.discount?.toString() || '0');
     const [errors, setErrors] = React.useState<{ [key: string]: string }>({});
     const [fertilizationProgramId, setFertilizationProgramId] = React.useState(invoice?.fertilizationProgramId || '');
     
     const getInitialItems = () => {
-        if (!invoice) {
-            return [{ quantity: '', price: '' }];
+        if (invoice?.priceItems && invoice.priceItems.length > 0) {
+            return invoice.priceItems.map(p => ({ 
+                quantity: p.quantity.toString(), 
+                price: p.price.toString() 
+            }));
         }
-        
-        let itemsFromInvoice: { quantity: string; price: string }[] = [];
-        if (invoice.priceItems && invoice.priceItems.length > 0) {
-            itemsFromInvoice = invoice.priceItems.map(p => ({ quantity: p.quantity.toString(), price: p.price.toString() }));
-        } else {
-            // Fallback for old data structure
-            if (typeof invoice.quantityGrade1 === 'number' || typeof invoice.priceGrade1 === 'number') {
-                itemsFromInvoice.push({ quantity: invoice.quantityGrade1?.toString() || '0', price: invoice.priceGrade1?.toString() || '0' });
-            }
-            if (typeof invoice.quantityGrade2 === 'number' || typeof invoice.priceGrade2 === 'number') {
-                itemsFromInvoice.push({ quantity: invoice.quantityGrade2?.toString() || '0', price: invoice.priceGrade2?.toString() || '0' });
-            }
-        }
-
-        // Ensure at least one item is present in the form UI
-        if (itemsFromInvoice.length === 0) {
-            itemsFromInvoice.push({ quantity: '', price: '' });
-        }
-        return itemsFromInvoice;
+        return [{ quantity: '', price: '' }];
     };
 
     const [items, setItems] = React.useState(getInitialItems);
@@ -145,10 +142,11 @@ const InvoiceForm: React.FC<{
 
         setErrors({});
 
-        const data: Omit<Transaction, 'id' | 'type' | 'category' | 'quantityGrade1' | 'priceGrade1' | 'quantityGrade2' | 'priceGrade2'> & { type: TransactionType.REVENUE; category: 'أخرى' } = {
+        const data: Omit<Transaction, 'id' | 'type' | 'category'> & { type: TransactionType.REVENUE; category: 'أخرى' } = {
             date,
             description,
             cropCycleId,
+            market,
             type: TransactionType.REVENUE,
             category: 'أخرى',
             amount: calculatedAmount,
@@ -181,11 +179,21 @@ const InvoiceForm: React.FC<{
                 </div>
                 <div>
                     <label htmlFor="cropCycle" className="block text-sm font-medium text-slate-700 dark:text-slate-300">العروة</label>
-                    <select id="cropCycle" value={cropCycleId} onChange={e => setCropCycleId(e.target.value)} disabled={cycles.length === 1} className={`${formInputClass} ${errors.cropCycleId ? errorInputClass : ''}`}>
+                    <select id="cropCycle" value={cropCycleId} onChange={e => setCropCycleId(e.target.value)} className={`${formInputClass} ${errors.cropCycleId ? errorInputClass : ''}`}>
                         <option value="" disabled>اختر عروة</option>
-                        {cycles.filter(c => c.status === CropCycleStatus.ACTIVE || c.status === CropCycleStatus.CLOSED || c.id === invoice?.cropCycleId).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                        {selectableCycles.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                     </select>
                     {errors.cropCycleId && <p className="mt-1 text-sm text-red-600">{errors.cropCycleId}</p>}
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label htmlFor="market" className="block text-sm font-medium text-slate-700 dark:text-slate-300">السوق</label>
+                    <select id="market" value={market} onChange={e => setMarket(e.target.value)} required className={formInputClass}>
+                        <option value="العبور">العبور</option>
+                        <option value="المستقبل">المستقبل</option>
+                    </select>
                 </div>
             </div>
 
@@ -217,11 +225,11 @@ const InvoiceForm: React.FC<{
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label htmlFor={`quantity-${index}`} className="block text-sm font-medium text-slate-700 dark:text-slate-300">الكمية (ك.ج)</label>
-                                <input type="number" id={`quantity-${index}`} value={item.quantity} onChange={e => handleItemChange(index, 'quantity', e.target.value)} min="0" className={formInputClass}/>
+                                <input type="number" id={`quantity-${index}`} value={item.quantity} onChange={e => handleItemChange(index, 'quantity', e.target.value)} min="0" step="any" className={formInputClass}/>
                             </div>
                              <div>
                                 <label htmlFor={`price-${index}`} className="block text-sm font-medium text-slate-700 dark:text-slate-300">سعر الكيلو</label>
-                                <input type="number" id={`price-${index}`} value={item.price} onChange={e => handleItemChange(index, 'price', e.target.value)} min="0" step="0.01" className={formInputClass}/>
+                                <input type="number" id={`price-${index}`} value={item.price} onChange={e => handleItemChange(index, 'price', e.target.value)} min="0" step="any" className={formInputClass}/>
                             </div>
                         </div>
                     </fieldset>
@@ -242,7 +250,7 @@ const InvoiceForm: React.FC<{
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
                  <div>
                     <label htmlFor="discount" className="block text-sm font-medium text-slate-700 dark:text-slate-300">الخصم (ج.م)</label>
-                    <input type="number" id="discount" value={discount} onChange={e => setDiscount(e.target.value)} min="0" step="0.01" className={formInputClass}/>
+                    <input type="number" id="discount" value={discount} onChange={e => setDiscount(e.target.value)} min="0" step="any" className={formInputClass}/>
                 </div>
                  <div className="pt-1">
                     <p className="text-sm font-medium text-slate-500 dark:text-slate-400">الإجمالي</p>

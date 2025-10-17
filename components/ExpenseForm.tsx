@@ -19,13 +19,24 @@ const ExpenseForm: React.FC<{
     const { addToast } = React.useContext(ToastContext) as ToastContextType;
     const expenseCategories = settings.expenseCategories || [];
     const otherCategoryName = expenseCategories.find(c => c.name === 'أخرى')?.name || expenseCategories[0]?.name || '';
-
-    const activeCycles = cycles.filter(c => c.status === CropCycleStatus.ACTIVE);
     
+    const selectableCycles = React.useMemo(() => {
+        const available = cycles.filter(
+            c => c.status === CropCycleStatus.ACTIVE || c.status === CropCycleStatus.CLOSED
+        );
+        if (expense?.cropCycleId) {
+            const existingCycle = cycles.find(c => c.id === expense.cropCycleId);
+            if (existingCycle && !available.some(ac => ac.id === existingCycle.id)) {
+                return [...available, existingCycle].sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
+            }
+        }
+        return available.sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
+    }, [cycles, expense]);
+
     const determineInitialCycleId = () => {
         if (expense?.cropCycleId) return expense.cropCycleId;
         if (initialCycleId) return initialCycleId;
-        if (activeCycles.length === 1) return activeCycles[0].id;
+        if (selectableCycles.length === 1) return selectableCycles[0].id;
         return '';
     };
 
@@ -140,9 +151,9 @@ const ExpenseForm: React.FC<{
                 </div>
                  <div>
                     <label htmlFor="cropCycle" className="block text-sm font-medium text-slate-700 dark:text-slate-300">العروة</label>
-                    <select id="cropCycle" value={cropCycleId} onChange={e => setCropCycleId(e.target.value)} disabled={cycles.length === 1} className={`${formInputClass} ${errors.cropCycleId ? errorInputClass : ''}`}>
+                    <select id="cropCycle" value={cropCycleId} onChange={e => setCropCycleId(e.target.value)} className={`${formInputClass} ${errors.cropCycleId ? errorInputClass : ''}`}>
                         <option value="" disabled>اختر عروة</option>
-                         {cycles.filter(c => c.status === CropCycleStatus.ACTIVE || c.status === CropCycleStatus.CLOSED || c.id === expense?.cropCycleId).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                         {selectableCycles.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                     </select>
                     {errors.cropCycleId && <p className="mt-1 text-sm text-red-600">{errors.cropCycleId}</p>}
                 </div>

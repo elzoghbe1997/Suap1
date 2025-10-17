@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FC, useState, useEffect, useRef, memo } from 'react';
 import { WarningIcon } from './Icons.tsx';
 
 interface ConfirmationModalProps {
@@ -11,10 +11,11 @@ interface ConfirmationModalProps {
   confirmColor?: 'red' | 'blue' | 'yellow';
 }
 
-const ConfirmationModal: React.FC<ConfirmationModalProps> = React.memo(({ isOpen, onClose, onConfirm, title, message, confirmText = 'حذف', confirmColor = 'red' }) => {
-    const [isAnimating, setIsAnimating] = React.useState(false);
+const ConfirmationModal: FC<ConfirmationModalProps> = memo(({ isOpen, onClose, onConfirm, title, message, confirmText = 'حذف', confirmColor = 'red' }) => {
+    const [isAnimating, setIsAnimating] = useState(false);
+    const modalRef = useRef<HTMLDivElement>(null);
 
-    React.useEffect(() => {
+    useEffect(() => {
         if (isOpen) {
             const timer = setTimeout(() => setIsAnimating(true), 10); // Start animation after mount
             return () => clearTimeout(timer);
@@ -22,6 +23,49 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = React.memo(({ isOpen
             setIsAnimating(false); // Reset on close
         }
     }, [isOpen]);
+
+    // Focus Trap and Escape key handler
+    useEffect(() => {
+        if (!isOpen) return;
+
+        const modalNode = modalRef.current;
+        if (!modalNode) return;
+
+        const focusableElements = modalNode.querySelectorAll('button');
+        if (focusableElements.length === 0) return;
+
+        const firstElement = focusableElements[0] as HTMLElement;
+        const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                onClose();
+                return;
+            }
+            if (e.key !== 'Tab') return;
+
+            if (e.shiftKey) { // Shift + Tab
+                if (document.activeElement === firstElement) {
+                    lastElement.focus();
+                    e.preventDefault();
+                }
+            } else { // Tab
+                if (document.activeElement === lastElement) {
+                    firstElement.focus();
+                    e.preventDefault();
+                }
+            }
+        };
+        
+        document.addEventListener('keydown', handleKeyDown);
+
+        // Focus the cancel button on open (it's the last element due to flex-row-reverse)
+        lastElement.focus();
+        
+        return () => {
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [isOpen, onClose]);
     
     if (!isOpen) return null;
 
@@ -34,8 +78,8 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = React.memo(({ isOpen
 
 
     return (
-        <div className={`absolute inset-0 flex items-center justify-center z-70 p-4 transition-opacity duration-300 ease-out ${isAnimating ? 'bg-black bg-opacity-60' : 'bg-black bg-opacity-0'}`} aria-modal="true" role="dialog" onClick={onClose}>
-            <div className={`bg-white dark:bg-slate-800 p-6 rounded-lg shadow-xl w-full max-w-md transform transition-all duration-300 ease-out ${isAnimating ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`} onClick={e => e.stopPropagation()}>
+        <div className={`fixed inset-0 flex items-center justify-center z-[70] p-4 transition-opacity duration-300 ease-out ${isAnimating ? 'bg-black bg-opacity-60' : 'bg-black bg-opacity-0'}`} aria-modal="true" role="dialog" onClick={onClose}>
+            <div ref={modalRef} className={`bg-white dark:bg-slate-800 p-6 rounded-lg shadow-xl w-full max-w-md transform transition-all duration-300 ease-out ${isAnimating ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`} onClick={e => e.stopPropagation()}>
                 <div className="flex">
                     <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/50 sm:mx-0 sm:h-10 sm:w-10">
                         <WarningIcon className="h-6 w-6 text-red-600 dark:text-red-400" aria-hidden="true" />

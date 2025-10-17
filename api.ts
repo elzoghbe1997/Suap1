@@ -1,4 +1,4 @@
-import { CropCycle, Transaction, CropCycleStatus, TransactionType, Greenhouse, AppSettings, Farmer, FarmerWithdrawal, Supplier, SupplierPayment, FertilizationProgram, ExpenseCategorySetting, BackupData, Advance } from './types';
+import { CropCycle, Transaction, CropCycleStatus, TransactionType, Greenhouse, AppSettings, Farmer, FarmerWithdrawal, Supplier, SupplierPayment, FertilizationProgram, ExpenseCategorySetting, BackupData, Advance, Person } from './types';
 
 // This file simulates a backend API. In a real application, these functions would make network requests.
 
@@ -58,6 +58,11 @@ const INITIAL_FARMERS: Farmer[] = [
     { id: 'f2', name: 'علي حسن' },
 ];
 
+const INITIAL_PEOPLE: Person[] = [
+    { id: 'p1', name: 'إبراهيم' },
+    { id: 'p2', name: 'محمد' },
+];
+
 const INITIAL_GREENHOUSES: Greenhouse[] = [
     { id: 'g1', name: 'الصوبة الشمالية', creationDate: '2023-01-15', initialCost: 150000 },
     { id: 'g2', name: 'الصوبة الجنوبية', creationDate: '2023-03-20', initialCost: 185000 },
@@ -85,13 +90,13 @@ const INITIAL_TRANSACTIONS: Transaction[] = [
     { id: 't1', date: '2023-10-01', description: 'شراء بذور طماطم', type: TransactionType.EXPENSE, category: 'بذور', amount: 2500, cropCycleId: '1' },
     { id: 't2', date: '2023-10-15', description: 'أسمدة ومغذيات', type: TransactionType.EXPENSE, category: 'أسمدة ومغذيات', amount: 4000, cropCycleId: '1' },
     { id: 't3', date: '2023-11-01', description: 'أجور عمال', type: TransactionType.EXPENSE, category: 'أجور عمال', amount: 7000, cropCycleId: '1' },
-    { id: 't4', date: '2024-01-10', description: 'بيع أول دفعة محصول طماطم', type: TransactionType.REVENUE, category: 'أخرى', amount: 15000, cropCycleId: '1', quantity: 500, priceItems: [{ quantity: 500, price: 30 }] },
-    { id: 't5', date: '2024-02-05', description: 'بيع ثاني دفعة محصول طماطم', type: TransactionType.REVENUE, category: 'أخرى', amount: 22000, cropCycleId: '1', quantity: 750, priceItems: [{ quantity: 500, price: 30 }, { quantity: 250, price: 28 }] },
+    { id: 't4', date: '2024-01-10', description: 'بيع أول دفعة محصول طماطم', type: TransactionType.REVENUE, category: 'أخرى', amount: 15000, cropCycleId: '1', quantity: 500, priceItems: [{ quantity: 500, price: 30 }], market: 'العبور' },
+    { id: 't5', date: '2024-02-05', description: 'بيع ثاني دفعة محصول طماطم', type: TransactionType.REVENUE, category: 'أخرى', amount: 22000, cropCycleId: '1', quantity: 750, priceItems: [{ quantity: 500, price: 30 }, { quantity: 250, price: 28 }], market: 'المستقبل' },
     { id: 't6', date: '2024-02-20', description: 'صيانة نظام الري', type: TransactionType.EXPENSE, category: 'صيانة', amount: 1200, cropCycleId: '1' },
     { id: 't7', date: '2024-04-15', description: 'شراء بذور خيار', type: TransactionType.EXPENSE, category: 'بذور', amount: 1800, cropCycleId: '2' },
     { id: 't8', date: getPastDate(28), description: 'أسمدة نيتروجينية', type: TransactionType.EXPENSE, category: 'أسمدة ومغذيات', amount: 3200, cropCycleId: '2', fertilizationProgramId: 'fp1' },
     { id: 't9', date: '2024-05-15', description: 'أجور عمال', type: TransactionType.EXPENSE, category: 'أجور عمال', amount: 5500, cropCycleId: '2' },
-    { id: 't10', date: getPastDate(5), description: 'بيع محصول خيار مبكر', type: TransactionType.REVENUE, category: 'أخرى', amount: 9500, cropCycleId: '2', quantity: 400, priceItems: [{ quantity: 400, price: 25 }], discount: 500 },
+    { id: 't10', date: getPastDate(5), description: 'بيع محصول خيار مبكر', type: TransactionType.REVENUE, category: 'أخرى', amount: 9500, cropCycleId: '2', quantity: 400, priceItems: [{ quantity: 400, price: 25 }], discount: 500, market: 'العبور' },
     { id: 't15', date: getPastDate(25), description: 'أسمدة بوتاسية (آجل)', type: TransactionType.EXPENSE, category: 'أسمدة ومغذيات', amount: 3500, cropCycleId: '2', supplierId: 's1', fertilizationProgramId: 'fp1' },
     { id: 't17', date: getPastDate(20), description: 'مبيدات وقائية (آجل)', type: TransactionType.EXPENSE, category: 'مبيدات', amount: 2200, cropCycleId: '2', supplierId: 's1', fertilizationProgramId: 'fp2' },
     { id: 't19', date: getPastDate(8), description: 'بذور خيار إضافية (آجل)', type: TransactionType.EXPENSE, category: 'بذور', amount: 1200, cropCycleId: '2', supplierId: 's3' },
@@ -110,14 +115,15 @@ const INITIAL_FARMER_WITHDRAWALS: FarmerWithdrawal[] = [
 ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
 const INITIAL_SUPPLIER_PAYMENTS: SupplierPayment[] = [
-    { id: 'sp1', date: getPastDate(3), amount: 2000, supplierId: 's1', description: 'دفعة من حساب الأسمدة' },
-    { id: 'sp2', date: getPastDate(1), amount: 1500, supplierId: 's1', description: 'تسوية جزء من الحساب' },
-    { id: 'sp3', date: getPastDate(5), amount: 3000, supplierId: 's2', description: 'دفعة أولى من الحساب' },
+    { id: 'sp1', date: getPastDate(3), amount: 2000, supplierId: 's1', description: 'دفعة من حساب الأسمدة', cropCycleId: '2' },
+    { id: 'sp2', date: getPastDate(1), amount: 1500, supplierId: 's1', description: 'تسوية جزء من الحساب', cropCycleId: '2', linkedExpenseIds: ['t15'] },
+    { id: 'sp3', date: getPastDate(5), amount: 3000, supplierId: 's2', description: 'دفعة أولى من الحساب', cropCycleId: '3' },
 ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
 const INITIAL_ADVANCES: Advance[] = [
-    { id: 'adv1', date: getPastDate(10), amount: 5000, description: 'سلفة شخصية' },
-    { id: 'adv2', date: getPastDate(3), amount: 1500, description: 'مصاريف طارئة' },
+    { id: 'adv1', date: getPastDate(10), amount: 5000, description: 'مصاريف شخصية', cropCycleId: '2', personId: 'p1' },
+    { id: 'adv2', date: getPastDate(3), amount: 1500, description: 'مصاريف طارئة', cropCycleId: '3', personId: 'p2' },
+    { id: 'adv3', date: getPastDate(2), amount: 2000, description: 'دفعة إيجار', cropCycleId: '2', personId: 'p1' },
 ];
 
 const DEMO_DATA: BackupData = {
@@ -131,6 +137,7 @@ const DEMO_DATA: BackupData = {
     supplierPayments: INITIAL_SUPPLIER_PAYMENTS,
     fertilizationPrograms: INITIAL_FERTILIZATION_PROGRAMS,
     advances: INITIAL_ADVANCES,
+    people: INITIAL_PEOPLE,
 };
 
 const FRESH_DATA: BackupData = {
@@ -144,6 +151,7 @@ const FRESH_DATA: BackupData = {
     supplierPayments: [],
     fertilizationPrograms: [],
     advances: [],
+    people: [],
 };
 
 // --- API Functions ---
@@ -212,6 +220,10 @@ export const deleteFertilizationProgram = (id: string): Promise<{ id: string }> 
 export const addAdvance = (item: Omit<Advance, 'id'>): Promise<Advance> => mockRequest({ ...item, id: Date.now().toString() });
 export const updateAdvance = (item: Advance): Promise<Advance> => mockRequest(item);
 export const deleteAdvance = (id: string): Promise<{ id: string }> => mockRequest({ id });
+
+export const addPerson = (item: Omit<Person, 'id'>): Promise<Person> => mockRequest({ ...item, id: Date.now().toString() });
+export const updatePerson = (item: Person): Promise<Person> => mockRequest(item);
+export const deletePerson = (id: string): Promise<{ id: string }> => mockRequest({ id });
 
 export const loadBackupData = (data: BackupData): Promise<BackupData> => mockRequest(data);
 export const deleteAllData = (): Promise<void> => mockRequest(undefined);

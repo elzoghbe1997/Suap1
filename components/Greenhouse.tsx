@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FC, useContext, useState, FormEvent, memo, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { AppContext } from '../App.tsx';
 import { AppContextType, Greenhouse } from '../types.ts';
@@ -9,13 +9,13 @@ import SkeletonCard from './SkeletonCard.tsx';
 
 const formInputClass = "mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500";
 
-const GreenhouseForm: React.FC<{ greenhouse?: Greenhouse; onSave: (greenhouse: Omit<Greenhouse, 'id'> | Greenhouse) => void; onCancel: () => void }> = ({ greenhouse, onSave, onCancel }) => {
-    const { addToast } = React.useContext(ToastContext) as ToastContextType;
-    const [name, setName] = React.useState(greenhouse?.name || '');
-    const [initialCost, setInitialCost] = React.useState(greenhouse?.initialCost?.toString() || '');
-    const [creationDate] = React.useState(greenhouse?.creationDate || new Date().toISOString().split('T')[0]);
+const GreenhouseForm: FC<{ greenhouse?: Greenhouse; onSave: (greenhouse: Omit<Greenhouse, 'id'> | Greenhouse) => void; onCancel: () => void }> = ({ greenhouse, onSave, onCancel }) => {
+    const { addToast } = useContext(ToastContext) as ToastContextType;
+    const [name, setName] = useState(greenhouse?.name || '');
+    const [initialCost, setInitialCost] = useState(greenhouse?.initialCost?.toString() || '');
+    const [creationDate] = useState(greenhouse?.creationDate || new Date().toISOString().split('T')[0]);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
         
         const numericCost = Number(initialCost);
@@ -50,13 +50,8 @@ const GreenhouseForm: React.FC<{ greenhouse?: Greenhouse; onSave: (greenhouse: O
     );
 };
 
-const GreenhouseCard: React.FC<{ greenhouse: Greenhouse; onEdit: () => void; onDelete: () => void; }> = ({ greenhouse, onEdit, onDelete }) => {
-    const { cropCycles } = React.useContext(AppContext) as AppContextType;
+const GreenhouseCard: FC<{ greenhouse: Greenhouse; onEdit: (g: Greenhouse) => void; onDelete: (id: string) => void; cycleCount: number; }> = memo(({ greenhouse, onEdit, onDelete, cycleCount }) => {
     const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EGP', maximumFractionDigits: 0 }).format(amount);
-    
-    const cycleCount = React.useMemo(() => {
-        return cropCycles.filter(c => c.greenhouseId === greenhouse.id).length;
-    }, [cropCycles, greenhouse.id]);
 
     return (
         <div className="bg-white dark:bg-slate-800 p-5 rounded-lg shadow-md transition-shadow hover:shadow-xl flex flex-col justify-between">
@@ -94,27 +89,30 @@ const GreenhouseCard: React.FC<{ greenhouse: Greenhouse; onEdit: () => void; onD
                     <span>عرض التقرير</span>
                 </Link>
                 <div className="flex items-center space-x-1 space-x-reverse">
-                    <button onClick={onEdit} className="p-2 text-slate-400 hover:text-blue-500 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" aria-label={`تعديل الصوبة ${greenhouse.name}`}>
+                    <button onClick={() => onEdit(greenhouse)} className="p-2 text-slate-400 hover:text-blue-500 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" aria-label={`تعديل الصوبة ${greenhouse.name}`}>
                         <EditIcon className="w-5 h-5"/>
                     </button>
-                    <button onClick={onDelete} className="p-2 text-slate-400 hover:text-red-500 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" aria-label={`حذف الصوبة ${greenhouse.name}`}>
+                    <button onClick={() => onDelete(greenhouse.id)} className="p-2 text-slate-400 hover:text-red-500 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" aria-label={`حذف الصوبة ${greenhouse.name}`}>
                         <DeleteIcon className="w-5 h-5"/>
                     </button>
                 </div>
             </div>
         </div>
     );
-};
+});
 
 
-const GreenhousePage: React.FC = () => {
-    const { loading, greenhouses, cropCycles, addGreenhouse, updateGreenhouse, deleteGreenhouse } = React.useContext(AppContext) as AppContextType;
-    const { addToast } = React.useContext(ToastContext) as ToastContextType;
-    const [isModalOpen, setIsModalOpen] = React.useState(false);
-    const [editingGreenhouse, setEditingGreenhouse] = React.useState<Greenhouse | undefined>(undefined);
-    const [deletingId, setDeletingId] = React.useState<string | null>(null);
+const GreenhousePage: FC = () => {
+    const { loading, greenhouses, cropCycles, addGreenhouse, updateGreenhouse, deleteGreenhouse } = useContext(AppContext) as AppContextType;
+    const { addToast } = useContext(ToastContext) as ToastContextType;
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isAnimatingModal, setIsAnimatingModal] = useState(false);
+    const [editingGreenhouse, setEditingGreenhouse] = useState<Greenhouse | undefined>(undefined);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
+    const modalRef = useRef<HTMLDivElement>(null);
 
-    React.useEffect(() => {
+
+    useEffect(() => {
         const isAnyModalOpen = isModalOpen || !!deletingId;
         if (isAnyModalOpen) {
             document.body.classList.add('body-no-scroll');
@@ -126,6 +124,58 @@ const GreenhousePage: React.FC = () => {
         };
     }, [isModalOpen, deletingId]);
 
+    useEffect(() => {
+        if (isModalOpen) {
+            const timer = setTimeout(() => setIsAnimatingModal(true), 10);
+            return () => clearTimeout(timer);
+        } else {
+            setIsAnimatingModal(false);
+        }
+    }, [isModalOpen]);
+
+    // Focus Trap and Escape key handler for modal
+    useEffect(() => {
+        if (!isModalOpen) return;
+        
+        const modalNode = modalRef.current;
+        if (!modalNode) return;
+
+        const focusableElements = modalNode.querySelectorAll<HTMLElement>(
+            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                setIsModalOpen(false);
+                setEditingGreenhouse(undefined);
+            }
+
+            if (e.key === 'Tab') {
+                if (e.shiftKey) { 
+                    if (document.activeElement === firstElement) {
+                        lastElement.focus();
+                        e.preventDefault();
+                    }
+                } else { 
+                    if (document.activeElement === lastElement) {
+                        firstElement.focus();
+                        e.preventDefault();
+                    }
+                }
+            }
+        };
+        
+        document.addEventListener('keydown', handleKeyDown);
+        firstElement?.focus();
+        
+        return () => {
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [isModalOpen]);
+
+
     const handleSave = (greenhouse: Omit<Greenhouse, 'id'> | Greenhouse) => {
         if ('id' in greenhouse) {
             updateGreenhouse(greenhouse);
@@ -136,19 +186,19 @@ const GreenhousePage: React.FC = () => {
         setEditingGreenhouse(undefined);
     };
 
-    const handleEdit = (greenhouse: Greenhouse) => {
+    const handleEdit = useCallback((greenhouse: Greenhouse) => {
         setEditingGreenhouse(greenhouse);
         setIsModalOpen(true);
-    };
+    }, []);
 
-    const handleDelete = (id: string) => {
+    const handleDelete = useCallback((id: string) => {
         const hasCycles = cropCycles.some(c => c.greenhouseId === id);
         if (hasCycles) {
             addToast('لا يمكن حذف الصوبة لأنها تحتوي على عروات. يجب حذف أو أرشفة العروات أولاً.', 'error');
         } else {
             setDeletingId(id);
         }
-    };
+    }, [cropCycles, addToast]);
 
     const confirmDelete = () => {
         if (deletingId) {
@@ -156,6 +206,14 @@ const GreenhousePage: React.FC = () => {
         }
         setDeletingId(null);
     };
+    
+    const cycleCounts = useMemo(() => {
+        const counts = new Map<string, number>();
+        for (const cycle of cropCycles) {
+            counts.set(cycle.greenhouseId, (counts.get(cycle.greenhouseId) || 0) + 1);
+        }
+        return counts;
+    }, [cropCycles]);
     
     const renderContent = () => {
         if (loading) {
@@ -172,8 +230,9 @@ const GreenhousePage: React.FC = () => {
                         <GreenhouseCard 
                             key={g.id} 
                             greenhouse={g} 
-                            onEdit={() => handleEdit(g)}
-                            onDelete={() => handleDelete(g.id)}
+                            onEdit={handleEdit}
+                            onDelete={handleDelete}
+                            cycleCount={cycleCounts.get(g.id) || 0}
                         />
                     )}
                 </div>
@@ -202,14 +261,18 @@ const GreenhousePage: React.FC = () => {
             {renderContent()}
 
             {isModalOpen && (
-                <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4" aria-modal="true" role="dialog">
-                    <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-xl w-full max-w-md">
-                        <h2 className="text-2xl font-bold mb-4 text-slate-800 dark:text-white">{editingGreenhouse ? 'تعديل الصوبة' : 'إضافة صوبة جديدة'}</h2>
-                        <GreenhouseForm 
-                            greenhouse={editingGreenhouse}
-                            onSave={handleSave} 
-                            onCancel={() => { setIsModalOpen(false); setEditingGreenhouse(undefined); }} 
-                        />
+                 <div className={`fixed inset-0 flex items-center justify-center z-50 p-4 transition-opacity duration-300 ease-out ${isAnimatingModal ? 'bg-black bg-opacity-60' : 'bg-black bg-opacity-0'}`} aria-modal="true" role="dialog" onClick={() => { setIsModalOpen(false); setEditingGreenhouse(undefined); }}>
+                    <div ref={modalRef} className={`bg-slate-50 dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-md max-h-[90vh] flex flex-col transform transition-all duration-300 ease-out ${isAnimatingModal ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`} onClick={e => e.stopPropagation()}>
+                        <div className="p-6 pb-4 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
+                            <h2 className="text-2xl font-bold text-slate-800 dark:text-white">{editingGreenhouse ? 'تعديل الصوبة' : 'إضافة صوبة جديدة'}</h2>
+                        </div>
+                        <div className="p-6 flex-grow overflow-y-auto modal-scroll-contain">
+                            <GreenhouseForm 
+                                greenhouse={editingGreenhouse}
+                                onSave={handleSave} 
+                                onCancel={() => { setIsModalOpen(false); setEditingGreenhouse(undefined); }} 
+                            />
+                        </div>
                     </div>
                 </div>
             )}

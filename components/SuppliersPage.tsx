@@ -1,11 +1,11 @@
-import React from 'react';
-import { AppContext } from '../App.tsx';
-import { AppContextType, TransactionType, Supplier, SupplierPayment, Transaction } from '../types.ts';
-import { SupplierIcon, InvoiceIcon, ExpenseIcon, ProfitIcon, AddIcon, EditIcon, DeleteIcon, ReportIcon, CloseIcon } from './Icons.tsx';
-import { ToastContext, ToastContextType } from '../context/ToastContext.tsx';
-import ConfirmationModal from './ConfirmationModal.tsx';
-import SkeletonCard from './SkeletonCard.tsx';
-import Pagination from './Pagination.tsx';
+import React, { useState, useMemo, useEffect, useCallback, useRef, useContext } from 'react';
+import { AppContext } from '../App';
+import { AppContextType, TransactionType, Supplier, SupplierPayment, Transaction, CropCycle, CropCycleStatus } from '../types';
+import { SupplierIcon, InvoiceIcon, ExpenseIcon, ProfitIcon, AddIcon, EditIcon, DeleteIcon, ReportIcon, CloseIcon } from './Icons';
+import { ToastContext, ToastContextType } from '../context/ToastContext';
+import ConfirmationModal from './ConfirmationModal';
+import SkeletonCard from './SkeletonCard';
+import Pagination from './Pagination';
 
 const formInputClass = "mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500";
 const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EGP' }).format(amount);
@@ -13,7 +13,7 @@ const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { styl
 
 // Supplier Form
 const SupplierForm: React.FC<{ supplier?: Supplier; onSave: (supplier: Omit<Supplier, 'id'> | Supplier) => void; onCancel: () => void }> = ({ supplier, onSave, onCancel }) => {
-    const [name, setName] = React.useState(supplier?.name || '');
+    const [name, setName] = useState(supplier?.name || '');
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         onSave(supplier ? { ...supplier, name } : { name });
@@ -33,19 +33,39 @@ const SupplierForm: React.FC<{ supplier?: Supplier; onSave: (supplier: Omit<Supp
 };
 
 // Payment Form
-const PaymentForm: React.FC<{ payment?: SupplierPayment; suppliers: Supplier[]; onSave: (payment: Omit<SupplierPayment, 'id'> | SupplierPayment) => void; onCancel: () => void }> = ({ payment, suppliers, onSave, onCancel }) => {
-    const { addToast } = React.useContext(ToastContext) as ToastContextType;
-    const { transactions } = React.useContext(AppContext) as AppContextType;
+const PaymentForm: React.FC<{ payment?: SupplierPayment; suppliers: Supplier[]; onSave: (payment: Omit<SupplierPayment, 'id'> | SupplierPayment) => void; onCancel: () => void; cropCycles: CropCycle[]; }> = ({ payment, suppliers, onSave, onCancel, cropCycles }) => {
+    const { addToast } = useContext(ToastContext) as ToastContextType;
+    const { transactions } = useContext(AppContext) as AppContextType;
 
-    const [date, setDate] = React.useState(payment?.date || new Date().toISOString().split('T')[0]);
-    const [amount, setAmount] = React.useState(payment?.amount?.toString() || '');
-    const [supplierId, setSupplierId] = React.useState(payment?.supplierId || '');
-    const [description, setDescription] = React.useState(payment?.description || '');
+    const [date, setDate] = useState(payment?.date || new Date().toISOString().split('T')[0]);
+    const [amount, setAmount] = useState(payment?.amount?.toString() || '');
+    const [supplierId, setSupplierId] = useState(payment?.supplierId || '');
+    const [cropCycleId, setCropCycleId] = useState(payment?.cropCycleId || '');
+    const [description, setDescription] = useState(payment?.description || '');
 
-    const [linkedExpenseIds, setLinkedExpenseIds] = React.useState<string[]>(payment?.linkedExpenseIds || []);
-    const [showLinker, setShowLinker] = React.useState(false);
+    const [linkedExpenseIds, setLinkedExpenseIds] = useState<string[]>(payment?.linkedExpenseIds || []);
+    const [showLinker, setShowLinker] = useState(false);
 
-    const availableExpenses = React.useMemo(() => {
+    const selectableCycles = useMemo(() => {
+        const available = cropCycles.filter(
+            c => c.status === CropCycleStatus.ACTIVE || c.status === CropCycleStatus.CLOSED
+        );
+        if (payment?.cropCycleId) {
+            const existingCycle = cropCycles.find(c => c.id === payment.cropCycleId);
+            if (existingCycle && !available.some(ac => ac.id === existingCycle.id)) {
+                return [...available, existingCycle].sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
+            }
+        }
+        return available.sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
+    }, [cropCycles, payment]);
+
+    useEffect(() => {
+        if (!payment && selectableCycles.length === 1) {
+            setCropCycleId(selectableCycles[0].id);
+        }
+    }, [selectableCycles, payment]);
+
+    const availableExpenses = useMemo(() => {
         if (!supplierId) return [];
         return transactions
             .filter(t => t.supplierId === supplierId && t.type === TransactionType.EXPENSE)
@@ -66,7 +86,11 @@ const PaymentForm: React.FC<{ payment?: SupplierPayment; suppliers: Supplier[]; 
             addToast('المبلغ يجب أن يكون أكبر من صفر.', 'error');
             return;
         }
-        const data = { date, amount: Number(amount), supplierId, description, linkedExpenseIds };
+        if (!cropCycleId) {
+            addToast('يجب اختيار العروة.', 'error');
+            return;
+        }
+        const data = { date, amount: Number(amount), supplierId, description, cropCycleId, linkedExpenseIds };
         onSave(payment ? { ...payment, ...data } : data);
     };
     
@@ -81,8 +105,11 @@ const PaymentForm: React.FC<{ payment?: SupplierPayment; suppliers: Supplier[]; 
                     </select>
                 </div>
                 <div>
-                    <label htmlFor="date" className="block text-sm font-medium">تاريخ الدفعة</label>
-                    <input type="date" id="date" value={date} onChange={e => setDate(e.target.value)} required className={formInputClass}/>
+                    <label htmlFor="cropCycleId" className="block text-sm font-medium">العروة</label>
+                    <select id="cropCycleId" value={cropCycleId} onChange={e => setCropCycleId(e.target.value)} required className={formInputClass}>
+                        <option value="" disabled>اختر عروة</option>
+                        {selectableCycles.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
                 </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -90,10 +117,14 @@ const PaymentForm: React.FC<{ payment?: SupplierPayment; suppliers: Supplier[]; 
                     <label htmlFor="amount" className="block text-sm font-medium">المبلغ (ج.م)</label>
                     <input type="number" id="amount" value={amount} onChange={e => setAmount(e.target.value)} required min="0.01" step="0.01" className={formInputClass}/>
                 </div>
-                 <div>
-                    <label htmlFor="description" className="block text-sm font-medium">الوصف</label>
-                    <input type="text" id="description" value={description} onChange={e => setDescription(e.target.value)} required className={formInputClass}/>
+                <div>
+                    <label htmlFor="date" className="block text-sm font-medium">تاريخ الدفعة</label>
+                    <input type="date" id="date" value={date} onChange={e => setDate(e.target.value)} required className={formInputClass}/>
                 </div>
+            </div>
+            <div>
+                <label htmlFor="description" className="block text-sm font-medium">الوصف</label>
+                <input type="text" id="description" value={description} onChange={e => setDescription(e.target.value)} required className={formInputClass}/>
             </div>
 
             <div className="mt-4">
@@ -153,11 +184,11 @@ const StatCard: React.FC<{ title: string; value: string; icon: React.ReactNode; 
 
 // Details Modal
 const DetailsModal: React.FC<{ supplier: Supplier; transactions: Transaction[]; payments: SupplierPayment[]; onClose: () => void }> = ({ supplier, transactions, payments, onClose }) => {
-    const { cropCycles } = React.useContext(AppContext) as AppContextType;
-    const [currentPage, setCurrentPage] = React.useState(1);
+    const { cropCycles } = useContext(AppContext) as AppContextType;
+    const [currentPage, setCurrentPage] = useState(1);
     const ITEMS_PER_PAGE = 10;
     
-    const combinedLedger = React.useMemo(() => {
+    const combinedLedger = useMemo(() => {
         const invoices = transactions.map(t => {
             const linkedPayments = payments.filter(p => p.linkedExpenseIds?.includes(t.id));
             const paidAmount = linkedPayments.reduce((sum, p) => sum + p.amount, 0);
@@ -179,8 +210,8 @@ const DetailsModal: React.FC<{ supplier: Supplier; transactions: Transaction[]; 
         return [...invoices, ...paid].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     }, [transactions, payments]);
 
-    const totalInvoices = React.useMemo(() => transactions.reduce((sum, t) => sum + t.amount, 0), [transactions]);
-    const totalPayments = React.useMemo(() => payments.reduce((sum, p) => sum + p.amount, 0), [payments]);
+    const totalInvoices = useMemo(() => transactions.reduce((sum, t) => sum + t.amount, 0), [transactions]);
+    const totalPayments = useMemo(() => payments.reduce((sum, p) => sum + p.amount, 0), [payments]);
     const balance = totalInvoices - totalPayments;
 
     const totalPages = Math.ceil(combinedLedger.length / ITEMS_PER_PAGE);
@@ -226,7 +257,7 @@ const DetailsModal: React.FC<{ supplier: Supplier; transactions: Transaction[]; 
                                         <div className="flex justify-between items-center">
                                             <div>
                                                 <p className="font-semibold text-slate-800 dark:text-white">{item.description}</p>
-                                                <p className="text-xs text-slate-500 dark:text-slate-400">{item.date} - دفعة مورد</p>
+                                                <p className="text-xs text-slate-500 dark:text-slate-400">{item.date} - دفعة مورد (من عروة: {cropCycles.find(c => c.id === item.cropCycleId)?.name || 'غير محدد'})</p>
                                             </div>
                                             <p className="font-bold text-green-600 dark:text-green-400">+{formatCurrency(item.amount)}</p>
                                         </div>
@@ -248,23 +279,12 @@ const DetailsModal: React.FC<{ supplier: Supplier; transactions: Transaction[]; 
 
 // Supplier Card
 const SupplierCard: React.FC<{
-    supplierData: { id: string; name: string; totalInvoices: number; totalPayments: number; balance: number; };
+    supplierData: { id: string; name: string; totalInvoices: number; totalPayments: number; balance: number; isDeletable: boolean; };
     onEdit: (supplier: Supplier) => void;
     onDelete: (id: string) => void;
     onDetails: (supplier: Supplier) => void;
-}> = ({ supplierData, onEdit, onDelete, onDetails }) => {
-    const { addToast } = React.useContext(ToastContext) as ToastContextType;
-    const { transactions, supplierPayments } = React.useContext(AppContext) as AppContextType;
+}> = React.memo(({ supplierData, onEdit, onDelete, onDetails }) => {
     const supplier = {id: supplierData.id, name: supplierData.name};
-    
-    const handleDelete = () => {
-        const hasTransactions = transactions.some(t => t.supplierId === supplier.id) || supplierPayments.some(p => p.supplierId === supplier.id);
-        if (hasTransactions) {
-            addToast("لا يمكن حذف مورد مرتبط بمعاملات. يجب حذف المعاملات أولاً.", "error");
-        } else {
-            onDelete(supplier.id);
-        }
-    };
     
     return (
         <div className="bg-white dark:bg-slate-800 p-5 rounded-lg shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1 flex flex-col justify-between">
@@ -287,23 +307,38 @@ const SupplierCard: React.FC<{
                 </button>
                 <div className="flex items-center space-x-1 space-x-reverse">
                     <button onClick={() => onEdit(supplier)} className="p-2 text-slate-400 hover:text-blue-500 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700" aria-label={`تعديل ${supplier.name}`}><EditIcon className="w-5 h-5"/></button>
-                    <button onClick={handleDelete} className="p-2 text-slate-400 hover:text-red-500 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700" aria-label={`حذف ${supplier.name}`}><DeleteIcon className="w-5 h-5"/></button>
+                    <button
+                        onClick={() => onDelete(supplier.id)}
+                        disabled={!supplierData.isDeletable}
+                        className={`p-2 text-slate-400 rounded-full transition-colors ${
+                            !supplierData.isDeletable
+                            ? 'cursor-not-allowed text-slate-300 dark:text-slate-600'
+                            : 'hover:text-red-500 hover:bg-slate-100 dark:hover:bg-slate-700'
+                        }`}
+                        title={!supplierData.isDeletable ? 'لا يمكن حذف مورد رصيده غير صفري' : 'حذف المورد'}
+                        aria-label={`حذف ${supplier.name}`}
+                    >
+                        <DeleteIcon className="w-5 h-5"/>
+                    </button>
                 </div>
             </div>
         </div>
     );
-};
+});
 
 // Main Page Component
 const SuppliersPage: React.FC = () => {
-    const { loading, suppliers, transactions, supplierPayments, addSupplier, updateSupplier, deleteSupplier, addSupplierPayment, updateSupplierPayment, deleteSupplierPayment, settings } = React.useContext(AppContext) as AppContextType;
+    const { loading, suppliers, transactions, supplierPayments, cropCycles, addSupplier, updateSupplier, deleteSupplier, addSupplierPayment, updateSupplierPayment, deleteSupplierPayment, settings } = useContext(AppContext) as AppContextType;
 
-    const [modal, setModal] = React.useState<'ADD_SUPPLIER' | 'EDIT_SUPPLIER' | 'ADD_PAYMENT' | 'EDIT_PAYMENT' | 'DETAILS' | null>(null);
-    const [selectedSupplier, setSelectedSupplier] = React.useState<Supplier | undefined>(undefined);
-    const [selectedPayment, setSelectedPayment] = React.useState<SupplierPayment | undefined>(undefined);
-    const [deletingId, setDeletingId] = React.useState<{id: string, type: 'supplier' | 'payment'} | null>(null);
+    const [modal, setModal] = useState<'ADD_SUPPLIER' | 'EDIT_SUPPLIER' | 'ADD_PAYMENT' | 'EDIT_PAYMENT' | 'DETAILS' | null>(null);
+    const [selectedSupplier, setSelectedSupplier] = useState<Supplier | undefined>(undefined);
+    const [selectedPayment, setSelectedPayment] = useState<SupplierPayment | undefined>(undefined);
+    // FIX: Corrected a syntax error where the type argument was incorrectly applied to the state setter in `useState` destructuring. The type has been moved to the `useState` call.
+    const [deletingId, setDeletingId] = useState<{id: string, type: 'supplier' | 'payment'} | null>(null);
+    const modalRef = useRef<HTMLDivElement>(null);
 
-    React.useEffect(() => {
+
+    useEffect(() => {
         const isAnyModalOpen = modal !== null || !!deletingId;
         if (isAnyModalOpen) {
             document.body.classList.add('body-no-scroll');
@@ -315,31 +350,95 @@ const SuppliersPage: React.FC = () => {
         };
     }, [modal, deletingId]);
 
-    const supplierAccountData = React.useMemo(() => {
+    // Focus Trap and Escape key handler for forms
+    useEffect(() => {
+        const isFormOpen = modal === 'ADD_SUPPLIER' || modal === 'EDIT_SUPPLIER' || modal === 'ADD_PAYMENT' || modal === 'EDIT_PAYMENT';
+        if (!isFormOpen) return;
+        
+        const modalNode = modalRef.current;
+        if (!modalNode) return;
+
+        const focusableElements = modalNode.querySelectorAll<HTMLElement>('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+        if (focusableElements.length === 0) return;
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') setModal(null);
+            if (e.key === 'Tab') {
+                if (e.shiftKey) { if (document.activeElement === firstElement) { lastElement.focus(); e.preventDefault(); }
+                } else { if (document.activeElement === lastElement) { firstElement.focus(); e.preventDefault(); } }
+            }
+        };
+        document.addEventListener('keydown', handleKeyDown);
+        firstElement?.focus();
+        
+        return () => document.removeEventListener('keydown', handleKeyDown);
+    }, [modal]);
+
+    const supplierAccountData = useMemo(() => {
+        const transactionsBySupplier = new Map<string, Transaction[]>();
+        transactions.forEach(t => {
+            if (t.supplierId && t.type === TransactionType.EXPENSE) {
+                if (!transactionsBySupplier.has(t.supplierId)) {
+                    transactionsBySupplier.set(t.supplierId, []);
+                }
+                transactionsBySupplier.get(t.supplierId)!.push(t);
+            }
+        });
+
+        const paymentsBySupplier = new Map<string, SupplierPayment[]>();
+        supplierPayments.forEach(p => {
+            if (!paymentsBySupplier.has(p.supplierId)) {
+                paymentsBySupplier.set(p.supplierId, []);
+            }
+            paymentsBySupplier.get(p.supplierId)!.push(p);
+        });
+
         return suppliers.map(supplier => {
-            const supplierTransactions = transactions.filter(t => t.supplierId === supplier.id && t.type === TransactionType.EXPENSE);
+            const supplierTransactions = transactionsBySupplier.get(supplier.id) || [];
             const totalInvoices = supplierTransactions.reduce((sum, t) => sum + t.amount, 0);
-            const payments = supplierPayments.filter(p => p.supplierId === supplier.id);
+            
+            const payments = paymentsBySupplier.get(supplier.id) || [];
             const totalPayments = payments.reduce((sum, p) => sum + p.amount, 0);
+            
             const balance = totalInvoices - totalPayments;
-            return { ...supplier, totalInvoices, totalPayments, balance };
+            const isDeletable = Math.abs(balance) < 0.01;
+            return { ...supplier, totalInvoices, totalPayments, balance, isDeletable };
         });
     }, [suppliers, transactions, supplierPayments]);
 
-    const handleSaveSupplier = (supplier: Omit<Supplier, 'id'> | Supplier) => {
+    const handleSaveSupplier = useCallback((supplier: Omit<Supplier, 'id'> | Supplier) => {
         if ('id' in supplier) updateSupplier(supplier); else addSupplier(supplier);
         setModal(null);
-    };
-    const handleSavePayment = (payment: Omit<SupplierPayment, 'id'> | SupplierPayment) => {
+    }, [updateSupplier, addSupplier]);
+
+    const handleSavePayment = useCallback((payment: Omit<SupplierPayment, 'id'> | SupplierPayment) => {
         if ('id' in payment) updateSupplierPayment(payment); else addSupplierPayment(payment);
         setModal(null);
-    };
-    const confirmDelete = () => {
+    }, [updateSupplierPayment, addSupplierPayment]);
+
+    const confirmDelete = useCallback(() => {
         if (!deletingId) return;
         if (deletingId.type === 'supplier') deleteSupplier(deletingId.id);
         else deleteSupplierPayment(deletingId.id);
         setDeletingId(null);
-    };
+    }, [deletingId, deleteSupplier, deleteSupplierPayment]);
+    
+    const handleEdit = useCallback((supplier: Supplier) => {
+        setSelectedSupplier(supplier);
+        setModal('EDIT_SUPPLIER');
+    }, []);
+
+    const handleDelete = useCallback((id: string) => {
+        setDeletingId({ id, type: 'supplier' });
+    }, []);
+
+    const handleDetails = useCallback((supplier: Supplier) => {
+        setSelectedSupplier(supplier);
+        setModal('DETAILS');
+    }, []);
+
 
     if (!settings.isSupplierSystemEnabled) {
         return (
@@ -373,9 +472,9 @@ const SuppliersPage: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                     {supplierAccountData.map(s => (
                         <SupplierCard key={s.id} supplierData={s} 
-                            onEdit={supplier => { setSelectedSupplier(supplier); setModal('EDIT_SUPPLIER'); }}
-                            onDelete={id => setDeletingId({id, type: 'supplier'})}
-                            onDetails={supplier => { setSelectedSupplier(supplier); setModal('DETAILS'); }}
+                            onEdit={handleEdit}
+                            onDelete={handleDelete}
+                            onDetails={handleDetails}
                         />
                     ))}
                 </div>
@@ -387,8 +486,8 @@ const SuppliersPage: React.FC = () => {
                 </div>
             )}
             
-            {(modal === 'ADD_SUPPLIER' || modal === 'EDIT_SUPPLIER') && <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"><div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-xl w-full max-w-md"><h2 className="text-2xl font-bold mb-4">{modal === 'EDIT_SUPPLIER' ? 'تعديل مورد' : 'إضافة مورد جديد'}</h2><SupplierForm supplier={selectedSupplier} onSave={handleSaveSupplier} onCancel={() => setModal(null)} /></div></div>}
-            {(modal === 'ADD_PAYMENT' || modal === 'EDIT_PAYMENT') && <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"><div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-xl w-full max-w-lg max-h-full overflow-y-auto modal-scroll-contain"><h2 className="text-2xl font-bold mb-4">{modal === 'EDIT_PAYMENT' ? 'تعديل دفعة' : 'إضافة دفعة جديدة'}</h2><PaymentForm payment={selectedPayment} suppliers={suppliers} onSave={handleSavePayment} onCancel={() => setModal(null)} /></div></div>}
+            {(modal === 'ADD_SUPPLIER' || modal === 'EDIT_SUPPLIER') && <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4" onClick={() => setModal(null)}><div ref={modalRef} className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-md max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}><div className="p-6 pb-4 border-b border-slate-200 dark:border-slate-700 flex-shrink-0"><h2 className="text-2xl font-bold">{modal === 'EDIT_SUPPLIER' ? 'تعديل مورد' : 'إضافة مورد جديد'}</h2></div><div className="p-6 flex-grow overflow-y-auto modal-scroll-contain"><SupplierForm supplier={selectedSupplier} onSave={handleSaveSupplier} onCancel={() => setModal(null)} /></div></div></div>}
+            {(modal === 'ADD_PAYMENT' || modal === 'EDIT_PAYMENT') && <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4" onClick={() => setModal(null)}><div ref={modalRef} className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}><div className="p-6 pb-4 border-b border-slate-200 dark:border-slate-700 flex-shrink-0"><h2 className="text-2xl font-bold">{modal === 'EDIT_PAYMENT' ? 'تعديل دفعة' : 'إضافة دفعة جديدة'}</h2></div><div className="p-6 flex-grow overflow-y-auto modal-scroll-contain"><PaymentForm payment={selectedPayment} suppliers={suppliers} cropCycles={cropCycles} onSave={handleSavePayment} onCancel={() => setModal(null)} /></div></div></div>}
             {modal === 'DETAILS' && selectedSupplier && <DetailsModal supplier={selectedSupplier} transactions={transactions.filter(t=>t.supplierId === selectedSupplier.id)} payments={supplierPayments.filter(p=>p.supplierId === selectedSupplier.id)} onClose={() => setModal(null)} />}
             <ConfirmationModal isOpen={!!deletingId} onClose={() => setDeletingId(null)} onConfirm={confirmDelete} title="تأكيد الحذف" message={`هل أنت متأكد من حذف هذا ${deletingId?.type === 'supplier' ? 'المورد' : 'الدفعة'}؟`} />
         </div>

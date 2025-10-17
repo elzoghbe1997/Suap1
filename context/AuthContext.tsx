@@ -7,12 +7,14 @@ interface AuthContextType {
     login: (email: string, pass: string) => Promise<void>;
     signup: (name: string, email: string, pass: string) => Promise<void>;
     logout: () => void;
+    isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+    const [isLoading, setIsLoading] = useState<boolean>(true);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -24,6 +26,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 // On logout, always navigate back to login
                 navigate('/login', { replace: true });
             }
+            setIsLoading(false);
         });
 
         return () => {
@@ -40,7 +43,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (error) {
             throw new Error('البريد الإلكتروني أو كلمة المرور غير صحيحة.');
         }
-        // The onAuthStateChange listener will set isAuthenticated and trigger navigation
+        // Manually set auth state to prevent race condition with the listener
+        setIsAuthenticated(true);
         navigate('/dashboard');
     };
     
@@ -61,9 +65,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (error) {
             throw new Error(error.message || 'فشل إنشاء الحساب. قد يكون البريد الإلكتروني مستخدمًا.');
         }
-        // On successful signup, clear onboarding flag
+        // On successful signup, clear onboarding flag for the new user.
         localStorage.removeItem('appInitialized');
-        // The onAuthStateChange listener will set isAuthenticated and trigger navigation
+        // Manually set auth state to prevent race condition
+        setIsAuthenticated(true);
         navigate('/dashboard');
     };
 
@@ -72,11 +77,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (error) {
             console.error('Error logging out:', error);
         }
-        // State and navigation are handled by onAuthStateChange
+        // Manually set auth state to ensure immediate UI update
+        setIsAuthenticated(false);
+        // State change and navigation are also handled by onAuthStateChange listener
     };
 
     return (
-        <AuthContext.Provider value={{ isAuthenticated, login, signup, logout }}>
+        <AuthContext.Provider value={{ isAuthenticated, login, signup, logout, isLoading }}>
             {children}
         </AuthContext.Provider>
     );
