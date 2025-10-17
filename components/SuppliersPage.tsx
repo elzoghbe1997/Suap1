@@ -330,10 +330,11 @@ const SupplierCard: React.FC<{
 const SuppliersPage: React.FC = () => {
     const { loading, suppliers, transactions, supplierPayments, cropCycles, addSupplier, updateSupplier, deleteSupplier, addSupplierPayment, updateSupplierPayment, deleteSupplierPayment, settings } = useContext(AppContext) as AppContextType;
 
-    const [modal, setModal] = React.useState<'ADD_SUPPLIER' | 'EDIT_SUPPLIER' | 'ADD_PAYMENT' | 'EDIT_PAYMENT' | 'DETAILS' | null>(null);
-    const [selectedSupplier, setSelectedSupplier] = React.useState<Supplier | undefined>(undefined);
-    const [selectedPayment, setSelectedPayment] = React.useState<SupplierPayment | undefined>(undefined);
-    const [deletingId, setDeletingId] = React.useState<{id: string, type: 'supplier' | 'payment'} | null>(null);
+    // FIX: Replaced `React.useState` with the destructured `useState` to resolve a TypeScript error where the function was considered untyped and could not accept generic arguments.
+    const [modal, setModal] = useState<'ADD_SUPPLIER' | 'EDIT_SUPPLIER' | 'ADD_PAYMENT' | 'EDIT_PAYMENT' | 'DETAILS' | null>(null);
+    const [selectedSupplier, setSelectedSupplier] = useState<Supplier | undefined>(undefined);
+    const [selectedPayment, setSelectedPayment] = useState<SupplierPayment | undefined>(undefined);
+    const [deletingId, setDeletingId] = useState<{id: string, type: 'supplier' | 'payment'} | null>(null);
     const modalRef = useRef<HTMLDivElement>(null);
 
 
