@@ -333,8 +333,8 @@ const SuppliersPage: React.FC = () => {
     const [modal, setModal] = useState<'ADD_SUPPLIER' | 'EDIT_SUPPLIER' | 'ADD_PAYMENT' | 'EDIT_PAYMENT' | 'DETAILS' | null>(null);
     const [selectedSupplier, setSelectedSupplier] = useState<Supplier | undefined>(undefined);
     const [selectedPayment, setSelectedPayment] = useState<SupplierPayment | undefined>(undefined);
-    // FIX: Corrected a syntax error where the type argument was incorrectly applied to the state setter in `useState` destructuring. The type has been moved to the `useState` call.
-    const [deletingId, setDeletingId] = useState<{id: string, type: 'supplier' | 'payment'} | null>(null);
+    // FIX: Rewrote useState call to use type assertion on the initial value instead of a generic type argument to work around a potential tooling issue.
+    const [deletingId, setDeletingId] = useState(null as {id: string, type: 'supplier' | 'payment'} | null);
     const modalRef = useRef<HTMLDivElement>(null);
 
 

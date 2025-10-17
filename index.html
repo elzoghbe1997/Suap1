@@ -190,7 +190,12 @@
         </svg>
     </div>
     </div>
-    <!-- Change script type to text/babel for Babel to transpile it -->
-    <script type="text/babel" data-presets="react,typescript" src="index.tsx"></script>
+    <!-- Load main app script as a module for Babel to transpile -->
+    <script
+      type="module"
+      data-type="babel"
+      data-options='{ "presets": ["react", "typescript"] }'
+      src="index.tsx"
+    ></script>
   </body>
 </html>
