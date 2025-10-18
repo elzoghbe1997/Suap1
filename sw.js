@@ -4,6 +4,7 @@ const APP_SHELL_URLS = [
     '/',
     'index.html',
     'manifest.json',
+    'icon.svg',
     'https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css',
     'https://cdn.tailwindcss.com',
     'https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap',
