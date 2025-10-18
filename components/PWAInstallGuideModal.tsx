@@ -90,11 +90,6 @@ const PWAInstallGuideModal: FC = () => {
                             ستجد أيقونة التطبيق على شاشة جهازك الرئيسية، جاهزة للاستخدام في أي وقت.
                         </li>
                     </ul>
-                    <div className="p-3 my-3 bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 text-yellow-800 dark:text-yellow-200 rounded-r-lg">
-                        <p className="text-sm">
-                            <strong className="font-semibold">ملاحظة هامة:</strong> بعض المتصفحات تستخدم كلمة "إنشاء اختصار" ولكنها في الحقيقة تقوم بتثبيت النسخة الكاملة من التطبيق التي تعمل دون اتصال بالإنترنت. <strong className="font-semibold">هذا هو الإجراء الصحيح لتثبيت التطبيق.</strong>
-                        </p>
-                    </div>
                 </div>
                 <div className="p-6 pt-4 border-t border-slate-200 dark:border-slate-700 flex justify-end">
                     <button
