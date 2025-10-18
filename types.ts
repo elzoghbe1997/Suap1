@@ -17,6 +17,9 @@ export interface ExpenseCategorySetting {
   isFoundational?: boolean;
 }
 
+// FIX: Added Theme type to support appearance settings across the app.
+export type Theme = 'light' | 'dark' | 'system';
+
 
 export interface Farmer {
   id: string;
@@ -24,14 +27,12 @@ export interface Farmer {
 }
 
 export interface FarmerWithdrawal {
-  id: string;
+  id:string;
   date: string;
   amount: number;
   cropCycleId: string;
   description: string;
 }
-
-export type Theme = 'light' | 'dark' | 'system';
 
 export interface AppSettings {
   isFarmerSystemEnabled: boolean;
@@ -39,8 +40,9 @@ export interface AppSettings {
   isAgriculturalProgramsSystemEnabled: boolean;
   isTreasurySystemEnabled?: boolean;
   isAdvancesSystemEnabled?: boolean;
-  theme: Theme;
   expenseCategories: ExpenseCategorySetting[];
+  // FIX: Added theme property to AppSettings to allow user-configurable themes.
+  theme: Theme;
 }
 
 export interface Person {

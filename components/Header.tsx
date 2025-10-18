@@ -1,8 +1,8 @@
 import React, { FC, memo, useContext, useState, useEffect, MouseEvent } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { AppContext } from '../App.tsx';
-import { AppContextType, Alert, Theme, AlertType, CropCycle } from '../types.ts';
-import { MenuIcon, AlertIcon, WarningIcon, SunIcon, MoonIcon, SystemIcon } from './Icons.tsx';
+import { AppContextType, Alert, AlertType, CropCycle } from '../types.ts';
+import { MenuIcon, AlertIcon, WarningIcon } from './Icons.tsx';
 import InstallPWAButton from './InstallPWAButton.tsx';
 
 const AlertsDropdown: FC<{ alerts: Alert[]; onClose: () => void }> = memo(({ alerts, onClose }) => {
@@ -59,70 +59,6 @@ const AlertsDropdown: FC<{ alerts: Alert[]; onClose: () => void }> = memo(({ ale
                     <p className="text-center text-sm text-slate-500 dark:text-slate-400 py-6">لا توجد تنبيهات جديدة.</p>
                 )}
             </div>
-        </div>
-    );
-});
-
-const ThemeSwitcher: FC = memo(() => {
-    const { settings, updateSettings } = useContext(AppContext) as AppContextType;
-    const [isThemeOpen, setIsThemeOpen] = useState(false);
-
-    const themeIcons = {
-        light: <SunIcon className="h-5 w-5" />,
-        dark: <MoonIcon className="h-5 w-5" />,
-        system: <SystemIcon className="h-5 w-5" />,
-    };
-    
-    const themeLabels: Record<Theme, string> = {
-        light: 'فاتح',
-        dark: 'داكن',
-        system: 'النظام',
-    };
-
-    const handleThemeChange = (theme: Theme) => {
-        updateSettings({ theme });
-        setIsThemeOpen(false);
-    };
-
-    useEffect(() => {
-        const close = () => setIsThemeOpen(false);
-        if (isThemeOpen) {
-            window.addEventListener('click', close);
-        }
-        return () => window.removeEventListener('click', close);
-    }, [isThemeOpen]);
-
-    return (
-        <div className="relative" onClick={(e) => e.stopPropagation()}>
-            <button
-                onClick={() => setIsThemeOpen(p => !p)}
-                className="p-2 rounded-full text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-emerald-500"
-                aria-label="Toggle theme"
-            >
-                {settings.theme === 'light' && <SunIcon className="h-6 w-6" />}
-                {settings.theme === 'dark' && <MoonIcon className="h-6 w-6" />}
-                {settings.theme === 'system' && <SystemIcon className="h-6 w-6" />}
-            </button>
-            {isThemeOpen && (
-                 <div 
-                    className="origin-top-left absolute left-0 mt-2 w-40 rounded-md shadow-lg bg-white dark:bg-slate-800 ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
-                    role="menu"
-                >
-                    <div className="py-1" role="none">
-                        {(['light', 'dark', 'system'] as Theme[]).map(theme => (
-                            <button
-                                key={theme}
-                                onClick={() => handleThemeChange(theme)}
-                                className={`w-full text-right flex items-center px-4 py-2 text-sm ${settings.theme === theme ? 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white' : 'text-slate-700 dark:text-slate-300'} hover:bg-slate-100 dark:hover:bg-slate-700`}
-                                role="menuitem"
-                            >
-                                <span className="mr-3">{themeIcons[theme]}</span>
-                                {themeLabels[theme]}
-                            </button>
-                        ))}
-                    </div>
-                 </div>
-            )}
         </div>
     );
 });
@@ -205,7 +141,6 @@ const Header: FC<HeaderProps> = ({ toggleSidebar }) => {
         
         <div className="flex items-center space-x-2">
             <InstallPWAButton />
-            <ThemeSwitcher />
             <div className="relative" onClick={(e) => e.stopPropagation()}>
                 <button
                     onClick={handleAlertsToggle}

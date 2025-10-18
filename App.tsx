@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useContext, createContext, FC } from 'react';
+import React, { useEffect, useState, useContext, createContext, FC, useCallback } from 'react';
 import { HashRouter, Routes, Route, Navigate, useLocation, Outlet } from 'react-router-dom';
 import Sidebar from './components/Sidebar.tsx';
 import Header from './components/Header.tsx';
@@ -47,8 +47,7 @@ const AppLayout: FC = () => {
     const location = useLocation();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     
-    // FIX: Wrapped toggleSidebar in useCallback for performance optimization to prevent unnecessary re-renders of the Header component.
-    const toggleSidebar = useCallback(() => {
+    const toggleSidebar = React.useCallback(() => {
         setIsSidebarOpen(prevIsOpen => !prevIsOpen);
     }, []);
 
@@ -59,50 +58,35 @@ const AppLayout: FC = () => {
         mediaQuery.addEventListener('change', handler);
         return () => mediaQuery.removeEventListener('change', handler);
     }, []);
-
+    
+    // System-Only Theme Logic
     useEffect(() => {
-        if (!contextValue || contextValue.loading) return;
-        const root = window.document.documentElement;
-        const newTheme = contextValue.settings.theme;
-
-        // Persist theme choice for FOUC prevention on next load
-        try {
-            localStorage.setItem('theme-preference', JSON.stringify(newTheme));
-        } catch(e) {
-            console.warn("Could not save theme preference to localStorage.");
-        }
-
-
-        if (newTheme === 'light') {
-            root.classList.remove('dark');
-            return; 
-        }
-        if (newTheme === 'dark') {
-            root.classList.add('dark');
-            return;
-        }
-
         const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-        const handleSystemChange = (e: MediaQueryListEvent) => {
-            if (e.matches) {
-                root.classList.add('dark');
+
+        const applyTheme = (isDark: boolean) => {
+            if (isDark) {
+                document.documentElement.classList.add('dark');
             } else {
-                root.classList.remove('dark');
+                document.documentElement.classList.remove('dark');
             }
         };
 
-        if (mediaQuery.matches) {
-            root.classList.add('dark');
-        } else {
-            root.classList.remove('dark');
-        }
-
-        mediaQuery.addEventListener('change', handleSystemChange);
-
-        return () => {
-            mediaQuery.removeEventListener('change', handleSystemChange);
+        const mediaQueryListener = (e: MediaQueryListEvent) => {
+            applyTheme(e.matches);
         };
-    }, [contextValue?.settings?.theme, contextValue?.loading]);
+
+        // Apply theme on initial load
+        applyTheme(mediaQuery.matches);
+        
+        // Add listener for changes
+        mediaQuery.addEventListener('change', mediaQueryListener);
+
+        // Cleanup
+        return () => {
+            mediaQuery.removeEventListener('change', mediaQueryListener);
+        };
+    }, []);
+
 
     if (contextValue.loading) {
         return (

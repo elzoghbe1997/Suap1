@@ -211,7 +211,28 @@ export const useAppData = (): AppContextType => {
 
     const addCropCycle = async (cycle: Omit<CropCycle, 'id'>) => { await createItem('crop_cycles', cycle, setCropCycles); addToast("تمت إضافة العروة بنجاح.", 'success'); };
     const updateCropCycle = async (updatedCycle: CropCycle) => { await updateItem('crop_cycles', updatedCycle, setCropCycles); addToast("تم تحديث العروة بنجاح.", 'success'); };
-    const archiveOrDeleteCropCycle = async (id: string) => { /* ... (logic remains mostly the same, but calls updateItem or deleteItem) ... */ };
+    const archiveOrDeleteCropCycle = async (id: string) => {
+        const cycle = cropCycles.find(c => c.id === id);
+        if (!cycle) {
+            addToast("لم يتم العثور على العروة.", "error");
+            return;
+        }
+
+        const hasTransactions = transactions.some(t => t.cropCycleId === id);
+        const hasWithdrawals = farmerWithdrawals.some(w => w.cropCycleId === id);
+        const isCycleEmpty = !hasTransactions && !hasWithdrawals;
+
+        if (isCycleEmpty) {
+            // Delete it
+            await deleteItem('crop_cycles', id, setCropCycles);
+            addToast(`تم حذف العروة "${cycle.name}" الفارغة بنجاح.`, 'success');
+        } else {
+            // Archive it
+            const updatedCycle = { ...cycle, status: CropCycleStatus.ARCHIVED };
+            await updateItem('crop_cycles', updatedCycle, setCropCycles);
+            addToast(`تم أرشفة العروة "${cycle.name}" بنجاح.`, 'success');
+        }
+    };
     const addTransaction = async (transaction: Omit<Transaction, 'id'>) => { await createItem('transactions', transaction, setTransactions, dateSort); /* ... (production start date logic) ... */ addToast("تمت إضافة المعاملة بنجاح.", 'success'); };
     const updateTransaction = async (updatedTransaction: Transaction) => { await updateItem('transactions', updatedTransaction, setTransactions, dateSort); addToast("تم تحديث المعاملة بنجاح.", 'success'); };
     const deleteTransaction = async (id: string) => { await deleteItem('transactions', id, setTransactions); addToast("تم حذف المعاملة بنجاح.", 'success'); };

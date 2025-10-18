@@ -129,20 +129,9 @@
 </script>
 <script>
   // Prevents Flash of Incorrect Theme (FOUC)
-  // This part remains tricky without a backend to store user preferences before the app loads.
-  // We'll rely on a small localStorage check here, but the main source of truth will be the DB.
+  // This script strictly follows the system preference.
   (function () {
-    let theme = 'system';
-    try {
-      const settingsStr = localStorage.getItem('theme-preference'); // Use a dedicated key
-      if (settingsStr) {
-        theme = JSON.parse(settingsStr);
-      }
-    } catch (e) {
-      console.warn("Could not parse theme preference from localStorage for FOUC prevention.");
-    }
-    
-    if (theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');

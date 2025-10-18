@@ -17,6 +17,7 @@ export const INITIAL_SETTINGS: AppSettings = {
   isAgriculturalProgramsSystemEnabled: true,
   isTreasurySystemEnabled: true,
   isAdvancesSystemEnabled: true,
-  theme: 'system',
   expenseCategories: INITIAL_EXPENSE_CATEGORIES,
+  // FIX: Added default theme to align with the updated AppSettings type.
+  theme: 'system',
 };

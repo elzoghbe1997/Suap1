@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useCallback, useRef, useContext, memo } from 'react';
+import React, { useMemo, useEffect, useCallback, useRef, useContext, memo, useState } from 'react';
 import { AppContext } from '../App';
 import { AppContextType, TransactionType, Supplier, SupplierPayment, Transaction, CropCycle, CropCycleStatus } from '../types';
 import { SupplierIcon, InvoiceIcon, ExpenseIcon, ProfitIcon, AddIcon, EditIcon, DeleteIcon, ReportIcon, CloseIcon } from './Icons';
@@ -42,7 +42,6 @@ const PaymentForm: React.FC<{ payment?: SupplierPayment; suppliers: Supplier[]; 
     const [supplierId, setSupplierId] = useState(payment?.supplierId || '');
     const [cropCycleId, setCropCycleId] = useState(payment?.cropCycleId || '');
     const [description, setDescription] = useState(payment?.description || '');
-
     const [linkedExpenseIds, setLinkedExpenseIds] = useState<string[]>(payment?.linkedExpenseIds || []);
     const [showLinker, setShowLinker] = useState(false);
 
@@ -330,8 +329,6 @@ const SupplierCard: React.FC<{
 const SuppliersPage: React.FC = () => {
     const { loading, suppliers, transactions, supplierPayments, cropCycles, addSupplier, updateSupplier, deleteSupplier, addSupplierPayment, updateSupplierPayment, deleteSupplierPayment, settings } = useContext(AppContext) as AppContextType;
 
-    // FIX: Replaced React.useState with the destructured useState to resolve a TypeScript error where untyped function calls may not accept type arguments.
-    // FIX: Replaced React.useState with the destructured useState to resolve a TypeScript error where the function was considered untyped and could not accept generic arguments.
     const [modal, setModal] = useState<'ADD_SUPPLIER' | 'EDIT_SUPPLIER' | 'ADD_PAYMENT' | 'EDIT_PAYMENT' | 'DETAILS' | null>(null);
     const [selectedSupplier, setSelectedSupplier] = useState<Supplier | undefined>(undefined);
     const [selectedPayment, setSelectedPayment] = useState<SupplierPayment | undefined>(undefined);
@@ -419,10 +416,14 @@ const SuppliersPage: React.FC = () => {
         setModal(null);
     }, [updateSupplierPayment, addSupplierPayment]);
 
+    // FIX: Removed explicit generic type from useCallback. The function's type is correctly inferred by TypeScript, fixing the "Untyped function calls may not accept type arguments" error.
     const confirmDelete = useCallback(() => {
         if (!deletingId) return;
-        if (deletingId.type === 'supplier') deleteSupplier(deletingId.id);
-        else deleteSupplierPayment(deletingId.id);
+        if (deletingId.type === 'supplier') {
+            deleteSupplier(deletingId.id);
+        } else {
+            deleteSupplierPayment(deletingId.id);
+        }
         setDeletingId(null);
     }, [deletingId, deleteSupplier, deleteSupplierPayment]);
     
