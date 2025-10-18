@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useRef, useContext, memo, useCallback, FC, useState } from 'react';
+import React, { useMemo, useEffect, useRef, useContext, memo } from 'react';
 import { AppContext } from '../App';
 import { AppContextType, TransactionType, Supplier, SupplierPayment, Transaction, CropCycle, CropCycleStatus } from '../types';
 import { SupplierIcon, InvoiceIcon, ExpenseIcon, ProfitIcon, AddIcon, EditIcon, DeleteIcon, ReportIcon, CloseIcon } from './Icons';
@@ -12,8 +12,8 @@ const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { styl
 
 
 // Supplier Form
-const SupplierForm: FC<{ supplier?: Supplier; onSave: (supplier: Omit<Supplier, 'id'> | Supplier) => void; onCancel: () => void }> = ({ supplier, onSave, onCancel }) => {
-    const [name, setName] = useState(supplier?.name || '');
+const SupplierForm: React.FC<{ supplier?: Supplier; onSave: (supplier: Omit<Supplier, 'id'> | Supplier) => void; onCancel: () => void }> = ({ supplier, onSave, onCancel }) => {
+    const [name, setName] = React.useState(supplier?.name || '');
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         onSave(supplier ? { ...supplier, name } : { name });
@@ -33,17 +33,17 @@ const SupplierForm: FC<{ supplier?: Supplier; onSave: (supplier: Omit<Supplier, 
 };
 
 // Payment Form
-const PaymentForm: FC<{ payment?: SupplierPayment; suppliers: Supplier[]; onSave: (payment: Omit<SupplierPayment, 'id'> | SupplierPayment) => void; onCancel: () => void; cropCycles: CropCycle[]; }> = ({ payment, suppliers, onSave, onCancel, cropCycles }) => {
+const PaymentForm: React.FC<{ payment?: SupplierPayment; suppliers: Supplier[]; onSave: (payment: Omit<SupplierPayment, 'id'> | SupplierPayment) => void; onCancel: () => void; cropCycles: CropCycle[]; }> = ({ payment, suppliers, onSave, onCancel, cropCycles }) => {
     const { addToast } = useContext(ToastContext) as ToastContextType;
     const { transactions } = useContext(AppContext) as AppContextType;
 
-    const [date, setDate] = useState(payment?.date || new Date().toISOString().split('T')[0]);
-    const [amount, setAmount] = useState(payment?.amount?.toString() || '');
-    const [supplierId, setSupplierId] = useState(payment?.supplierId || '');
-    const [cropCycleId, setCropCycleId] = useState(payment?.cropCycleId || '');
-    const [description, setDescription] = useState(payment?.description || '');
-    const [linkedExpenseIds, setLinkedExpenseIds] = useState<string[]>(payment?.linkedExpenseIds || []);
-    const [showLinker, setShowLinker] = useState(false);
+    const [date, setDate] = React.useState(payment?.date || new Date().toISOString().split('T')[0]);
+    const [amount, setAmount] = React.useState(payment?.amount?.toString() || '');
+    const [supplierId, setSupplierId] = React.useState(payment?.supplierId || '');
+    const [cropCycleId, setCropCycleId] = React.useState(payment?.cropCycleId || '');
+    const [description, setDescription] = React.useState(payment?.description || '');
+    const [linkedExpenseIds, setLinkedExpenseIds] = React.useState<string[]>(payment?.linkedExpenseIds || []);
+    const [showLinker, setShowLinker] = React.useState(false);
 
     const selectableCycles = useMemo(() => {
         const available = cropCycles.filter(
@@ -169,7 +169,7 @@ const PaymentForm: FC<{ payment?: SupplierPayment; suppliers: Supplier[]; onSave
 
 
 // Stat Card
-const StatCard: FC<{ title: string; value: string; icon: React.ReactNode; }> = ({ title, value, icon }) => (
+const StatCard: React.FC<{ title: string; value: string; icon: React.ReactNode; }> = ({ title, value, icon }) => (
     <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-4">
         <div className="flex items-center">
             {icon}
@@ -182,9 +182,9 @@ const StatCard: FC<{ title: string; value: string; icon: React.ReactNode; }> = (
 );
 
 // Details Modal
-const DetailsModal: FC<{ supplier: Supplier; transactions: Transaction[]; payments: SupplierPayment[]; onClose: () => void }> = ({ supplier, transactions, payments, onClose }) => {
+const DetailsModal: React.FC<{ supplier: Supplier; transactions: Transaction[]; payments: SupplierPayment[]; onClose: () => void }> = ({ supplier, transactions, payments, onClose }) => {
     const { cropCycles } = useContext(AppContext) as AppContextType;
-    const [currentPage, setCurrentPage] = useState(1);
+    const [currentPage, setCurrentPage] = React.useState(1);
     const ITEMS_PER_PAGE = 10;
     
     const combinedLedger = useMemo(() => {
@@ -277,7 +277,7 @@ const DetailsModal: FC<{ supplier: Supplier; transactions: Transaction[]; paymen
 };
 
 // Supplier Card
-const SupplierCard: FC<{
+const SupplierCard: React.FC<{
     supplierData: { id: string; name: string; totalInvoices: number; totalPayments: number; balance: number; isDeletable: boolean; };
     onEdit: (supplier: Supplier) => void;
     onDelete: (id: string) => void;
@@ -326,15 +326,13 @@ const SupplierCard: FC<{
 });
 
 // Main Page Component
-// FIX: Changed React.FC to FC and added FC to the import to resolve a type inference issue.
-const SuppliersPage: FC = () => {
+const SuppliersPage: React.FC = () => {
     const { loading, suppliers, transactions, supplierPayments, cropCycles, addSupplier, updateSupplier, deleteSupplier, addSupplierPayment, updateSupplierPayment, deleteSupplierPayment, settings } = useContext(AppContext) as AppContextType;
 
-    // FIX: Imported useState and used it directly to resolve "Untyped function calls may not accept type arguments" error and improve consistency.
-    const [modal, setModal] = useState<'ADD_SUPPLIER' | 'EDIT_SUPPLIER' | 'ADD_PAYMENT' | 'EDIT_PAYMENT' | 'DETAILS' | null>(null);
-    const [selectedSupplier, setSelectedSupplier] = useState<Supplier | undefined>(undefined);
-    const [selectedPayment, setSelectedPayment] = useState<SupplierPayment | undefined>(undefined);
-    const [deletingId, setDeletingId] = useState<{id: string, type: 'supplier' | 'payment'} | null>(null);
+    const [modal, setModal] = React.useState<'ADD_SUPPLIER' | 'EDIT_SUPPLIER' | 'ADD_PAYMENT' | 'EDIT_PAYMENT' | 'DETAILS' | null>(null);
+    const [selectedSupplier, setSelectedSupplier] = React.useState<Supplier | undefined>(undefined);
+    const [selectedPayment, setSelectedPayment] = React.useState<SupplierPayment | undefined>(undefined);
+    const [deletingId, setDeletingId] = React.useState<{id: string, type: 'supplier' | 'payment'} | null>(null);
     const modalRef = useRef<HTMLDivElement>(null);
 
 
@@ -408,18 +406,17 @@ const SuppliersPage: FC = () => {
         });
     }, [suppliers, transactions, supplierPayments]);
 
-    // FIX: Changed React.useCallback to useCallback and added it to the import to resolve a type inference issue and improve consistency.
-    const handleSaveSupplier = useCallback((supplier: Omit<Supplier, 'id'> | Supplier) => {
+    const handleSaveSupplier = React.useCallback((supplier: Omit<Supplier, 'id'> | Supplier) => {
         if ('id' in supplier) updateSupplier(supplier); else addSupplier(supplier);
         setModal(null);
     }, [updateSupplier, addSupplier]);
 
-    const handleSavePayment = useCallback((payment: Omit<SupplierPayment, 'id'> | SupplierPayment) => {
+    const handleSavePayment = React.useCallback((payment: Omit<SupplierPayment, 'id'> | SupplierPayment) => {
         if ('id' in payment) updateSupplierPayment(payment); else addSupplierPayment(payment);
         setModal(null);
     }, [updateSupplierPayment, addSupplierPayment]);
 
-    const confirmDelete = useCallback(() => {
+    const confirmDelete = React.useCallback(() => {
         if (!deletingId) return;
         if (deletingId.type === 'supplier') {
             deleteSupplier(deletingId.id);
@@ -429,16 +426,16 @@ const SuppliersPage: FC = () => {
         setDeletingId(null);
     }, [deletingId, deleteSupplier, deleteSupplierPayment]);
     
-    const handleEdit = useCallback((supplier: Supplier) => {
+    const handleEdit = React.useCallback((supplier: Supplier) => {
         setSelectedSupplier(supplier);
         setModal('EDIT_SUPPLIER');
     }, []);
 
-    const handleDelete = useCallback((id: string) => {
+    const handleDelete = React.useCallback((id: string) => {
         setDeletingId({ id, type: 'supplier' });
     }, []);
 
-    const handleDetails = useCallback((supplier: Supplier) => {
+    const handleDetails = React.useCallback((supplier: Supplier) => {
         setSelectedSupplier(supplier);
         setModal('DETAILS');
     }, []);

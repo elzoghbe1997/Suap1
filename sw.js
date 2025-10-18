@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v9'; // Bump version
+const CACHE_VERSION = 'v10';
 const CACHE_NAME = `greenhouse-accountant-${CACHE_VERSION}`;
 const APP_SHELL_URLS = [
     '/',
@@ -12,13 +12,12 @@ const APP_SHELL_URLS = [
 
 self.addEventListener('install', event => {
     event.waitUntil(
-        caches.open(CACHE_NAME).then(cache => {
-            console.log('Service Worker: Caching App Shell for offline use.');
-            // We are not caching external resources during install anymore
-            // to make installation more reliable. The fetch handler will
-            // cache them on first use.
-            return cache.addAll(APP_SHELL_URLS);
-        })
+        caches.open(CACHE_NAME)
+            .then(cache => {
+                console.log('SW: Caching App Shell on install.');
+                return cache.addAll(APP_SHELL_URLS);
+            })
+            .then(() => self.skipWaiting()) // Force activation of new SW
     );
 });
 
@@ -28,47 +27,62 @@ self.addEventListener('activate', event => {
             return Promise.all(
                 cacheNames.map(cacheName => {
                     if (cacheName.startsWith('greenhouse-accountant-') && cacheName !== CACHE_NAME) {
-                        console.log('Service Worker: Deleting old cache:', cacheName);
+                        console.log('SW: Deleting old cache:', cacheName);
                         return caches.delete(cacheName);
                     }
                 })
             );
-        }).then(() => self.clients.claim()) // Ensure the new SW takes control immediately.
+        }).then(() => self.clients.claim())
     );
 });
 
 self.addEventListener('fetch', event => {
-    const { request } = event;
-
-    // Strategy: Network falling back to cache for navigation requests.
-    // This ensures users get the latest HTML if they are online.
-    if (request.mode === 'navigate') {
+    // For navigation requests, use Network-first to ensure users get the latest HTML.
+    if (event.request.mode === 'navigate') {
         event.respondWith(
-            fetch(request).catch(() => {
-                // If the network fails, serve the main app shell from cache.
-                console.log('Service Worker: Fetch failed for navigation. Serving index.html from cache.');
-                return caches.match('index.html');
-            })
+            fetch(event.request)
+                .then(response => {
+                    // If the fetch is successful, cache it.
+                    return caches.open(CACHE_NAME).then(cache => {
+                        cache.put(event.request, response.clone());
+                        return response;
+                    });
+                })
+                .catch(() => {
+                    // If network fails, serve from cache.
+                    return caches.match(event.request)
+                        .then(response => response || caches.match('/')); // Fallback to root
+                })
         );
         return;
     }
 
-    // Strategy: Stale-While-Revalidate for other assets (JS, CSS, fonts, etc.).
-    // This serves assets from cache for speed, then updates the cache in the background.
+    // For all other requests (assets, API calls etc.), use Cache-first strategy.
     event.respondWith(
-        caches.open(CACHE_NAME).then(cache => {
-            return cache.match(request).then(cachedResponse => {
-                const fetchPromise = fetch(request).then(networkResponse => {
-                    // Check for valid responses before caching.
-                    if (networkResponse && networkResponse.status === 200) {
-                        cache.put(request, networkResponse.clone());
+        caches.match(event.request)
+            .then(response => {
+                // If we find a match in the cache, return it.
+                if (response) {
+                    return response;
+                }
+                
+                // If not, fetch from network, cache it, and return the response.
+                return fetch(event.request).then(networkResponse => {
+                    // Check if we received a valid response.
+                    // We don't want to cache error responses.
+                    if (!networkResponse || networkResponse.status !== 200 || networkResponse.type === 'error') {
+                        return networkResponse;
                     }
+
+                    const responseToCache = networkResponse.clone();
+
+                    caches.open(CACHE_NAME)
+                        .then(cache => {
+                            cache.put(event.request, responseToCache);
+                        });
+
                     return networkResponse;
                 });
-
-                // Return cached response immediately if available, otherwise wait for network.
-                return cachedResponse || fetchPromise;
-            });
-        })
+            })
     );
 });
