@@ -52,9 +52,9 @@ const PWAInstallBanner: React.FC = () => {
                 </div>
                 
                 <div className="flex-grow">
-                    <h2 id="pwa-install-banner-title" className="font-bold text-slate-800 dark:text-white">أضف التطبيق لشاشتك الرئيسية</h2>
+                    <h2 id="pwa-install-banner-title" className="font-bold text-slate-800 dark:text-white">ثبّت التطبيق لتجربة كاملة</h2>
                     <p className="text-sm text-slate-600 dark:text-slate-400">
-                        للحصول على أفضل تجربة، بما في ذلك الوصول دون اتصال بالإنترنت.
+                        اضغط على 'تثبيت'. قد يعرض متصفحك خيار 'إنشاء اختصار' أو 'إضافة للشاشة الرئيسية' - وهذا هو الخيار الصحيح لتثبيت التطبيق.
                     </p>
                 </div>
 
@@ -64,7 +64,7 @@ const PWAInstallBanner: React.FC = () => {
                         className="flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg shadow-md hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors"
                     >
                         <DownloadIcon className="w-5 h-5 ml-2" />
-                        <span>إضافة</span>
+                        <span>تثبيت</span>
                     </button>
                 </div>
             </div>
