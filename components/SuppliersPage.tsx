@@ -416,8 +416,9 @@ const SuppliersPage: React.FC = () => {
         setModal(null);
     }, [updateSupplierPayment, addSupplierPayment]);
 
-    // FIX: Explicitly typed the callback passed to React.useCallback to aid type inference.
-    const confirmDelete = React.useCallback((): void => {
+    // FIX: The explicit '(): void' type annotation on the callback was causing a build error.
+    // TypeScript correctly infers the return type, so it has been removed.
+    const confirmDelete = React.useCallback(() => {
         if (!deletingId) return;
         if (deletingId.type === 'supplier') {
             deleteSupplier(deletingId.id);

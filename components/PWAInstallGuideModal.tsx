@@ -1,9 +1,9 @@
 import React, { FC, useEffect, useRef } from 'react';
 import { usePWAInstall } from '../App';
-import { DownloadIcon, CloseIcon } from './Icons';
+import { DownloadIcon, CloseIcon, MenuVerticalIcon } from './Icons';
 
 const PWAInstallGuideModal: FC = () => {
-    const { closeInstallGuide, triggerInstall } = usePWAInstall();
+    const { closeInstallGuide, triggerInstall, canInstall } = usePWAInstall();
     const modalRef = useRef<HTMLDivElement>(null);
 
     const handleInstall = () => {
@@ -69,35 +69,61 @@ const PWAInstallGuideModal: FC = () => {
                 onClick={e => e.stopPropagation()}
             >
                 <div className="p-6 pb-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
-                    <h2 className="text-2xl font-bold text-slate-800 dark:text-white">كيفية تثبيت التطبيق</h2>
+                    <h2 className="text-2xl font-bold text-slate-800 dark:text-white">تثبيت التطبيق على جهازك</h2>
                     <button onClick={closeInstallGuide} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700">
                         <CloseIcon className="w-6 h-6" />
                     </button>
                 </div>
-                <div className="p-6 flex-grow overflow-y-auto space-y-4 text-slate-600 dark:text-slate-300">
-                    <p>للحصول على أفضل تجربة، اتبع هذه الخطوات البسيطة لوضع التطبيق على شاشتك الرئيسية:</p>
-                    <ul className="list-decimal list-inside space-y-3 pr-4">
-                        <li>
-                            <strong className="font-semibold text-slate-800 dark:text-white">اضغط على زر "متابعة التثبيت"</strong> في الأسفل.
-                        </li>
-                        <li>
-                            سيفتح متصفحك نافذة صغيرة للتأكيد.
-                        </li>
-                        <li>
-                            <strong className="font-semibold text-slate-800 dark:text-white">اضغط على "إضافة" أو "تثبيت" للتأكيد.</strong>
-                        </li>
-                        <li>
-                            ستجد أيقونة التطبيق على شاشة جهازك الرئيسية، جاهزة للاستخدام في أي وقت.
-                        </li>
-                    </ul>
+                <div className="p-6 flex-grow overflow-y-auto space-y-6 text-slate-600 dark:text-slate-300">
+                    {canInstall ? (
+                        <>
+                            <p>لتثبيت التطبيق مباشرة والحصول على أفضل تجربة، اضغط على الزر أدناه.</p>
+                             <button
+                                onClick={handleInstall}
+                                className="w-full flex items-center justify-center px-6 py-3 bg-emerald-600 text-white font-semibold rounded-lg shadow-md hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors"
+                            >
+                                <DownloadIcon className="w-5 h-5 ml-2" />
+                                <span>تثبيت التطبيق الآن</span>
+                            </button>
+                             <div className="border-t border-slate-200 dark:border-slate-700 my-6"></div>
+                            <p className="text-sm text-center text-slate-500 dark:text-slate-400">إذا لم يعمل الزر، أو كنت ترغب في التثبيت يدويًا، اتبع الخطوات التالية:</p>
+
+                        </>
+                    ) : (
+                        <p>للحصول على أفضل تجربة والوصول السريع، اتبع هذه الخطوات البسيطة لوضع التطبيق على شاشتك الرئيسية:</p>
+                    )}
+
+                    {/* Manual steps */}
+                    <div className="space-y-4">
+                        <div className="flex items-start">
+                            <div className="flex-shrink-0 w-8 text-center font-bold text-emerald-500 text-xl">1.</div>
+                            <div className="mr-3">
+                                <p className="font-semibold text-slate-800 dark:text-white">افتح قائمة المتصفح</p>
+                                <p>اضغط على أيقونة القائمة (<MenuVerticalIcon className="w-4 h-4 inline-block mx-1"/>) في متصفح جوجل كروم.</p>
+                            </div>
+                        </div>
+                        <div className="flex items-start">
+                             <div className="flex-shrink-0 w-8 text-center font-bold text-emerald-500 text-xl">2.</div>
+                            <div className="mr-3">
+                                <p className="font-semibold text-slate-800 dark:text-white">اختر "تثبيت التطبيق"</p>
+                                <p>ابحث عن خيار <span className="font-mono bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded-md text-sm">"تثبيت التطبيق"</span> أو <span className="font-mono bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded-md text-sm">"إضافة إلى الشاشة الرئيسية"</span> واضغط عليه.</p>
+                            </div>
+                        </div>
+                        <div className="flex items-start">
+                             <div className="flex-shrink-0 w-8 text-center font-bold text-emerald-500 text-xl">3.</div>
+                            <div className="mr-3">
+                                <p className="font-semibold text-slate-800 dark:text-white">أكّد التثبيت</p>
+                                <p>ستظهر نافذة صغيرة، اضغط على "تثبيت" لتأكيد الإضافة.</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div className="p-6 pt-4 border-t border-slate-200 dark:border-slate-700 flex justify-end">
-                    <button
-                        onClick={handleInstall}
-                        className="flex items-center px-6 py-3 bg-emerald-600 text-white font-semibold rounded-lg shadow-md hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors"
+                     <button
+                        onClick={closeInstallGuide}
+                        className="px-6 py-2 bg-slate-200 dark:bg-slate-600 text-slate-800 dark:text-slate-200 font-semibold rounded-lg hover:bg-slate-300 dark:hover:bg-slate-500 transition-colors"
                     >
-                        <DownloadIcon className="w-5 h-5 ml-2" />
-                        <span>متابعة التثبيت</span>
+                        إغلاق
                     </button>
                 </div>
             </div>

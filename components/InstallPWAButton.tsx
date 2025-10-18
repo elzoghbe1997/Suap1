@@ -3,11 +3,7 @@ import { DownloadIcon } from './Icons';
 import { usePWAInstall } from '../App';
 
 const InstallPWAButton: React.FC = () => {
-    const { canInstall, openInstallGuide } = usePWAInstall();
-
-    if (!canInstall) {
-        return null;
-    }
+    const { openInstallGuide } = usePWAInstall();
 
     return (
         <button
