@@ -51,6 +51,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         });
 
         if (error) {
+            // Provide a specific message for unconfirmed emails, which is a common issue.
+            if (error.message === 'Email not confirmed') {
+                throw new Error('لم يتم تأكيد البريد الإلكتروني. يرجى التحقق من بريدك الوارد لتفعيل حسابك.');
+            }
+            // For all other errors, use a generic message for security.
             throw new Error('البريد الإلكتروني أو كلمة المرور غير صحيحة.');
         }
         // Manually set auth state to prevent race condition with the listener
