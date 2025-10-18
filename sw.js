@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v8'; // Bump version
+const CACHE_VERSION = 'v9'; // Bump version
 const CACHE_NAME = `greenhouse-accountant-${CACHE_VERSION}`;
 const APP_SHELL_URLS = [
     '/',
@@ -7,19 +7,17 @@ const APP_SHELL_URLS = [
     'icon.svg',
     'icon-192.png',
     'icon-512.png',
-    'icon-maskable-512.png',
-    'https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css',
-    'https://cdn.tailwindcss.com',
-    'https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap',
-    'https://unpkg.com/@babel/standalone/babel.min.js'
+    'icon-maskable-512.png'
 ];
 
 self.addEventListener('install', event => {
     event.waitUntil(
         caches.open(CACHE_NAME).then(cache => {
             console.log('Service Worker: Caching App Shell for offline use.');
-            const requests = APP_SHELL_URLS.map(url => new Request(url, { cache: 'reload' }));
-            return cache.addAll(requests);
+            // We are not caching external resources during install anymore
+            // to make installation more reliable. The fetch handler will
+            // cache them on first use.
+            return cache.addAll(APP_SHELL_URLS);
         })
     );
 });
