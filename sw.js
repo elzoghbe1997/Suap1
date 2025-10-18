@@ -1,10 +1,13 @@
-const CACHE_VERSION = 'v4';
+const CACHE_VERSION = 'v5';
 const CACHE_NAME = `greenhouse-accountant-${CACHE_VERSION}`;
 const APP_SHELL_URLS = [
     '/',
     'index.html',
     'manifest.json',
     'icon.svg',
+    'icon-192.png',
+    'icon-512.png',
+    'icon-maskable-512.png',
     'https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css',
     'https://cdn.tailwindcss.com',
     'https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap',
