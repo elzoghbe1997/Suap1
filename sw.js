@@ -32,7 +32,7 @@ workbox.precaching.precacheAndRoute(APP_SHELL_URLS);
  */
 
 // 1. Google Fonts (stylesheets and font files)
-// StaleWhileRevalidate for the CSS file
+// StaleWhileRevalidate for the CSS file, as it might change, but not critically.
 workbox.routing.registerRoute(
     ({ url }) => url.origin === 'https://fonts.googleapis.com',
     new workbox.strategies.StaleWhileRevalidate({
@@ -40,7 +40,7 @@ workbox.routing.registerRoute(
     })
 );
 
-// CacheFirst for the font files themselves
+// CacheFirst for the font files themselves, as they are versioned and immutable.
 workbox.routing.registerRoute(
     ({ url }) => url.origin === 'https://fonts.gstatic.com',
     new workbox.strategies.CacheFirst({
@@ -57,24 +57,25 @@ workbox.routing.registerRoute(
     })
 );
 
-// 2. Third-party CSS and JS libraries from CDNs
-// Use StaleWhileRevalidate for assets that might update but aren't critical to have the latest version immediately.
+// 2. Third-party CSS and JS libraries from CDNs.
+// Use CacheFirst for these critical dependencies. Once they are cached,
+// the app will load instantly and work offline reliably. This is crucial for PWA installability.
 workbox.routing.registerRoute(
     ({ url }) =>
         url.origin === 'https://cdnjs.cloudflare.com' ||
         url.origin === 'https://cdn.tailwindcss.com' ||
-        url.origin === 'https://unpkg.com' ||
-        url.origin === 'https://aistudiocdn.com' ||
-        url.origin === 'https://cdn.jsdelivr.net',
-    new workbox.strategies.StaleWhileRevalidate({
-        cacheName: 'cdn-assets',
+        url.origin === 'https://unpkg.com' || // Babel compiler
+        url.origin === 'https://aistudiocdn.com' || // React and other dependencies
+        url.origin === 'https://cdn.jsdelivr.net', // Supabase
+    new workbox.strategies.CacheFirst({
+        cacheName: 'cdn-libraries',
         plugins: [
             new workbox.cacheableResponse.CacheableResponsePlugin({
-                statuses: [0, 200], // Cache opaque responses
+                statuses: [0, 200], // Cache opaque responses for cross-origin requests
             }),
              new workbox.expiration.ExpirationPlugin({
-                maxEntries: 60,
-                maxAgeSeconds: 30 * 24 * 60 * 60, // 30 Days
+                maxEntries: 100,
+                maxAgeSeconds: 365 * 24 * 60 * 60, // Cache for a year
             }),
         ],
     })
@@ -95,5 +96,19 @@ workbox.routing.registerRoute(
     })
 );
 
-// Default handler for any other requests
+// 4. Local App Source Code (TSX/TS files)
+// StaleWhileRevalidate is a good strategy for the app's own code.
+// It ensures the user gets updates in the background without blocking them.
+workbox.routing.registerRoute(
+    ({ request }) => 
+        (request.destination === 'script' || request.destination === '') &&
+        new URL(request.url).origin === self.location.origin &&
+        /\.(tsx|ts)$/.test(new URL(request.url).pathname),
+    new workbox.strategies.StaleWhileRevalidate({
+        cacheName: 'app-source-code',
+    })
+);
+
+
+// Default handler for any other requests (like images, if any are added later)
 workbox.routing.setDefaultHandler(new workbox.strategies.StaleWhileRevalidate());
