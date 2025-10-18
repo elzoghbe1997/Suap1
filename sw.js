@@ -1,88 +1,99 @@
-const CACHE_VERSION = 'v10';
-const CACHE_NAME = `greenhouse-accountant-${CACHE_VERSION}`;
+// Import Workbox from Google's CDN
+importScripts('https://storage.googleapis.com/workbox-cdn/releases/7.0.0/workbox-sw.js');
+
+// Set a specific cache name for our app's assets.
+workbox.core.setCacheNameDetails({ prefix: 'greenhouse-accountant' });
+
+// This line immediately triggers the self.skipWaiting() and self.clients.claim()
+// lifecycle events, which is a best practice for PWAs.
+workbox.core.clientsClaim();
+workbox.core.skipWaiting();
+
+
+/**
+ * Precaching App Shell
+ * This tells Workbox to cache a list of files during the service worker's install phase.
+ * These files make up the "app shell" and are essential for the app to run offline.
+ */
 const APP_SHELL_URLS = [
-    '/',
-    'index.html',
-    'manifest.json',
-    'icon.svg',
-    'icon-192.png',
-    'icon-512.png',
-    'icon-maskable-512.png'
+    { url: '/index.html', revision: null },
+    { url: '/', revision: null },
+    { url: '/manifest.json', revision: null },
+    { url: '/icon.svg', revision: null },
+    { url: '/icon-192.png', revision: null },
+    { url: '/icon-512.png', revision: null },
+    { url: '/icon-maskable-512.png', revision: null }
 ];
+workbox.precaching.precacheAndRoute(APP_SHELL_URLS);
 
-self.addEventListener('install', event => {
-    event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then(cache => {
-                console.log('SW: Caching App Shell on install.');
-                return cache.addAll(APP_SHELL_URLS);
-            })
-            .then(() => self.skipWaiting()) // Force activation of new SW
-    );
-});
+/**
+ * Caching Strategies for Runtime Requests
+ * Here we define how different types of requests should be handled.
+ */
 
-self.addEventListener('activate', event => {
-    event.waitUntil(
-        caches.keys().then(cacheNames => {
-            return Promise.all(
-                cacheNames.map(cacheName => {
-                    if (cacheName.startsWith('greenhouse-accountant-') && cacheName !== CACHE_NAME) {
-                        console.log('SW: Deleting old cache:', cacheName);
-                        return caches.delete(cacheName);
-                    }
-                })
-            );
-        }).then(() => self.clients.claim())
-    );
-});
+// 1. Google Fonts (stylesheets and font files)
+// StaleWhileRevalidate for the CSS file
+workbox.routing.registerRoute(
+    ({ url }) => url.origin === 'https://fonts.googleapis.com',
+    new workbox.strategies.StaleWhileRevalidate({
+        cacheName: 'google-fonts-stylesheets',
+    })
+);
 
-self.addEventListener('fetch', event => {
-    // For navigation requests, use Network-first to ensure users get the latest HTML.
-    if (event.request.mode === 'navigate') {
-        event.respondWith(
-            fetch(event.request)
-                .then(response => {
-                    // If the fetch is successful, cache it.
-                    return caches.open(CACHE_NAME).then(cache => {
-                        cache.put(event.request, response.clone());
-                        return response;
-                    });
-                })
-                .catch(() => {
-                    // If network fails, serve from cache.
-                    return caches.match(event.request)
-                        .then(response => response || caches.match('/')); // Fallback to root
-                })
-        );
-        return;
-    }
+// CacheFirst for the font files themselves
+workbox.routing.registerRoute(
+    ({ url }) => url.origin === 'https://fonts.gstatic.com',
+    new workbox.strategies.CacheFirst({
+        cacheName: 'google-fonts-webfonts',
+        plugins: [
+            new workbox.cacheableResponse.CacheableResponsePlugin({
+                statuses: [0, 200], // Cache opaque responses for cross-origin font requests
+            }),
+            new workbox.expiration.ExpirationPlugin({
+                maxAgeSeconds: 60 * 60 * 24 * 365, // Cache fonts for a year
+                maxEntries: 30,
+            }),
+        ],
+    })
+);
 
-    // For all other requests (assets, API calls etc.), use Cache-first strategy.
-    event.respondWith(
-        caches.match(event.request)
-            .then(response => {
-                // If we find a match in the cache, return it.
-                if (response) {
-                    return response;
-                }
-                
-                // If not, fetch from network, cache it, and return the response.
-                return fetch(event.request).then(networkResponse => {
-                    // Check if we received a valid response.
-                    // We don't want to cache error responses.
-                    if (!networkResponse || networkResponse.status !== 200 || networkResponse.type === 'error') {
-                        return networkResponse;
-                    }
+// 2. Third-party CSS and JS libraries from CDNs
+// Use StaleWhileRevalidate for assets that might update but aren't critical to have the latest version immediately.
+workbox.routing.registerRoute(
+    ({ url }) =>
+        url.origin === 'https://cdnjs.cloudflare.com' ||
+        url.origin === 'https://cdn.tailwindcss.com' ||
+        url.origin === 'https://unpkg.com' ||
+        url.origin === 'https://aistudiocdn.com' ||
+        url.origin === 'https://cdn.jsdelivr.net',
+    new workbox.strategies.StaleWhileRevalidate({
+        cacheName: 'cdn-assets',
+        plugins: [
+            new workbox.cacheableResponse.CacheableResponsePlugin({
+                statuses: [0, 200], // Cache opaque responses
+            }),
+             new workbox.expiration.ExpirationPlugin({
+                maxEntries: 60,
+                maxAgeSeconds: 30 * 24 * 60 * 60, // 30 Days
+            }),
+        ],
+    })
+);
 
-                    const responseToCache = networkResponse.clone();
+// 3. Navigation requests (HTML pages)
+// Use NetworkFirst to ensure users see the latest version of the page if they are online.
+// Fall back to the cached version if they are offline.
+workbox.routing.registerRoute(
+    ({ request }) => request.mode === 'navigate',
+    new workbox.strategies.NetworkFirst({
+        cacheName: 'pages',
+        plugins: [
+            new workbox.cacheableResponse.CacheableResponsePlugin({
+                statuses: [200],
+            }),
+        ],
+    })
+);
 
-                    caches.open(CACHE_NAME)
-                        .then(cache => {
-                            cache.put(event.request, responseToCache);
-                        });
-
-                    return networkResponse;
-                });
-            })
-    );
-});
+// Default handler for any other requests
+workbox.routing.setDefaultHandler(new workbox.strategies.StaleWhileRevalidate());

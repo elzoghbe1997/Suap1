@@ -333,7 +333,7 @@ const SuppliersPage: React.FC = () => {
     const [selectedSupplier, setSelectedSupplier] = React.useState<Supplier | undefined>(undefined);
     const [selectedPayment, setSelectedPayment] = React.useState<SupplierPayment | undefined>(undefined);
     const [deletingId, setDeletingId] = React.useState<{id: string, type: 'supplier' | 'payment'} | null>(null);
-    const modalRef = useRef<HTMLDivElement>(null);
+    const modalRef = React.useRef<HTMLDivElement>(null);
 
 
     useEffect(() => {
@@ -356,7 +356,8 @@ const SuppliersPage: React.FC = () => {
         const modalNode = modalRef.current;
         if (!modalNode) return;
 
-        const focusableElements = modalNode.querySelectorAll<HTMLElement>('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+        // FIX: Replaced `querySelectorAll<HTMLElement>` with a type assertion to fix "Untyped function calls may not accept type arguments" error.
+        const focusableElements = modalNode.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])') as NodeListOf<HTMLElement>;
         if (focusableElements.length === 0) return;
         const firstElement = focusableElements[0];
         const lastElement = focusableElements[focusableElements.length - 1];
