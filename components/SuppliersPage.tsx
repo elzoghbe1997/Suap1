@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useRef, useContext, memo, useState } from 'react';
+import React, { useMemo, useEffect, useRef, useContext, memo, useState, useCallback } from 'react';
 import { AppContext } from '../App';
 import { AppContextType, TransactionType, Supplier, SupplierPayment, Transaction, CropCycle, CropCycleStatus } from '../types';
 import { SupplierIcon, InvoiceIcon, ExpenseIcon, ProfitIcon, AddIcon, EditIcon, DeleteIcon, ReportIcon, CloseIcon } from './Icons';
@@ -406,19 +406,18 @@ const SuppliersPage: React.FC = () => {
         });
     }, [suppliers, transactions, supplierPayments]);
 
-    const handleSaveSupplier = React.useCallback((supplier: Omit<Supplier, 'id'> | Supplier) => {
+    const handleSaveSupplier = useCallback((supplier: Omit<Supplier, 'id'> | Supplier) => {
         if ('id' in supplier) updateSupplier(supplier); else addSupplier(supplier);
         setModal(null);
     }, [updateSupplier, addSupplier]);
 
-    const handleSavePayment = React.useCallback((payment: Omit<SupplierPayment, 'id'> | SupplierPayment) => {
+    const handleSavePayment = useCallback((payment: Omit<SupplierPayment, 'id'> | SupplierPayment) => {
         if ('id' in payment) updateSupplierPayment(payment); else addSupplierPayment(payment);
         setModal(null);
     }, [updateSupplierPayment, addSupplierPayment]);
 
-    // FIX: The explicit '(): void' type annotation on the callback was causing a build error.
-    // TypeScript correctly infers the return type, so it has been removed.
-    const confirmDelete = React.useCallback(() => {
+    // FIX: Imported `useCallback` from React and used it directly. The previous `React.useCallback` was causing a typing error due to a missing import.
+    const confirmDelete = useCallback(() => {
         if (!deletingId) return;
         if (deletingId.type === 'supplier') {
             deleteSupplier(deletingId.id);
@@ -428,16 +427,16 @@ const SuppliersPage: React.FC = () => {
         setDeletingId(null);
     }, [deletingId, deleteSupplier, deleteSupplierPayment]);
     
-    const handleEdit = React.useCallback((supplier: Supplier) => {
+    const handleEdit = useCallback((supplier: Supplier) => {
         setSelectedSupplier(supplier);
         setModal('EDIT_SUPPLIER');
     }, []);
 
-    const handleDelete = React.useCallback((id: string) => {
+    const handleDelete = useCallback((id: string) => {
         setDeletingId({ id, type: 'supplier' });
     }, []);
 
-    const handleDetails = React.useCallback((supplier: Supplier) => {
+    const handleDetails = useCallback((supplier: Supplier) => {
         setSelectedSupplier(supplier);
         setModal('DETAILS');
     }, []);
