@@ -330,7 +330,8 @@ const SupplierCard: FC<{
 const SuppliersPage: FC = () => {
     const { loading, suppliers, transactions, supplierPayments, cropCycles, addSupplier, updateSupplier, deleteSupplier, addSupplierPayment, updateSupplierPayment, deleteSupplierPayment, settings } = useContext(AppContext) as AppContextType;
 
-    const [modal, setModal] = useState<'ADD_SUPPLIER' | 'EDIT_SUPPLIER' | 'ADD_PAYMENT' | 'EDIT_PAYMENT' | 'DETAILS' | null>(null);
+    // FIX: Replaced `useState` with `React.useState` to resolve an "Untyped function calls may not accept type arguments" error, likely caused by a TypeScript type inference issue with the destructured import.
+    const [modal, setModal] = React.useState<'ADD_SUPPLIER' | 'EDIT_SUPPLIER' | 'ADD_PAYMENT' | 'EDIT_PAYMENT' | 'DETAILS' | null>(null);
     const [selectedSupplier, setSelectedSupplier] = useState<Supplier | undefined>(undefined);
     const [selectedPayment, setSelectedPayment] = useState<SupplierPayment | undefined>(undefined);
     const [deletingId, setDeletingId] = useState<{id: string, type: 'supplier' | 'payment'} | null>(null);
