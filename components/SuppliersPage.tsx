@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useRef, useContext, memo, useState, useCallback, FC } from 'react';
+import React, { useMemo, useEffect, useRef, useContext, memo, useCallback, FC } from 'react';
 import { AppContext } from '../App';
 import { AppContextType, TransactionType, Supplier, SupplierPayment, Transaction, CropCycle, CropCycleStatus } from '../types';
 import { SupplierIcon, InvoiceIcon, ExpenseIcon, ProfitIcon, AddIcon, EditIcon, DeleteIcon, ReportIcon, CloseIcon } from './Icons';
@@ -13,7 +13,7 @@ const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { styl
 
 // Supplier Form
 const SupplierForm: FC<{ supplier?: Supplier; onSave: (supplier: Omit<Supplier, 'id'> | Supplier) => void; onCancel: () => void }> = ({ supplier, onSave, onCancel }) => {
-    const [name, setName] = useState(supplier?.name || '');
+    const [name, setName] = React.useState(supplier?.name || '');
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         onSave(supplier ? { ...supplier, name } : { name });
@@ -37,13 +37,13 @@ const PaymentForm: FC<{ payment?: SupplierPayment; suppliers: Supplier[]; onSave
     const { addToast } = useContext(ToastContext) as ToastContextType;
     const { transactions } = useContext(AppContext) as AppContextType;
 
-    const [date, setDate] = useState(payment?.date || new Date().toISOString().split('T')[0]);
-    const [amount, setAmount] = useState(payment?.amount?.toString() || '');
-    const [supplierId, setSupplierId] = useState(payment?.supplierId || '');
-    const [cropCycleId, setCropCycleId] = useState(payment?.cropCycleId || '');
-    const [description, setDescription] = useState(payment?.description || '');
-    const [linkedExpenseIds, setLinkedExpenseIds] = useState<string[]>(payment?.linkedExpenseIds || []);
-    const [showLinker, setShowLinker] = useState(false);
+    const [date, setDate] = React.useState(payment?.date || new Date().toISOString().split('T')[0]);
+    const [amount, setAmount] = React.useState(payment?.amount?.toString() || '');
+    const [supplierId, setSupplierId] = React.useState(payment?.supplierId || '');
+    const [cropCycleId, setCropCycleId] = React.useState(payment?.cropCycleId || '');
+    const [description, setDescription] = React.useState(payment?.description || '');
+    const [linkedExpenseIds, setLinkedExpenseIds] = React.useState<string[]>(payment?.linkedExpenseIds || []);
+    const [showLinker, setShowLinker] = React.useState(false);
 
     const selectableCycles = useMemo(() => {
         const available = cropCycles.filter(
@@ -184,7 +184,7 @@ const StatCard: FC<{ title: string; value: string; icon: React.ReactNode; }> = (
 // Details Modal
 const DetailsModal: FC<{ supplier: Supplier; transactions: Transaction[]; payments: SupplierPayment[]; onClose: () => void }> = ({ supplier, transactions, payments, onClose }) => {
     const { cropCycles } = useContext(AppContext) as AppContextType;
-    const [currentPage, setCurrentPage] = useState(1);
+    const [currentPage, setCurrentPage] = React.useState(1);
     const ITEMS_PER_PAGE = 10;
     
     const combinedLedger = useMemo(() => {
@@ -330,11 +330,11 @@ const SupplierCard: FC<{
 const SuppliersPage: FC = () => {
     const { loading, suppliers, transactions, supplierPayments, cropCycles, addSupplier, updateSupplier, deleteSupplier, addSupplierPayment, updateSupplierPayment, deleteSupplierPayment, settings } = useContext(AppContext) as AppContextType;
 
-    // FIX: Replaced `useState` with `React.useState` to resolve an "Untyped function calls may not accept type arguments" error, likely caused by a TypeScript type inference issue with the destructured import.
+    // FIX: Replaced all `useState` calls with `React.useState` to resolve "Untyped function calls may not accept type arguments" errors.
     const [modal, setModal] = React.useState<'ADD_SUPPLIER' | 'EDIT_SUPPLIER' | 'ADD_PAYMENT' | 'EDIT_PAYMENT' | 'DETAILS' | null>(null);
-    const [selectedSupplier, setSelectedSupplier] = useState<Supplier | undefined>(undefined);
-    const [selectedPayment, setSelectedPayment] = useState<SupplierPayment | undefined>(undefined);
-    const [deletingId, setDeletingId] = useState<{id: string, type: 'supplier' | 'payment'} | null>(null);
+    const [selectedSupplier, setSelectedSupplier] = React.useState<Supplier | undefined>(undefined);
+    const [selectedPayment, setSelectedPayment] = React.useState<SupplierPayment | undefined>(undefined);
+    const [deletingId, setDeletingId] = React.useState<{id: string, type: 'supplier' | 'payment'} | null>(null);
     const modalRef = useRef<HTMLDivElement>(null);
 
 
