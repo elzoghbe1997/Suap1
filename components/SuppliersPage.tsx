@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useCallback, useRef, useContext } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useRef, useContext, memo } from 'react';
 import { AppContext } from '../App';
 import { AppContextType, TransactionType, Supplier, SupplierPayment, Transaction, CropCycle, CropCycleStatus } from '../types';
 import { SupplierIcon, InvoiceIcon, ExpenseIcon, ProfitIcon, AddIcon, EditIcon, DeleteIcon, ReportIcon, CloseIcon } from './Icons';
@@ -283,7 +283,7 @@ const SupplierCard: React.FC<{
     onEdit: (supplier: Supplier) => void;
     onDelete: (id: string) => void;
     onDetails: (supplier: Supplier) => void;
-}> = React.memo(({ supplierData, onEdit, onDelete, onDetails }) => {
+}> = memo(({ supplierData, onEdit, onDelete, onDetails }) => {
     const supplier = {id: supplierData.id, name: supplierData.name};
     
     return (
@@ -330,7 +330,7 @@ const SupplierCard: React.FC<{
 const SuppliersPage: React.FC = () => {
     const { loading, suppliers, transactions, supplierPayments, cropCycles, addSupplier, updateSupplier, deleteSupplier, addSupplierPayment, updateSupplierPayment, deleteSupplierPayment, settings } = useContext(AppContext) as AppContextType;
 
-    // FIX: Replaced `React.useState` with the destructured `useState` to resolve a TypeScript error where the function was considered untyped and could not accept generic arguments.
+    // FIX: Replaced React.useState with the destructured useState to resolve a TypeScript error where the function was considered untyped and could not accept generic arguments.
     const [modal, setModal] = useState<'ADD_SUPPLIER' | 'EDIT_SUPPLIER' | 'ADD_PAYMENT' | 'EDIT_PAYMENT' | 'DETAILS' | null>(null);
     const [selectedSupplier, setSelectedSupplier] = useState<Supplier | undefined>(undefined);
     const [selectedPayment, setSelectedPayment] = useState<SupplierPayment | undefined>(undefined);
