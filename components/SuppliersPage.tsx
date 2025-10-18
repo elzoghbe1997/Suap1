@@ -417,7 +417,7 @@ const SuppliersPage: React.FC = () => {
     }, [updateSupplierPayment, addSupplierPayment]);
 
     // FIX: Untyped function calls may not accept type arguments. Removed explicit generic type argument from useCallback as TypeScript can infer it.
-    const confirmDelete = React.useCallback(() => {
+    const confirmDelete = React.useCallback((): void => {
         if (!deletingId) return;
         if (deletingId.type === 'supplier') {
             deleteSupplier(deletingId.id);

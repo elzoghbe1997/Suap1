@@ -69,34 +69,34 @@ const PWAInstallGuideModal: FC = () => {
                 onClick={e => e.stopPropagation()}
             >
                 <div className="p-6 pb-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
-                    <h2 className="text-2xl font-bold text-slate-800 dark:text-white">خطوات تثبيت التطبيق</h2>
+                    <h2 className="text-2xl font-bold text-slate-800 dark:text-white">كيفية الإضافة إلى الشاشة الرئيسية</h2>
                     <button onClick={closeInstallGuide} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700">
                         <CloseIcon className="w-6 h-6" />
                     </button>
                 </div>
                 <div className="p-6 flex-grow overflow-y-auto space-y-4 text-slate-600 dark:text-slate-300">
-                    <p>لتثبيت التطبيق على جهازك والوصول إليه بسهولة، يرجى اتباع الخطوات التالية:</p>
+                    <p>للحصول على أفضل تجربة، اتبع هذه الخطوات البسيطة لوضع التطبيق على شاشتك الرئيسية:</p>
                     <ul className="list-decimal list-inside space-y-3 pr-4">
                         <li>
-                            <strong className="font-semibold text-slate-800 dark:text-white">اضغط على زر "متابعة التثبيت"</strong> في الأسفل.
+                            <strong className="font-semibold text-slate-800 dark:text-white">اضغط على زر "متابعة الإضافة"</strong> في الأسفل.
                         </li>
                         <li>
-                            سيفتح متصفحك نافذة صغيرة. قد يختلف النص بداخلها، لكنها غالبًا ما تقول:
+                            سيفتح متصفحك نافذة صغيرة للتأكيد. قد يظهر فيها نص مثل:
                             <div className="my-2 p-3 bg-slate-100 dark:bg-slate-700/50 rounded-md border border-slate-200 dark:border-slate-700 text-center font-mono text-sm">
-                                "إضافة إلى الشاشة الرئيسية"
-                                <br/> أو <br/>
                                 "إنشاء اختصار"
+                                <br/> أو <br/>
+                                "إضافة إلى الشاشة الرئيسية"
                             </div>
                         </li>
                         <li>
-                            <strong className="font-semibold text-slate-800 dark:text-white">هذه هي الخطوة الصحيحة!</strong> اضغط على "إضافة" أو "تثبيت" لتأكيد العملية.
+                            <strong className="font-semibold text-slate-800 dark:text-white">اضغط على "إضافة" أو "تثبيت" للتأكيد.</strong>
                         </li>
                         <li>
-                            بعد لحظات، ستجد أيقونة التطبيق على شاشة جهازك الرئيسية مثل أي تطبيق آخر.
+                            ستجد أيقونة التطبيق على شاشة جهازك الرئيسية، جاهزة للاستخدام في أي وقت.
                         </li>
                     </ul>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-200 dark:border-slate-700">
-                        بالرغم من أن المتصفح قد يسميها "اختصار"، إلا أنها النسخة الكاملة من التطبيق التي تعمل بشكل مستقل حتى بدون انترنت.
+                    <p className="text-sm text-slate-500 dark:text-slate-400 pt-3 border-t border-slate-200 dark:border-slate-700">
+                        <strong className="text-slate-600 dark:text-slate-300">ملاحظة هامة:</strong> بعض المتصفحات تستخدم كلمة "إنشاء اختصار" ولكنها في الحقيقة تقوم بتثبيت النسخة الكاملة من التطبيق التي تعمل دون اتصال بالإنترنت. <strong className="text-slate-600 dark:text-slate-300">هذا هو الإجراء الصحيح.</strong>
                     </p>
                 </div>
                 <div className="p-6 pt-4 border-t border-slate-200 dark:border-slate-700 flex justify-end">
@@ -105,7 +105,7 @@ const PWAInstallGuideModal: FC = () => {
                         className="flex items-center px-6 py-3 bg-emerald-600 text-white font-semibold rounded-lg shadow-md hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors"
                     >
                         <DownloadIcon className="w-5 h-5 ml-2" />
-                        <span>متابعة التثبيت</span>
+                        <span>متابعة الإضافة</span>
                     </button>
                 </div>
             </div>
