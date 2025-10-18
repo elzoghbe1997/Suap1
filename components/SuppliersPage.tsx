@@ -416,7 +416,7 @@ const SuppliersPage: React.FC = () => {
         setModal(null);
     }, [updateSupplierPayment, addSupplierPayment]);
 
-    // FIX: Removed explicit generic type from useCallback. The function's type is correctly inferred by TypeScript, fixing the "Untyped function calls may not accept type arguments" error.
+    // FIX: Removed explicit generic type from useCallback. The function's type is correctly inferred by TypeScript, fixing an "Untyped function calls may not accept type arguments" error.
     const confirmDelete = useCallback(() => {
         if (!deletingId) return;
         if (deletingId.type === 'supplier') {

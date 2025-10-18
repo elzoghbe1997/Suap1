@@ -268,7 +268,78 @@ export const useAppData = (): AppContextType => {
     const deleteExpenseCategory = async (id: string) => { /* validation logic */ await updateSettings({ expenseCategories: settings.expenseCategories.filter(c => c.id !== id) }); };
 
 
-    const loadBackupData = async (data: BackupData) => { /* ... to be implemented if needed, more complex with DB ... */ };
+    const loadBackupData = async (data: BackupData) => {
+        setIsDeletingData(true);
+        addToast('جاري استعادة البيانات، سيتم إعادة تشغيل التطبيق بعد قليل...', 'info');
+
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            addToast("يجب أن تكون مسجلاً للدخول لاستعادة البيانات.", "error");
+            setIsDeletingData(false);
+            return;
+        }
+
+        try {
+            // Step 1: Delete all existing data for the user.
+            const deletePromises = TABLES.map(table =>
+                supabase.from(table).delete().eq('user_id', user.id)
+            );
+            const deleteResults = await Promise.all(deletePromises);
+            for (const result of deleteResults) {
+                if (result.error) {
+                    console.error('Delete error:', result.error);
+                    throw new Error(`فشل في حذف البيانات القديمة: ${result.error.message}`);
+                }
+            }
+
+            const prepareDataForDb = (arr: any[] | undefined) => {
+                if (!arr || arr.length === 0) return [];
+                return arr.map(item => toSnakeCase({ ...item, userId: user.id }));
+            };
+
+            // Step 2: Insert data sequentially, checking for errors at each step.
+            const executeInsert = async (tableName: string, tableData: any[] | undefined) => {
+                const preparedData = prepareDataForDb(tableData);
+                if (preparedData.length === 0) return; // Skip if no data
+                const { error } = await supabase.from(tableName).insert(preparedData);
+                if (error) {
+                    console.error(`Insert error for table ${tableName}:`, error);
+                    throw new Error(`فشل في استعادة جدول '${tableName}': ${error.message}`);
+                }
+            };
+            
+            // Level 0 (no dependencies)
+            await executeInsert('greenhouses', data.greenhouses);
+            await executeInsert('farmers', data.farmers);
+            await executeInsert('suppliers', data.suppliers);
+            await executeInsert('people', data.people);
+
+            // Level 1 (depends on level 0)
+            await executeInsert('crop_cycles', data.cropCycles);
+            
+            // Level 2 (depends on level 1)
+            await executeInsert('fertilization_programs', data.fertilizationPrograms);
+
+            // Level 3 (depends on levels 0, 1, 2)
+            await executeInsert('transactions', data.transactions);
+            await executeInsert('farmer_withdrawals', data.farmerWithdrawals);
+            await executeInsert('supplier_payments', data.supplierPayments);
+            await executeInsert('advances', data.advances);
+
+            // Step 3: Update settings.
+            if (data.settings) {
+                await updateSettings(data.settings);
+            }
+
+            addToast("تم استعادة البيانات بنجاح. سيتم إعادة تشغيل التطبيق.", "success");
+            setTimeout(() => window.location.reload(), 1500);
+
+        } catch (error: any) {
+            console.error("Restore failed:", error);
+            addToast(`فشل في استعادة البيانات: ${error.message}`, "error");
+            setTimeout(() => window.location.reload(), 2500); // Give user more time to read error
+        }
+    };
     
     const deleteAllData = async () => {
         setIsDeletingData(true);
