@@ -1,39 +1,17 @@
 import React from 'react';
 import { DownloadIcon } from './Icons';
+import { usePWAInstall } from '../App';
 
 const InstallPWAButton: React.FC = () => {
-    const [installPromptEvent, setInstallPromptEvent] = React.useState<any>(null); // Use 'any' as BeforeInstallPromptEvent is not in standard TS lib
+    const { canInstall, triggerInstall } = usePWAInstall();
 
-    React.useEffect(() => {
-        const handleBeforeInstallPrompt = (event: Event) => {
-            event.preventDefault();
-            setInstallPromptEvent(event);
-        };
-
-        window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
-        return () => {
-            window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-        };
-    }, []);
-
-    const handleInstallClick = async () => {
-        if (!installPromptEvent) {
-            return;
-        }
-
-        installPromptEvent.prompt();
-        // The prompt can only be used once.
-        setInstallPromptEvent(null);
-    };
-
-    if (!installPromptEvent) {
+    if (!canInstall) {
         return null;
     }
 
     return (
         <button
-            onClick={handleInstallClick}
+            onClick={triggerInstall}
             className="p-2 rounded-full text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-emerald-500"
             aria-label="تثبيت التطبيق"
             title="تثبيت التطبيق"

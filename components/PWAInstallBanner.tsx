@@ -1,42 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { DownloadIcon, CloseIcon, LogoIcon } from './Icons';
+import { usePWAInstall } from '../App';
 
 const PWAInstallBanner: React.FC = () => {
-    const [installPrompt, setInstallPrompt] = useState<any>(null);
+    const { canInstall, triggerInstall } = usePWAInstall();
     const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
-        const handleBeforeInstallPrompt = (event: Event) => {
-            event.preventDefault();
-            // Check if the banner was dismissed before
-            const dismissed = localStorage.getItem('pwaInstallDismissed');
-            // Check if it's a mobile device (simple check)
-            const isMobile = window.matchMedia('(max-width: 768px)').matches;
-            
-            if (!dismissed && isMobile) {
-                setInstallPrompt(event);
-                setIsVisible(true);
-            }
-        };
+        const dismissed = localStorage.getItem('pwaInstallDismissed');
+        const isMobile = window.matchMedia('(max-width: 768px)').matches;
 
-        window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
-        return () => {
-            window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-        };
-    }, []);
-
-    const handleInstallClick = async () => {
-        if (!installPrompt) {
-            return;
+        if (canInstall && !dismissed && isMobile) {
+            setIsVisible(true);
+        } else {
+            setIsVisible(false);
         }
+    }, [canInstall]);
 
-        installPrompt.prompt();
-        // The userChoice property returns a Promise that resolves to an object with an outcome property.
-        await installPrompt.userChoice;
-        // Hide the banner after prompt
-        setIsVisible(false);
-        setInstallPrompt(null);
+    const handleInstallClick = () => {
+        triggerInstall();
+        setIsVisible(false); // Hide banner after triggering prompt
     };
     
     const handleDismissClick = () => {
@@ -45,13 +28,13 @@ const PWAInstallBanner: React.FC = () => {
         setIsVisible(false);
     };
 
-    if (!isVisible || !installPrompt) {
+    if (!isVisible) {
         return null;
     }
 
     return (
         <div 
-            className="absolute bottom-0 left-0 right-0 z-50 p-4 animate-fadeInSlideUp md:hidden" 
+            className="fixed bottom-0 left-0 right-0 z-50 p-4 animate-fadeInSlideUp md:hidden" 
             role="dialog" 
             aria-labelledby="pwa-install-banner-title"
         >

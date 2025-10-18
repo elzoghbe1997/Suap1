@@ -28,6 +28,61 @@ import PWAInstallBanner from './components/PWAInstallBanner.tsx';
 import TransactionListPage from './components/TransactionListPage.tsx';
 
 
+// --- PWA Install Context ---
+interface PWAInstallContextType {
+    canInstall: boolean;
+    triggerInstall: () => void;
+}
+
+const PWAInstallContext = createContext<PWAInstallContextType | null>(null);
+
+export const usePWAInstall = () => {
+    const context = useContext(PWAInstallContext);
+    if (!context) {
+        throw new Error('usePWAInstall must be used within a PWAInstallProvider');
+    }
+    return context;
+};
+
+const PWAInstallProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    const [installPrompt, setInstallPrompt] = React.useState<any>(null);
+
+    React.useEffect(() => {
+        const handleBeforeInstallPrompt = (event: Event) => {
+            event.preventDefault();
+            setInstallPrompt(event);
+        };
+        window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+        const handleAppInstalled = () => {
+            setInstallPrompt(null);
+        };
+        window.addEventListener('appinstalled', handleAppInstalled);
+
+        return () => {
+            window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+            window.removeEventListener('appinstalled', handleAppInstalled);
+        };
+    }, []);
+
+    const triggerInstall = async () => {
+        if (!installPrompt) return;
+        installPrompt.prompt();
+        await installPrompt.userChoice;
+        setInstallPrompt(null);
+    };
+
+    const value = { canInstall: !!installPrompt, triggerInstall };
+
+    return (
+        <PWAInstallContext.Provider value={value}>
+            {children}
+        </PWAInstallContext.Provider>
+    );
+};
+// --- End PWA Install Context ---
+
+
 export const AppContext = createContext<AppContextType | null>(null);
 
 const DeletingDataOverlay: FC = () => (
@@ -193,9 +248,11 @@ const App: FC = () => {
   return (
     <ToastProvider>
       <HashRouter>
-        <AuthProvider>
-            <AppContent />
-        </AuthProvider>
+        <PWAInstallProvider>
+            <AuthProvider>
+                <AppContent />
+            </AuthProvider>
+        </PWAInstallProvider>
       </HashRouter>
     </ToastProvider>
   );
