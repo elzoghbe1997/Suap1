@@ -3,7 +3,7 @@ import { DownloadIcon, CloseIcon, LogoIcon } from './Icons';
 import { usePWAInstall } from '../App';
 
 const PWAInstallBanner: React.FC = () => {
-    const { canInstall, openInstallGuide } = usePWAInstall();
+    const { canInstall, triggerInstall } = usePWAInstall();
     const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
@@ -18,7 +18,8 @@ const PWAInstallBanner: React.FC = () => {
     }, [canInstall]);
 
     const handleInstallClick = () => {
-        openInstallGuide();
+        triggerInstall();
+        setIsVisible(false);
     };
     
     const handleDismissClick = () => {
@@ -62,7 +63,7 @@ const PWAInstallBanner: React.FC = () => {
                         className="flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg shadow-md hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors"
                     >
                         <DownloadIcon className="w-5 h-5 ml-2" />
-                        <span>إضافة</span>
+                        <span>تثبيت</span>
                     </button>
                 </div>
             </div>

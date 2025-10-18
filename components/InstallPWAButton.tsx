@@ -3,16 +3,25 @@ import { DownloadIcon } from './Icons';
 import { usePWAInstall } from '../App';
 
 const InstallPWAButton: React.FC = () => {
-    const { openInstallGuide } = usePWAInstall();
+    const { canInstall, triggerInstall, openInstallGuide } = usePWAInstall();
+
+    const handleClick = () => {
+        // If the prompt is available, show it. Otherwise, show the guide.
+        if (canInstall) {
+            triggerInstall();
+        } else {
+            openInstallGuide();
+        }
+    };
 
     return (
         <button
-            onClick={openInstallGuide}
+            onClick={handleClick}
             className="p-2 rounded-full text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-emerald-500"
-            aria-label="إضافة التطبيق للشاشة الرئيسية"
-            title="إضافة التطبيق للشاشة الرئيسية"
+            aria-label="تثبيت التطبيق على الجهاز"
+            title="تثبيت التطبيق على الجهاز"
         >
-            <DownloadIcon className="h-6 w-6" />
+            <DownloadIcon className="h-6 h-6" />
         </button>
     );
 };

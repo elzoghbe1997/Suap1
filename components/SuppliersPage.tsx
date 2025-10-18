@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useRef, useContext, memo, useState, useCallback } from 'react';
+import React, { useMemo, useEffect, useRef, useContext, memo, useState, useCallback, FC } from 'react';
 import { AppContext } from '../App';
 import { AppContextType, TransactionType, Supplier, SupplierPayment, Transaction, CropCycle, CropCycleStatus } from '../types';
 import { SupplierIcon, InvoiceIcon, ExpenseIcon, ProfitIcon, AddIcon, EditIcon, DeleteIcon, ReportIcon, CloseIcon } from './Icons';
@@ -12,7 +12,7 @@ const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { styl
 
 
 // Supplier Form
-const SupplierForm: React.FC<{ supplier?: Supplier; onSave: (supplier: Omit<Supplier, 'id'> | Supplier) => void; onCancel: () => void }> = ({ supplier, onSave, onCancel }) => {
+const SupplierForm: FC<{ supplier?: Supplier; onSave: (supplier: Omit<Supplier, 'id'> | Supplier) => void; onCancel: () => void }> = ({ supplier, onSave, onCancel }) => {
     const [name, setName] = useState(supplier?.name || '');
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -33,7 +33,7 @@ const SupplierForm: React.FC<{ supplier?: Supplier; onSave: (supplier: Omit<Supp
 };
 
 // Payment Form
-const PaymentForm: React.FC<{ payment?: SupplierPayment; suppliers: Supplier[]; onSave: (payment: Omit<SupplierPayment, 'id'> | SupplierPayment) => void; onCancel: () => void; cropCycles: CropCycle[]; }> = ({ payment, suppliers, onSave, onCancel, cropCycles }) => {
+const PaymentForm: FC<{ payment?: SupplierPayment; suppliers: Supplier[]; onSave: (payment: Omit<SupplierPayment, 'id'> | SupplierPayment) => void; onCancel: () => void; cropCycles: CropCycle[]; }> = ({ payment, suppliers, onSave, onCancel, cropCycles }) => {
     const { addToast } = useContext(ToastContext) as ToastContextType;
     const { transactions } = useContext(AppContext) as AppContextType;
 
@@ -169,7 +169,7 @@ const PaymentForm: React.FC<{ payment?: SupplierPayment; suppliers: Supplier[]; 
 
 
 // Stat Card
-const StatCard: React.FC<{ title: string; value: string; icon: React.ReactNode; }> = ({ title, value, icon }) => (
+const StatCard: FC<{ title: string; value: string; icon: React.ReactNode; }> = ({ title, value, icon }) => (
     <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-4">
         <div className="flex items-center">
             {icon}
@@ -182,7 +182,7 @@ const StatCard: React.FC<{ title: string; value: string; icon: React.ReactNode; 
 );
 
 // Details Modal
-const DetailsModal: React.FC<{ supplier: Supplier; transactions: Transaction[]; payments: SupplierPayment[]; onClose: () => void }> = ({ supplier, transactions, payments, onClose }) => {
+const DetailsModal: FC<{ supplier: Supplier; transactions: Transaction[]; payments: SupplierPayment[]; onClose: () => void }> = ({ supplier, transactions, payments, onClose }) => {
     const { cropCycles } = useContext(AppContext) as AppContextType;
     const [currentPage, setCurrentPage] = useState(1);
     const ITEMS_PER_PAGE = 10;
@@ -277,7 +277,7 @@ const DetailsModal: React.FC<{ supplier: Supplier; transactions: Transaction[]; 
 };
 
 // Supplier Card
-const SupplierCard: React.FC<{
+const SupplierCard: FC<{
     supplierData: { id: string; name: string; totalInvoices: number; totalPayments: number; balance: number; isDeletable: boolean; };
     onEdit: (supplier: Supplier) => void;
     onDelete: (id: string) => void;
@@ -326,7 +326,8 @@ const SupplierCard: React.FC<{
 });
 
 // Main Page Component
-const SuppliersPage: React.FC = () => {
+// FIX: Changed React.FC to FC and added FC to the import to resolve a type inference issue.
+const SuppliersPage: FC = () => {
     const { loading, suppliers, transactions, supplierPayments, cropCycles, addSupplier, updateSupplier, deleteSupplier, addSupplierPayment, updateSupplierPayment, deleteSupplierPayment, settings } = useContext(AppContext) as AppContextType;
 
     const [modal, setModal] = useState<'ADD_SUPPLIER' | 'EDIT_SUPPLIER' | 'ADD_PAYMENT' | 'EDIT_PAYMENT' | 'DETAILS' | null>(null);
