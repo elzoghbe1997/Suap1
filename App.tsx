@@ -28,12 +28,16 @@ const TreasuryDetailsPage = lazy(() => import('./components/TreasuryDetailsPage.
 const AdvancesPage = lazy(() => import('./components/AdvancesPage.tsx'));
 const AuthPage = lazy(() => import('./components/AuthPage.tsx'));
 const TransactionListPage = lazy(() => import('./components/TransactionListPage.tsx'));
+const PWAInstallGuideModal = lazy(() => import('./components/PWAInstallGuideModal.tsx'));
 
 
 // --- PWA Install Context ---
 interface PWAInstallContextType {
     canInstall: boolean;
     triggerInstall: () => void;
+    isGuideOpen: boolean;
+    openInstallGuide: () => void;
+    closeInstallGuide: () => void;
 }
 
 const PWAInstallContext = createContext<PWAInstallContextType | null>(null);
@@ -48,6 +52,7 @@ export const usePWAInstall = () => {
 
 const PWAInstallProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [installPrompt, setInstallPrompt] = React.useState<any>(null);
+    const [isGuideOpen, setIsGuideOpen] = React.useState(false);
 
     React.useEffect(() => {
         const handleBeforeInstallPrompt = (event: Event) => {
@@ -74,7 +79,16 @@ const PWAInstallProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setInstallPrompt(null);
     };
 
-    const value = { canInstall: !!installPrompt, triggerInstall };
+    const openInstallGuide = () => setIsGuideOpen(true);
+    const closeInstallGuide = () => setIsGuideOpen(false);
+
+    const value = { 
+        canInstall: !!installPrompt, 
+        triggerInstall,
+        isGuideOpen,
+        openInstallGuide,
+        closeInstallGuide
+    };
 
     return (
         <PWAInstallContext.Provider value={value}>
@@ -101,6 +115,7 @@ const DeletingDataOverlay: FC = () => (
 
 const AppLayout: FC = () => {
     const contextValue = useContext(AppContext) as AppContextType;
+    const { isGuideOpen } = usePWAInstall();
     const location = useLocation();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     
@@ -169,6 +184,9 @@ const AppLayout: FC = () => {
                 </main>
             </div>
             
+            <Suspense>
+                {isGuideOpen && <PWAInstallGuideModal />}
+            </Suspense>
             <ToastContainer />
             <PWAInstallBanner />
         </div>

@@ -3,7 +3,7 @@ import { DownloadIcon, CloseIcon, LogoIcon } from './Icons';
 import { usePWAInstall } from '../App';
 
 const PWAInstallBanner: React.FC = () => {
-    const { canInstall, triggerInstall } = usePWAInstall();
+    const { canInstall, openInstallGuide } = usePWAInstall();
     const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
@@ -18,12 +18,10 @@ const PWAInstallBanner: React.FC = () => {
     }, [canInstall]);
 
     const handleInstallClick = () => {
-        triggerInstall();
-        setIsVisible(false); // Hide banner after triggering prompt
+        openInstallGuide();
     };
     
     const handleDismissClick = () => {
-        // Remember dismissal for this session/forever
         localStorage.setItem('pwaInstallDismissed', 'true');
         setIsVisible(false);
     };
@@ -52,9 +50,9 @@ const PWAInstallBanner: React.FC = () => {
                 </div>
                 
                 <div className="flex-grow">
-                    <h2 id="pwa-install-banner-title" className="font-bold text-slate-800 dark:text-white">ثبّت التطبيق لتجربة كاملة</h2>
+                    <h2 id="pwa-install-banner-title" className="font-bold text-slate-800 dark:text-white">ثبّت التطبيق على جهازك</h2>
                     <p className="text-sm text-slate-600 dark:text-slate-400">
-                        اضغط على 'تثبيت'. قد يعرض متصفحك خيار 'إنشاء اختصار' أو 'إضافة للشاشة الرئيسية' - وهذا هو الخيار الصحيح لتثبيت التطبيق.
+                        احصل على تجربة أفضل مع إمكانية الوصول السريع والعمل بدون انترنت.
                     </p>
                 </div>
 

@@ -3,7 +3,7 @@ import { DownloadIcon } from './Icons';
 import { usePWAInstall } from '../App';
 
 const InstallPWAButton: React.FC = () => {
-    const { canInstall, triggerInstall } = usePWAInstall();
+    const { canInstall, openInstallGuide } = usePWAInstall();
 
     if (!canInstall) {
         return null;
@@ -11,7 +11,7 @@ const InstallPWAButton: React.FC = () => {
 
     return (
         <button
-            onClick={triggerInstall}
+            onClick={openInstallGuide}
             className="p-2 rounded-full text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-emerald-500"
             aria-label="تثبيت التطبيق على الجهاز"
             title="تثبيت التطبيق على الجهاز"
