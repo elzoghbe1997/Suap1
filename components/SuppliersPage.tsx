@@ -330,6 +330,7 @@ const SupplierCard: React.FC<{
 const SuppliersPage: React.FC = () => {
     const { loading, suppliers, transactions, supplierPayments, cropCycles, addSupplier, updateSupplier, deleteSupplier, addSupplierPayment, updateSupplierPayment, deleteSupplierPayment, settings } = useContext(AppContext) as AppContextType;
 
+    // FIX: Replaced React.useState with the destructured useState to resolve a TypeScript error where untyped function calls may not accept type arguments.
     // FIX: Replaced React.useState with the destructured useState to resolve a TypeScript error where the function was considered untyped and could not accept generic arguments.
     const [modal, setModal] = useState<'ADD_SUPPLIER' | 'EDIT_SUPPLIER' | 'ADD_PAYMENT' | 'EDIT_PAYMENT' | 'DETAILS' | null>(null);
     const [selectedSupplier, setSelectedSupplier] = useState<Supplier | undefined>(undefined);
