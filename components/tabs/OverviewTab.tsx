@@ -1,8 +1,10 @@
 import React from 'react';
 import { AppContext } from '../../App';
 import { AppContextType, CropCycle, TransactionType } from '../../types';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { RevenueIcon, ExpenseIcon, ProfitIcon, YieldIcon, PlantIcon, PercentIcon, DailyProductionIcon } from '../Icons';
+
+// FIX: Cannot find name 'Recharts'. Import from 'recharts' instead.
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 
 const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EGP', maximumFractionDigits: 0 }).format(amount);
 

@@ -1,5 +1,4 @@
-import React, { useEffect, useState, useContext, createContext, FC, useCallback, lazy, Suspense } from 'react';
-import { HashRouter, Routes, Route, Navigate, useLocation, Outlet } from 'react-router-dom';
+import React from 'react';
 import Sidebar from './components/Sidebar.tsx';
 import Header from './components/Header.tsx';
 // FIX: Added Theme type import to support appearance settings across the app.
@@ -14,22 +13,25 @@ import DashboardSkeleton from './components/DashboardSkeleton.tsx';
 import PWAInstallBanner from './components/PWAInstallBanner.tsx';
 
 // Lazy load page components for code splitting
-const Dashboard = lazy(() => import('./components/Dashboard.tsx'));
-const CropCyclesPage = lazy(() => import('./components/CropCycles.tsx'));
-const CropCycleDetailsPage = lazy(() => import('./components/CropCycleDetailsPage.tsx'));
-const GreenhousePage = lazy(() => import('./components/Greenhouse.tsx'));
-const GreenhouseReport = lazy(() => import('./components/GreenhouseReport.tsx'));
-const ReportsPage = lazy(() => import('./components/Reports.tsx'));
-const SettingsPage = lazy(() => import('./components/SettingsPage.tsx'));
-const FarmerAccountsPage = lazy(() => import('./components/FarmerAccountsPage.tsx'));
-const SuppliersPage = lazy(() => import('./components/SuppliersPage.tsx'));
-const FertilizationProgramsPage = lazy(() => import('./components/FertilizationProgramsPage.tsx'));
-const TreasuryPage = lazy(() => import('./components/TreasuryPage.tsx'));
-const TreasuryDetailsPage = lazy(() => import('./components/TreasuryDetailsPage.tsx'));
-const AdvancesPage = lazy(() => import('./components/AdvancesPage.tsx'));
-const AuthPage = lazy(() => import('./components/AuthPage.tsx'));
-const TransactionListPage = lazy(() => import('./components/TransactionListPage.tsx'));
-const PWAInstallGuideModal = lazy(() => import('./components/PWAInstallGuideModal.tsx'));
+const Dashboard = React.lazy(() => import('./components/Dashboard.tsx'));
+const CropCyclesPage = React.lazy(() => import('./components/CropCycles.tsx'));
+const CropCycleDetailsPage = React.lazy(() => import('./components/CropCycleDetailsPage.tsx'));
+const GreenhousePage = React.lazy(() => import('./components/Greenhouse.tsx'));
+const GreenhouseReport = React.lazy(() => import('./components/GreenhouseReport.tsx'));
+const ReportsPage = React.lazy(() => import('./components/Reports.tsx'));
+const SettingsPage = React.lazy(() => import('./components/SettingsPage.tsx'));
+const FarmerAccountsPage = React.lazy(() => import('./components/FarmerAccountsPage.tsx'));
+const SuppliersPage = React.lazy(() => import('./components/SuppliersPage.tsx'));
+const FertilizationProgramsPage = React.lazy(() => import('./components/FertilizationProgramsPage.tsx'));
+const TreasuryPage = React.lazy(() => import('./components/TreasuryPage.tsx'));
+const TreasuryDetailsPage = React.lazy(() => import('./components/TreasuryDetailsPage.tsx'));
+const AdvancesPage = React.lazy(() => import('./components/AdvancesPage.tsx'));
+const AuthPage = React.lazy(() => import('./components/AuthPage.tsx'));
+const TransactionListPage = React.lazy(() => import('./components/TransactionListPage.tsx'));
+const PWAInstallGuideModal = React.lazy(() => import('./components/PWAInstallGuideModal.tsx'));
+
+// FIX: Cannot find name 'ReactRouterDOM'. Import from 'react-router-dom' instead.
+import { HashRouter, Routes, Route, Navigate, useLocation, Outlet } from 'react-router-dom';
 
 
 // --- PWA Install Context ---
@@ -41,10 +43,10 @@ interface PWAInstallContextType {
     closeInstallGuide: () => void;
 }
 
-const PWAInstallContext = createContext<PWAInstallContextType | null>(null);
+const PWAInstallContext = React.createContext<PWAInstallContextType | null>(null);
 
 export const usePWAInstall = () => {
-    const context = useContext(PWAInstallContext);
+    const context = React.useContext(PWAInstallContext);
     if (!context) {
         throw new Error('usePWAInstall must be used within a PWAInstallProvider');
     }
@@ -100,9 +102,9 @@ const PWAInstallProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 // --- End PWA Install Context ---
 
 
-export const AppContext = createContext<AppContextType | null>(null);
+export const AppContext = React.createContext<AppContextType | null>(null);
 
-const DeletingDataOverlay: FC = () => (
+const DeletingDataOverlay: React.FC = () => (
     <div className="absolute inset-0 bg-slate-900 z-50 flex flex-col items-center justify-center text-white">
         <svg className="animate-spin h-10 w-10 text-white mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -114,17 +116,17 @@ const DeletingDataOverlay: FC = () => (
 );
 
 
-const AppLayout: FC = () => {
-    const contextValue = useContext(AppContext) as AppContextType;
+const AppLayout: React.FC = () => {
+    const contextValue = React.useContext(AppContext) as AppContextType;
     const { isGuideOpen } = usePWAInstall();
     const location = useLocation();
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
     
     const toggleSidebar = React.useCallback(() => {
         setIsSidebarOpen(prevIsOpen => !prevIsOpen);
     }, []);
 
-    useEffect(() => {
+    React.useEffect(() => {
         const mediaQuery = window.matchMedia('(min-width: 768px)');
         setIsSidebarOpen(mediaQuery.matches);
         const handler = (e: MediaQueryListEvent) => setIsSidebarOpen(e.matches);
@@ -132,7 +134,7 @@ const AppLayout: FC = () => {
         return () => mediaQuery.removeEventListener('change', handler);
     }, []);
     
-    useEffect(() => {
+    React.useEffect(() => {
         const root = document.documentElement;
         const theme = contextValue.settings.theme;
         const themeMeta = document.querySelector('meta[name="theme-color"]');
@@ -190,15 +192,15 @@ const AppLayout: FC = () => {
             <div className={`flex-1 flex flex-col w-full transition-all duration-300 ease-in-out bg-slate-50 dark:bg-slate-900 ${isSidebarOpen ? 'md:mr-64' : 'md:mr-0'}`}>
                 <Header toggleSidebar={toggleSidebar} />
                 <main key={location.pathname} className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto animate-page-fade-in">
-                    <Suspense fallback={<DashboardSkeleton />}>
+                    <React.Suspense fallback={<DashboardSkeleton />}>
                         <Outlet />
-                    </Suspense>
+                    </React.Suspense>
                 </main>
             </div>
             
-            <Suspense>
+            <React.Suspense>
                 {isGuideOpen && <PWAInstallGuideModal />}
-            </Suspense>
+            </React.Suspense>
             <ToastContainer />
             <PWAInstallBanner />
         </div>
@@ -206,7 +208,7 @@ const AppLayout: FC = () => {
 };
 
 
-const AppContent: FC = () => {
+const AppContent: React.FC = () => {
   const contextValue = useAppData();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   
@@ -225,7 +227,7 @@ const AppContent: FC = () => {
       );
   }
   
-  const AuthLoader: FC = () => (
+  const AuthLoader: React.FC = () => (
       <div className="flex items-center justify-center h-screen w-screen bg-slate-900">
           <svg className="animate-spin h-14 w-14 text-emerald-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -238,9 +240,9 @@ const AppContent: FC = () => {
     <AppContext.Provider value={contextValue}>
       <Routes>
         <Route path="/login" element={
-            <Suspense fallback={<AuthLoader />}>
+            <React.Suspense fallback={<AuthLoader />}>
                 <AuthPage />
-            </Suspense>
+            </React.Suspense>
         } />
         <Route element={<ProtectedRoute />}>
             <Route element={<AppLayout />}>
@@ -269,8 +271,8 @@ const AppContent: FC = () => {
 };
 
 
-const App: FC = () => {
-  useEffect(() => {
+const App: React.FC = () => {
+  React.useEffect(() => {
     // FIX: Refactored ServiceWorker registration to reliably occur after the 'load' event, preventing "invalid state" errors.
     if ('serviceWorker' in navigator) {
       const handleServiceWorkerRegistration = () => {

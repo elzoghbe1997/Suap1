@@ -1,5 +1,4 @@
-import React, { ReactNode, memo, FC } from 'react';
-import { NavLink } from 'react-router-dom';
+import React from 'react';
 import { 
   DashboardIcon, 
   CycleIcon, 
@@ -19,6 +18,9 @@ import {
 import { AppSettings } from '../types.ts';
 import { useAuth } from '../context/AuthContext.tsx';
 
+// FIX: Cannot find name 'ReactRouterDOM'. Import from 'react-router-dom' instead.
+import { NavLink } from 'react-router-dom';
+
 
 interface SidebarProps {
   isOpen: boolean;
@@ -26,11 +28,11 @@ interface SidebarProps {
   settings: AppSettings;
 }
 
-const NavHeader: FC<{ children: ReactNode }> = ({ children }) => (
+const NavHeader: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <h3 className="px-3 pt-4 pb-1 text-xs font-semibold text-slate-500 uppercase tracking-wider">{children}</h3>
 );
 
-const Sidebar: FC<SidebarProps> = memo(({ isOpen, setIsOpen, settings }) => {
+const Sidebar: React.FC<SidebarProps> = React.memo(({ isOpen, setIsOpen, settings }) => {
   const { logout } = useAuth();
   
   const commonLinkClasses = "flex items-center px-3 py-2.5 rounded-lg text-base transition-all duration-200";

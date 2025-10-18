@@ -1,11 +1,13 @@
-import React, { FC, memo, useContext, useState, useEffect, MouseEvent } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import React from 'react';
 import { AppContext } from '../App.tsx';
 import { AppContextType, Alert, AlertType, CropCycle } from '../types.ts';
 import { MenuIcon, AlertIcon, WarningIcon } from './Icons.tsx';
 import InstallPWAButton from './InstallPWAButton.tsx';
 
-const AlertsDropdown: FC<{ alerts: Alert[]; onClose: () => void }> = memo(({ alerts, onClose }) => {
+// FIX: Cannot find name 'ReactRouterDOM'. Import from 'react-router-dom' instead.
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+
+const AlertsDropdown: React.FC<{ alerts: Alert[]; onClose: () => void }> = React.memo(({ alerts, onClose }) => {
     const navigate = useNavigate();
 
     const handleAlertClick = (alert: Alert) => {
@@ -63,10 +65,10 @@ const AlertsDropdown: FC<{ alerts: Alert[]; onClose: () => void }> = memo(({ ale
     );
 });
 
-const DynamicTitle: FC = () => {
+const DynamicTitle: React.FC = () => {
     const location = useLocation();
     const params = useParams();
-    const { cropCycles } = useContext(AppContext) as AppContextType;
+    const { cropCycles } = React.useContext(AppContext) as AppContextType;
 
     const getPageTitle = () => {
         const path = location.pathname;
@@ -107,16 +109,16 @@ interface HeaderProps {
     toggleSidebar: () => void;
 }
 
-const Header: FC<HeaderProps> = ({ toggleSidebar }) => {
-  const { alerts } = useContext(AppContext) as AppContextType;
-  const [isAlertsOpen, setIsAlertsOpen] = useState(false);
+const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
+  const { alerts } = React.useContext(AppContext) as AppContextType;
+  const [isAlertsOpen, setIsAlertsOpen] = React.useState(false);
   
-    const handleAlertsToggle = (e: MouseEvent) => {
+    const handleAlertsToggle = (e: React.MouseEvent) => {
         e.stopPropagation();
         setIsAlertsOpen(prev => !prev);
     };
     
-    useEffect(() => {
+    React.useEffect(() => {
         const close = () => setIsAlertsOpen(false);
         if (isAlertsOpen) {
             window.addEventListener('click', close);

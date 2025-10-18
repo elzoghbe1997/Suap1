@@ -1,65 +1,212 @@
 import React from 'react';
 import { AppContext } from '../../App';
-import { AppContextType, CropCycle, FertilizationProgram, Transaction, TransactionType } from '../../types';
+import { AppContextType, FertilizationProgram, CropCycle, TransactionType, Transaction, Farmer, CropCycleStatus } from '../../types';
 import { ToastContext, ToastContextType } from '../../context/ToastContext';
 import { AddIcon, EditIcon, DeleteIcon, ProgramIcon, ReportIcon, CalendarIcon, RevenueIcon, ExpenseIcon, ProfitIcon, CloseIcon, FarmerIcon } from '../Icons';
 import ConfirmationModal from '../ConfirmationModal';
+import SkeletonCard from '../SkeletonCard';
+// FIX: Cannot find name 'Recharts'. Import from 'recharts' instead.
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
-const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EGP', maximumFractionDigits: 0 }).format(amount);
+
 const formInputClass = "mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500";
+const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EGP', maximumFractionDigits: 0 }).format(amount);
 
-
-const ProgramFormModal: React.FC<{program?: FertilizationProgram; onSave: (p: Omit<FertilizationProgram, 'id'> | FertilizationProgram) => void; onClose: () => void; cycle: CropCycle;}> = ({ program, onSave, onClose, cycle }) => {
+// Form for adding/editing programs
+const ProgramFormModal: React.FC<{
+    program?: FertilizationProgram;
+    onSave: (program: Omit<FertilizationProgram, 'id'> | FertilizationProgram) => void;
+    onCancel: () => void;
+    cropCycle: CropCycle;
+}> = ({ program, onSave, onCancel, cropCycle }) => {
     const { addToast } = React.useContext(ToastContext) as ToastContextType;
     const [name, setName] = React.useState(program?.name || '');
     const [startDate, setStartDate] = React.useState(program?.startDate || '');
     const [endDate, setEndDate] = React.useState(program?.endDate || '');
-    
+    const cropCycleId = cropCycle.id;
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (new Date(endDate) < new Date(startDate)) { addToast('تاريخ النهاية يجب أن يكون بعد تاريخ البداية.', 'error'); return; }
-        const data = { name, startDate, endDate, cropCycleId: cycle.id };
+        if (new Date(endDate) < new Date(startDate)) {
+            addToast('تاريخ النهاية يجب أن يكون بعد تاريخ البداية.', 'error');
+            return;
+        }
+        const data = { name, startDate, endDate, cropCycleId };
         onSave(program ? { ...program, ...data } : data);
     };
 
-    return <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4" onClick={onClose}><div className="bg-slate-50 dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col" onClick={e=>e.stopPropagation()}><div className="p-6 pb-4 border-b border-slate-200 dark:border-slate-700 flex-shrink-0"><h2 className="text-2xl font-bold">{program ? 'تعديل البرنامج' : 'إضافة برنامج جديد'}</h2></div><div className="p-6 flex-grow overflow-y-auto modal-scroll-contain"><form onSubmit={handleSubmit} className="space-y-4"><div><label htmlFor="name" className="block text-sm font-medium">اسم البرنامج</label><input type="text" id="name" value={name} onChange={e => setName(e.target.value)} required className={formInputClass} /></div><div className="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label htmlFor="startDate" className="block text-sm font-medium">تاريخ البدء</label><input type="date" id="startDate" value={startDate} onChange={e => setStartDate(e.target.value)} required className={formInputClass} /></div><div><label htmlFor="endDate" className="block text-sm font-medium">تاريخ النهاية</label><input type="date" id="endDate" value={endDate} onChange={e => setEndDate(e.target.value)} required className={formInputClass} /></div></div><div className="flex justify-end space-x-2 space-x-reverse pt-4"><button type="button" onClick={onClose} className="px-4 py-2 bg-slate-200 dark:bg-slate-600 rounded-md">إلغاء</button><button type="submit" className="px-4 py-2 bg-emerald-600 text-white rounded-md">حفظ</button></div></form></div></div></div>
-}
-
-const ReportStatCard: React.FC<{ title: string; value: string; icon: React.ReactNode; }> = ({ title, value, icon }) => (
-    <div className="bg-slate-100 dark:bg-slate-700/50 rounded-lg p-4">
-        <div className="flex items-center">
-            {icon}
-            <div className="mr-3">
-                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{title}</p>
-                <p className="text-xl font-bold text-slate-800 dark:text-slate-200">{value}</p>
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4" onClick={onCancel}>
+            <div className="bg-slate-50 dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+                <div className="p-6 pb-4 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
+                    <h2 className="text-2xl font-bold text-slate-800 dark:text-white">
+                        {program ? 'تعديل البرنامج' : `إضافة برنامج لـ: ${cropCycle.name}`}
+                    </h2>
+                </div>
+                <div className="p-6 flex-grow overflow-y-auto modal-scroll-contain">
+                     <form onSubmit={handleSubmit} className="space-y-4">
+                        <div>
+                            <label htmlFor="name" className="block text-sm font-medium">اسم البرنامج</label>
+                            <input type="text" id="name" value={name} onChange={e => setName(e.target.value)} required className={formInputClass} />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label htmlFor="startDate" className="block text-sm font-medium">تاريخ البدء</label>
+                                <input type="date" id="startDate" value={startDate} onChange={e => setStartDate(e.target.value)} required className={formInputClass} />
+                            </div>
+                            <div>
+                                <label htmlFor="endDate" className="block text-sm font-medium">تاريخ النهاية</label>
+                                <input type="date" id="endDate" value={endDate} onChange={e => setEndDate(e.target.value)} required className={formInputClass} />
+                            </div>
+                        </div>
+                        <div className="flex justify-end space-x-2 space-x-reverse pt-4">
+                            <button type="button" onClick={onCancel} className="px-4 py-2 bg-slate-200 dark:bg-slate-600 rounded-md">إلغاء</button>
+                            <button type="submit" className="px-4 py-2 bg-emerald-600 text-white rounded-md">حفظ</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
-    </div>
-);
-
-
-const ProgramReportModal: React.FC<{program: FertilizationProgram; onClose: () => void;}> = ({ program, onClose }) => {
-    const { transactions, cropCycles, settings } = React.useContext(AppContext) as AppContextType;
-    const reportData = React.useMemo(() => {
-        const cycle = cropCycles.find(c => c.id === program.cropCycleId); if (!cycle) return null;
-        const expenses = transactions.filter(t => t.fertilizationProgramId === program.id && t.type === TransactionType.EXPENSE);
-        const totalExpenses = expenses.reduce((sum, t) => sum + t.amount, 0);
-        const revenues = transactions.filter(t => t.fertilizationProgramId === program.id && t.type === TransactionType.REVENUE);
-        const totalRevenue = revenues.reduce((sum, t) => sum + t.amount, 0);
-        let farmerShare = 0;
-        if (settings.isFarmerSystemEnabled && cycle.farmerId && cycle.farmerSharePercentage) farmerShare = totalRevenue * (cycle.farmerSharePercentage / 100);
-        const ownerProfit = totalRevenue - totalExpenses - farmerShare;
-        return { expenses, revenues, totalExpenses, totalRevenue, farmerShare, ownerProfit, cycle };
-    }, [program, transactions, cropCycles, settings]);
-
-    if (!reportData) return <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"><div className="bg-white p-4 rounded-lg">خطأ.</div></div>;
-    const { expenses, revenues, totalExpenses, totalRevenue, farmerShare, ownerProfit, cycle } = reportData;
-
-    return <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4" onClick={onClose}><div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col" onClick={e=>e.stopPropagation()}><div className="flex justify-between items-center mb-4 pb-4 border-b border-slate-200 dark:border-slate-700"><h2 className="text-2xl font-bold text-slate-800 dark:text-white">تقرير: {program.name}</h2><button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700"><CloseIcon className="w-6 h-6" /></button></div><div className="flex-grow overflow-y-auto space-y-6 modal-scroll-contain"><div className="grid grid-cols-1 md:grid-cols-3 gap-4"><ReportStatCard title="إجمالي مصروفات البرنامج" value={formatCurrency(totalExpenses)} icon={<ExpenseIcon className="w-7 h-7 text-rose-500" />} /><ReportStatCard title="إيرادات البرنامج" value={formatCurrency(totalRevenue)} icon={<RevenueIcon className="w-7 h-7 text-emerald-500" />} /><ReportStatCard title="صافي ربح المالك" value={formatCurrency(ownerProfit)} icon={<ProfitIcon className={`w-7 h-7 ${ownerProfit >= 0 ? 'text-sky-500' : 'text-orange-500'}`} />} /></div>{settings.isFarmerSystemEnabled && cycle.farmerId && <ReportStatCard title={`حصة المزارع (${cycle.farmerSharePercentage}%)`} value={formatCurrency(farmerShare)} icon={<FarmerIcon className="w-7 h-7 text-indigo-500" />} />}<div className="grid grid-cols-1 lg:grid-cols-2 gap-6"><div><h3 className="text-lg font-semibold mb-2">المصروفات ({expenses.length})</h3><div className="border rounded-lg dark:border-slate-700 max-h-60 overflow-y-auto"><table className="w-full text-sm"><tbody>{expenses.length > 0 ? expenses.map(t => (<tr key={t.id} className="border-b dark:border-slate-700 last:border-b-0"><td className="p-2">{t.description}</td><td className="p-2 text-left font-semibold">{formatCurrency(t.amount)}</td></tr>)) : <tr><td colSpan={2} className="p-4 text-center text-slate-500">لا توجد مصروفات.</td></tr>}</tbody></table></div></div><div><h3 className="text-lg font-semibold mb-2">الإيرادات ({revenues.length})</h3><div className="border rounded-lg dark:border-slate-700 max-h-60 overflow-y-auto"><table className="w-full text-sm"><tbody>{revenues.length > 0 ? revenues.map(t => (<tr key={t.id} className="border-b dark:border-slate-700 last:border-b-0"><td className="p-2">{t.description}</td><td className="p-2 text-left font-semibold">{formatCurrency(t.amount)}</td></tr>)) : <tr><td colSpan={2} className="p-4 text-center text-slate-500">لا توجد إيرادات.</td></tr>}</tbody></table></div></div></div></div></div></div>
+    );
 };
 
+// Report Modal
+const ProgramReportModal: React.FC<{
+    program: FertilizationProgram;
+    onClose: () => void;
+}> = ({ program, onClose }) => {
+    const { transactions, cropCycles, farmers, settings } = React.useContext(AppContext) as AppContextType;
+    
+    const getWeekLabel = (dateStr: string): string => {
+        const date = new Date(dateStr);
+        const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
+        const pastDaysOfYear = (date.getTime() - firstDayOfYear.getTime()) / 86400000;
+        const weekNumber = Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+        return `الأسبوع ${weekNumber}, ${date.getFullYear()}`;
+    };
+
+    const reportData = React.useMemo(() => {
+        const cycle = cropCycles.find(c => c.id === program.cropCycleId);
+        if (!cycle) return null;
+
+        const expenses = transactions.filter(t => t.fertilizationProgramId === program.id && t.type === TransactionType.EXPENSE);
+        const totalExpenses = expenses.reduce((sum, t) => sum + t.amount, 0);
+        
+        const revenues = transactions.filter(t => t.fertilizationProgramId === program.id && t.type === TransactionType.REVENUE);
+        const totalRevenue = revenues.reduce((sum, t) => sum + t.amount, 0);
+
+        let farmerShare = 0;
+        if (settings.isFarmerSystemEnabled && cycle.farmerId && cycle.farmerSharePercentage) {
+            farmerShare = totalRevenue * (cycle.farmerSharePercentage / 100);
+        }
+        const ownerProfit = totalRevenue - totalExpenses - farmerShare;
+        
+        const weeklyProduction: { [key: string]: number } = {};
+        const revenueTransactionsInPeriod = transactions.filter(t => 
+            t.cropCycleId === program.cropCycleId &&
+            t.type === TransactionType.REVENUE &&
+            new Date(t.date) >= new Date(program.startDate) &&
+            new Date(t.date) <= new Date(program.endDate)
+        );
+        
+        revenueTransactionsInPeriod.forEach(t => {
+            if (t.quantity) {
+                const weekLabel = getWeekLabel(t.date);
+                weeklyProduction[weekLabel] = (weeklyProduction[weekLabel] || 0) + t.quantity;
+            }
+        });
+
+        const weeklyProductionData = Object.entries(weeklyProduction)
+            .map(([week, production]) => ({ week, production }))
+            .sort((a,b) => a.week.localeCompare(b.week)); // Sort chronologically
+
+        return { expenses, revenues, totalExpenses, totalRevenue, farmerShare, ownerProfit, cycle, weeklyProductionData };
+    }, [program, transactions, cropCycles, settings]);
+
+    if (!reportData) {
+        return <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"><div className="bg-white p-4 rounded-lg">خطأ في تحميل بيانات التقرير.</div></div>;
+    }
+
+    const { expenses, revenues, totalExpenses, totalRevenue, farmerShare, ownerProfit, cycle, weeklyProductionData } = reportData;
+
+    return (
+        <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4" onClick={onClose}>
+            <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+                <div className="flex justify-between items-center mb-4 pb-4 border-b border-slate-200 dark:border-slate-700">
+                    <div>
+                        <h2 className="text-2xl font-bold text-slate-800 dark:text-white">تقرير البرنامج: {program.name}</h2>
+                        <p className="text-slate-500 dark:text-slate-400">{cycle.name}</p>
+                    </div>
+                    <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700"><CloseIcon className="w-6 h-6" /></button>
+                </div>
+
+                <div className="flex-grow overflow-y-auto space-y-6 modal-scroll-contain">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="bg-slate-100 dark:bg-slate-700/50 p-4 rounded-lg flex items-center"><ExpenseIcon className="w-7 h-7 text-rose-500 ml-3"/><div className="text-right"><p className="text-sm text-slate-500">إجمالي مصروفات البرنامج</p><p className="text-xl font-bold">{formatCurrency(totalExpenses)}</p></div></div>
+                        <div className="bg-slate-100 dark:bg-slate-700/50 p-4 rounded-lg flex items-center"><RevenueIcon className="w-7 h-7 text-emerald-500 ml-3"/><div className="text-right"><p className="text-sm text-slate-500">إيرادات البرنامج المرتبطة</p><p className="text-xl font-bold">{formatCurrency(totalRevenue)}</p></div></div>
+                        <div className="bg-slate-100 dark:bg-slate-700/50 p-4 rounded-lg flex items-center"><ProfitIcon className={`w-7 h-7 ${ownerProfit >= 0 ? 'text-sky-500' : 'text-orange-500'} ml-3`}/><div className="text-right"><p className="text-sm text-slate-500">صافي ربح المالك (من البرنامج)</p><p className="text-xl font-bold">{formatCurrency(ownerProfit)}</p></div></div>
+                    </div>
+                    {settings.isFarmerSystemEnabled && cycle.farmerId && <div className="bg-slate-100 dark:bg-slate-700/50 p-4 rounded-lg flex items-center"><FarmerIcon className="w-7 h-7 text-indigo-500 ml-3"/><div className="text-right"><p className="text-sm text-slate-500">حصة المزارع ({cycle.farmerSharePercentage}%)</p><p className="text-xl font-bold">{formatCurrency(farmerShare)}</p></div></div>}
+                    
+                    <div className="bg-white dark:bg-slate-700/50 rounded-lg p-4">
+                        <h3 className="text-lg font-semibold mb-4 text-slate-800 dark:text-white">الإنتاج الأسبوعي خلال البرنامج (ك.ج)</h3>
+                        {weeklyProductionData.length > 0 ? (
+                            <ResponsiveContainer width="100%" height={250}>
+                                <BarChart data={weeklyProductionData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(128, 128, 128, 0.2)" />
+                                    <XAxis dataKey="week" stroke="#9ca3af" fontSize={12} />
+                                    <YAxis stroke="#9ca3af" fontSize={12} tickFormatter={(value) => `${value} ك.ج`} />
+                                    <Tooltip
+                                        contentStyle={{ backgroundColor: 'rgba(31, 41, 55, 0.9)', border: 'none', borderRadius: '0.5rem' }}
+                                        labelStyle={{ color: '#fff' }}
+                                        itemStyle={{ color: '#fff' }}
+                                        formatter={(value) => [`${value} ك.ج`, "الإنتاج"]}
+                                    />
+                                    <Bar dataKey="production" name="الإنتاج" fill="#10b981" radius={[4, 4, 0, 0]} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <p className="text-center py-10 text-slate-500 dark:text-slate-400">لا يوجد إنتاج مسجل خلال فترة هذا البرنامج.</p>
+                        )}
+                    </div>
+                    
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div>
+                            <h3 className="text-lg font-semibold mb-2">المصروفات المرتبطة بالبرنامج ({expenses.length})</h3>
+                            <div className="border rounded-lg dark:border-slate-700 max-h-60 overflow-y-auto">
+                                <table className="w-full text-sm">
+                                    <tbody>
+                                        {expenses.length > 0 ? expenses.map(t => (
+                                            <tr key={t.id} className="border-b dark:border-slate-700 last:border-b-0"><td className="p-2">{t.description}</td><td className="p-2 text-left font-semibold">{formatCurrency(t.amount)}</td></tr>
+                                        )) : <tr className="text-center text-slate-500 p-4"><td colSpan={2} className="p-4">لا توجد مصروفات.</td></tr>}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-semibold mb-2">الإيرادات المرتبطة بالبرنامج ({revenues.length})</h3>
+                            <div className="border rounded-lg dark:border-slate-700 max-h-60 overflow-y-auto">
+                                <table className="w-full text-sm">
+                                    <tbody>
+                                        {revenues.length > 0 ? revenues.map(t => (
+                                            <tr key={t.id} className="border-b dark:border-slate-700 last:border-b-0"><td className="p-2">{t.description}</td><td className="p-2 text-left font-semibold">{formatCurrency(t.amount)}</td></tr>
+                                        )) : <tr className="text-center text-slate-500 p-4"><td colSpan={2} className="p-4">لا توجد إيرادات.</td></tr>}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
+// FIX: Renamed component to ProgramsTab to match filename and usage, fixing the default export error.
 const ProgramsTab: React.FC<{ cycle: CropCycle }> = ({ cycle }) => {
-    const { fertilizationPrograms, transactions, addFertilizationProgram, updateFertilizationProgram, deleteFertilizationProgram, settings } = React.useContext(AppContext) as AppContextType;
+    const context = React.useContext(AppContext) as AppContextType;
+    const { fertilizationPrograms, transactions, addFertilizationProgram, updateFertilizationProgram, deleteFertilizationProgram, settings } = context;
 
     const [modal, setModal] = React.useState<'ADD' | 'EDIT' | 'VIEW_REPORT' | null>(null);
     const [selectedProgram, setSelectedProgram] = React.useState<FertilizationProgram | undefined>(undefined);
@@ -77,28 +224,163 @@ const ProgramsTab: React.FC<{ cycle: CropCycle }> = ({ cycle }) => {
         };
     }, [modal, deletingId]);
 
-    const cyclePrograms = React.useMemo(() => {
-        return fertilizationPrograms
-            .filter(p => p.cropCycleId === cycle.id)
-            .sort((a,b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
-    }, [fertilizationPrograms, cycle.id]);
-
-    const handleSave = (program: Omit<FertilizationProgram, 'id'> | FertilizationProgram) => {
+    const handleSave = React.useCallback((program: Omit<FertilizationProgram, 'id'> | FertilizationProgram) => {
         if ('id' in program) {
             updateFertilizationProgram(program);
         } else {
             addFertilizationProgram(program);
         }
         setModal(null);
-    };
+    }, [addFertilizationProgram, updateFertilizationProgram]);
 
-    const confirmDelete = () => {
+    const confirmDelete = React.useCallback(() => {
         if (deletingId) {
             deleteFertilizationProgram(deletingId);
         }
         setDeletingId(null);
-    };
+    }, [deletingId, deleteFertilizationProgram]);
+    
+    const cyclePrograms = React.useMemo(() => {
+        return fertilizationPrograms
+            .filter(p => p.cropCycleId === cycle.id)
+            .sort((a,b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
+    }, [fertilizationPrograms, cycle.id]);
 
+    const productionsInCycle = cyclePrograms.map(p => {
+        return transactions
+            .filter(t => t.fertilizationProgramId === p.id && t.type === TransactionType.REVENUE)
+            .reduce((sum, t) => sum + (t.quantity || 0), 0);
+    });
+    const maxProductionInCycle = Math.max(...productionsInCycle, 1);
+
+    const renderContent = () => {
+        if (cyclePrograms.length === 0) return (
+            <div className="text-center py-16 bg-white dark:bg-slate-800 rounded-lg border-2 border-dashed border-slate-200 dark:border-slate-700">
+                <ProgramIcon className="w-16 h-16 mx-auto text-slate-400 dark:text-slate-500 mb-4"/>
+                <p className="text-lg font-semibold text-slate-600 dark:text-slate-300">لا توجد برامج مسجلة لهذه العروة</p>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">ابدأ بإضافة برنامج جديد لتتبع تكاليفه وربحيته.</p>
+            </div>
+        );
+
+        return (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {cyclePrograms.map(program => {
+                    const programExpenses = transactions
+                        .filter(t => t.fertilizationProgramId === program.id && t.type === TransactionType.EXPENSE)
+                        .reduce((sum, t) => sum + t.amount, 0);
+                    
+                    const programRevenueTransactions = transactions
+                        .filter(t => t.fertilizationProgramId === program.id && t.type === TransactionType.REVENUE);
+                        
+                    const programRevenues = programRevenueTransactions.reduce((sum, t) => sum + t.amount, 0);
+                    const programProduction = programRevenueTransactions.reduce((sum, t) => sum + (t.quantity || 0), 0);
+                    const productionPercentage = (programProduction / maxProductionInCycle) * 100;
+
+                    let farmerShare = 0;
+                    if (settings.isFarmerSystemEnabled && cycle.farmerId && cycle.farmerSharePercentage) {
+                        farmerShare = programRevenues * (cycle.farmerSharePercentage / 100);
+                    }
+                    const ownerProfit = programRevenues - programExpenses - farmerShare;
+
+                    let profitabilityPercentage: number;
+                    let profitabilityColor: string;
+
+                    if (programExpenses === 0) {
+                        profitabilityPercentage = programRevenues > 0 ? 100 : 50;
+                        profitabilityColor = programRevenues > 0 ? 'bg-emerald-500' : 'bg-slate-400';
+                    } else {
+                        const ratio = programRevenues / programExpenses;
+                        if (ratio >= 1) {
+                            profitabilityPercentage = 50 + Math.min((ratio - 1), 1) * 50;
+                        } else {
+                            profitabilityPercentage = ratio * 50;
+                        }
+
+                        if (profitabilityPercentage > 75) {
+                            profitabilityColor = 'bg-emerald-500';
+                        } else if (profitabilityPercentage > 40) {
+                            profitabilityColor = 'bg-yellow-500';
+                        } else {
+                            profitabilityColor = 'bg-rose-500';
+                        }
+                    }
+
+                    return (
+                    <div key={program.id} className="bg-white dark:bg-slate-800 p-5 rounded-lg shadow-md hover:shadow-xl transition-shadow flex flex-col justify-between">
+                        <div>
+                            <h3 className="text-xl font-bold text-slate-800 dark:text-white">{program.name}</h3>
+                            <p className="flex items-center mt-2 text-sm text-slate-500 dark:text-slate-400">
+                                <CalendarIcon className="w-4 h-4 ml-2"/>
+                                {program.startDate} إلى {program.endDate}
+                            </p>
+                            <div className="mt-4">
+                                <div className="flex justify-between items-center mb-1">
+                                    <span className="text-sm font-medium text-slate-600 dark:text-slate-400">ربحية البرنامج</span>
+                                    <span className={`text-sm font-bold ${
+                                        profitabilityPercentage > 75 ? 'text-emerald-600 dark:text-emerald-400' : 
+                                        profitabilityPercentage > 40 ? 'text-yellow-600 dark:text-yellow-400' : 'text-rose-600 dark:text-rose-400'
+                                    }`}>{Math.round(profitabilityPercentage)}%</span>
+                                </div>
+                                <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2.5">
+                                    <div 
+                                        className={`${profitabilityColor} h-2.5 rounded-full transition-all duration-500 ease-out`} 
+                                        style={{ width: `${profitabilityPercentage}%` }}
+                                        role="progressbar"
+                                        aria-valuenow={profitabilityPercentage}
+                                        aria-valuemin={0}
+                                        aria-valuemax={100}
+                                    ></div>
+                                </div>
+                            </div>
+
+                            <div className="mt-4">
+                                <div className="flex justify-between items-center mb-1">
+                                    <span className="text-sm font-medium text-slate-600 dark:text-slate-400">مستوى الإنتاج</span>
+                                    <span className="text-sm font-bold text-sky-600 dark:text-sky-400">
+                                        {programProduction.toLocaleString()} ك.ج
+                                    </span>
+                                </div>
+                                <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2.5">
+                                    <div 
+                                        className="bg-sky-500 h-2.5 rounded-full transition-all duration-500 ease-out" 
+                                        style={{ width: `${productionPercentage}%` }}
+                                        role="progressbar"
+                                        aria-valuenow={productionPercentage}
+                                        aria-valuemin={0}
+                                        aria-valuemax={100}
+                                    ></div>
+                                </div>
+                            </div>
+
+                            <div className="mt-4 border-t border-slate-200 dark:border-slate-700 pt-3 grid grid-cols-3 gap-2 text-center">
+                                <div>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400">المصروفات</p>
+                                    <p className="text-sm font-semibold text-rose-600">{formatCurrency(programExpenses)}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400">الإيرادات</p>
+                                    <p className="text-sm font-semibold text-emerald-600">{formatCurrency(programRevenues)}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400">ربح المالك</p>
+                                    <p className={`text-sm font-semibold ${ownerProfit >= 0 ? 'text-sky-600' : 'text-orange-500'}`}>{formatCurrency(ownerProfit)}</p>
+                                </div>
+                            </div>
+
+                        </div>
+                        <div className="flex justify-between items-center mt-4 border-t border-slate-200 dark:border-slate-700 pt-3">
+                            <button onClick={() => { setSelectedProgram(program); setModal('VIEW_REPORT'); }} className="flex items-center px-3 py-1.5 text-xs bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-md hover:bg-slate-200 dark:hover:bg-slate-600"><ReportIcon className="w-4 h-4 ml-1.5"/><span>عرض التقرير</span></button>
+                            <div>
+                                <button onClick={() => { setSelectedProgram(program); setModal('EDIT'); }} className="p-2 text-slate-400 hover:text-blue-500 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700" aria-label={`تعديل البرنامج ${program.name}`}><EditIcon className="w-5 h-5"/></button>
+                                <button onClick={() => setDeletingId(program.id)} className="p-2 text-slate-400 hover:text-red-500 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700" aria-label={`حذف البرنامج ${program.name}`}><DeleteIcon className="w-5 h-5"/></button>
+                            </div>
+                        </div>
+                    </div>
+                )})}
+            </div>
+        );
+    }
+    
     return (
         <div className="space-y-6 animate-fadeInSlideUp">
             <div className="flex justify-end">
@@ -107,51 +389,15 @@ const ProgramsTab: React.FC<{ cycle: CropCycle }> = ({ cycle }) => {
                 </button>
             </div>
 
-            {cyclePrograms.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                    {cyclePrograms.map(program => {
-                        const programExpenses = transactions.filter(t => t.fertilizationProgramId === program.id && t.type === TransactionType.EXPENSE).reduce((sum, t) => sum + t.amount, 0);
-                        const programRevenues = transactions.filter(t => t.fertilizationProgramId === program.id && t.type === TransactionType.REVENUE).reduce((sum, t) => sum + t.amount, 0);
-                        let farmerShare = 0;
-                        if (settings.isFarmerSystemEnabled && cycle.farmerId && cycle.farmerSharePercentage) {
-                            farmerShare = programRevenues * (cycle.farmerSharePercentage / 100);
-                        }
-                        const ownerProfit = programRevenues - programExpenses - farmerShare;
-                        return (
-                            <div key={program.id} className="bg-white dark:bg-slate-800 p-5 rounded-lg shadow-md hover:shadow-xl transition-shadow flex flex-col justify-between">
-                                <div>
-                                    <h3 className="text-xl font-bold text-slate-800 dark:text-white">{program.name}</h3>
-                                    <p className="flex items-center mt-2 text-sm text-slate-500 dark:text-slate-400">
-                                        <CalendarIcon className="w-4 h-4 ml-2"/>
-                                        {program.startDate} إلى {program.endDate}
-                                    </p>
-                                    <div className="mt-4 border-t border-slate-200 dark:border-slate-700 pt-3 grid grid-cols-3 gap-2 text-center">
-                                        <div><p className="text-xs text-slate-500">المصروفات</p><p className="text-sm font-semibold text-rose-600">{formatCurrency(programExpenses)}</p></div>
-                                        <div><p className="text-xs text-slate-500">الإيرادات</p><p className="text-sm font-semibold text-emerald-600">{formatCurrency(programRevenues)}</p></div>
-                                        <div><p className="text-xs text-slate-500">ربح المالك</p><p className={`text-sm font-semibold ${ownerProfit >= 0 ? 'text-sky-600' : 'text-orange-500'}`}>{formatCurrency(ownerProfit)}</p></div>
-                                    </div>
-                                </div>
-                                <div className="flex justify-between items-center mt-4 border-t border-slate-200 dark:border-slate-700 pt-3">
-                                    <button onClick={() => { setSelectedProgram(program); setModal('VIEW_REPORT'); }} className="flex items-center px-3 py-1.5 text-xs bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-md hover:bg-slate-200 dark:hover:bg-slate-600"><ReportIcon className="w-4 h-4 ml-1.5"/><span>عرض التقرير</span></button>
-                                    <div>
-                                        <button onClick={() => { setSelectedProgram(program); setModal('EDIT'); }} className="p-2 text-slate-400 hover:text-blue-500 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700"><EditIcon className="w-5 h-5"/></button>
-                                        <button onClick={() => setDeletingId(program.id)} className="p-2 text-slate-400 hover:text-red-500 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700"><DeleteIcon className="w-5 h-5"/></button>
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-            ) : (
-                <div className="text-center py-16 bg-white dark:bg-slate-800 rounded-lg border-2 border-dashed border-slate-200 dark:border-slate-700">
-                    <ProgramIcon className="w-16 h-16 mx-auto text-slate-400 dark:text-slate-500 mb-4"/>
-                    <p className="text-lg font-semibold text-slate-600 dark:text-slate-300">لا توجد برامج مسجلة لهذه العروة</p>
-                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">أضف برنامجًا جديدًا من الزر أعلاه.</p>
-                </div>
-            )}
-            
+            {renderContent()}
+
             {(modal === 'ADD' || modal === 'EDIT') && (
-                <ProgramFormModal program={selectedProgram} onSave={handleSave} onClose={() => setModal(null)} cycle={cycle} />
+                <ProgramFormModal
+                    program={selectedProgram}
+                    onSave={handleSave}
+                    onCancel={() => setModal(null)}
+                    cropCycle={cycle}
+                />
             )}
             {modal === 'VIEW_REPORT' && selectedProgram && (
                 <ProgramReportModal program={selectedProgram} onClose={() => setModal(null)} />
@@ -159,6 +405,6 @@ const ProgramsTab: React.FC<{ cycle: CropCycle }> = ({ cycle }) => {
             <ConfirmationModal isOpen={!!deletingId} onClose={() => setDeletingId(null)} onConfirm={confirmDelete} title="تأكيد حذف البرنامج" message="هل أنت متأكد من حذف هذا البرنامج؟ لا يمكن حذف برنامج مرتبط بمعاملات."/>
         </div>
     );
-}
+};
 
 export default ProgramsTab;

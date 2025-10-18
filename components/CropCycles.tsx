@@ -1,5 +1,4 @@
-import React, { useState, useContext, useEffect, FormEvent, memo, useRef, MouseEvent, useCallback, useMemo, FC } from 'react';
-import { useLocation, useNavigate, Link } from 'react-router-dom';
+import React from 'react';
 import { AppContext } from '../App.tsx';
 import { AppContextType, CropCycle, CropCycleStatus, TransactionType, Greenhouse, Farmer, Transaction, FarmerWithdrawal } from '../types.ts';
 import { ToastContext, ToastContextType } from '../context/ToastContext.tsx';
@@ -7,24 +6,26 @@ import { AddIcon, SeedIcon, GreenhouseIcon, CalendarIcon, CalendarCheckIcon, Rep
 import SkeletonCard from './SkeletonCard.tsx';
 import ConfirmationModal from './ConfirmationModal.tsx';
 
+// FIX: Cannot find name 'ReactRouterDOM'. Import from 'react-router-dom' instead.
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 
 const formInputClass = "mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500";
 const searchInputClass = "block w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500";
 
-const CropCycleForm: FC<{ cycle?: CropCycle; onSave: (cycle: Omit<CropCycle, 'id'> | CropCycle) => void; onCancel: () => void; greenhouses: Greenhouse[]; farmers: Farmer[]; isFarmerSystemEnabled: boolean; }> = ({ cycle, onSave, onCancel, greenhouses, farmers, isFarmerSystemEnabled }) => {
-    const { addToast } = useContext(ToastContext) as ToastContextType;
-    const [name, setName] = useState(cycle?.name || '');
-    const [seedType, setSeedType] = useState(cycle?.seedType || '');
-    const [plantCount, setPlantCount] = useState(cycle?.plantCount?.toString() || '');
-    const [startDate, setStartDate] = useState(cycle?.startDate || new Date().toISOString().split('T')[0]);
-    const [status, setStatus] = useState<CropCycleStatus>(cycle?.status || CropCycleStatus.ACTIVE);
-    const [greenhouseId, setGreenhouseId] = useState(cycle?.greenhouseId || '');
-    const [farmerId, setFarmerId] = useState(cycle?.farmerId || '');
-    const [farmerSharePercentage, setFarmerSharePercentage] = useState(cycle?.farmerSharePercentage?.toString() || '20');
-    const [productionStartDate, setProductionStartDate] = useState(cycle?.productionStartDate || '');
+const CropCycleForm: React.FC<{ cycle?: CropCycle; onSave: (cycle: Omit<CropCycle, 'id'> | CropCycle) => void; onCancel: () => void; greenhouses: Greenhouse[]; farmers: Farmer[]; isFarmerSystemEnabled: boolean; }> = ({ cycle, onSave, onCancel, greenhouses, farmers, isFarmerSystemEnabled }) => {
+    const { addToast } = React.useContext(ToastContext) as ToastContextType;
+    const [name, setName] = React.useState(cycle?.name || '');
+    const [seedType, setSeedType] = React.useState(cycle?.seedType || '');
+    const [plantCount, setPlantCount] = React.useState(cycle?.plantCount?.toString() || '');
+    const [startDate, setStartDate] = React.useState(cycle?.startDate || new Date().toISOString().split('T')[0]);
+    const [status, setStatus] = React.useState<CropCycleStatus>(cycle?.status || CropCycleStatus.ACTIVE);
+    const [greenhouseId, setGreenhouseId] = React.useState(cycle?.greenhouseId || '');
+    const [farmerId, setFarmerId] = React.useState(cycle?.farmerId || '');
+    const [farmerSharePercentage, setFarmerSharePercentage] = React.useState(cycle?.farmerSharePercentage?.toString() || '20');
+    const [productionStartDate, setProductionStartDate] = React.useState(cycle?.productionStartDate || '');
 
 
-    const handleSubmit = (e: FormEvent) => {
+    const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         
         const numericPlantCount = Number(plantCount);
@@ -119,7 +120,7 @@ const CropCycleForm: FC<{ cycle?: CropCycle; onSave: (cycle: Omit<CropCycle, 'id
     );
 };
 
-const CropCycleCard: FC<{
+const CropCycleCard: React.FC<{
     cycle: CropCycle;
     onEdit: (c: CropCycle) => void;
     onClose: (c: CropCycle) => void;
@@ -131,9 +132,9 @@ const CropCycleCard: FC<{
     profit: number;
     healthPercentage: number;
     healthColor: string;
-}> = memo(({ cycle, onEdit, onClose, onArchiveOrDelete, greenhouseName, farmerName, revenue, expense, profit, healthPercentage, healthColor }) => {
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const menuRef = useRef<HTMLDivElement>(null);
+}> = React.memo(({ cycle, onEdit, onClose, onArchiveOrDelete, greenhouseName, farmerName, revenue, expense, profit, healthPercentage, healthColor }) => {
+    const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+    const menuRef = React.useRef<HTMLDivElement>(null);
 
     const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EGP', maximumFractionDigits: 0 }).format(amount);
 
@@ -143,14 +144,14 @@ const CropCycleCard: FC<{
         [CropCycleStatus.ARCHIVED]: { dot: 'bg-slate-500', text: 'text-slate-800 dark:text-slate-300', bg: 'bg-slate-200 dark:bg-slate-700' },
     };
 
-    const handleAction = (e: MouseEvent, action: () => void) => {
+    const handleAction = (e: React.MouseEvent, action: () => void) => {
         e.preventDefault();
         e.stopPropagation();
         action();
         setIsMenuOpen(false);
     };
 
-    useEffect(() => {
+    React.useEffect(() => {
         const handleClickOutside = (event: globalThis.MouseEvent) => {
             if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
                 setIsMenuOpen(false);
@@ -263,7 +264,7 @@ const CropCycleCard: FC<{
     );
 });
 
-const EmptyState: FC<{ message: string; subMessage: string; icon: React.ReactNode }> = ({ message, subMessage, icon }) => (
+const EmptyState: React.FC<{ message: string; subMessage: string; icon: React.ReactNode }> = ({ message, subMessage, icon }) => (
     <div className="text-center py-16 bg-slate-50 dark:bg-slate-800/50 rounded-lg border-2 border-dashed border-slate-200 dark:border-slate-700">
         <div className="flex justify-center mb-4 text-slate-400 dark:text-slate-500">{icon}</div>
         <p className="text-lg font-semibold text-slate-600 dark:text-slate-300">{message}</p>
@@ -272,26 +273,26 @@ const EmptyState: FC<{ message: string; subMessage: string; icon: React.ReactNod
 );
 
 
-const CropCyclesPage: FC = () => {
-    const { loading, cropCycles, addCropCycle, updateCropCycle, archiveOrDeleteCropCycle, greenhouses, farmers, settings, transactions, farmerWithdrawals } = useContext(AppContext) as AppContextType;
-    const { addToast } = useContext(ToastContext) as ToastContextType;
+const CropCyclesPage: React.FC = () => {
+    const { loading, cropCycles, addCropCycle, updateCropCycle, archiveOrDeleteCropCycle, greenhouses, farmers, settings, transactions, farmerWithdrawals } = React.useContext(AppContext) as AppContextType;
+    const { addToast } = React.useContext(ToastContext) as ToastContextType;
     const location = useLocation();
     const navigate = useNavigate();
 
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isAnimatingModal, setIsAnimatingModal] = useState(false);
-    const [editingCycle, setEditingCycle] = useState<CropCycle | null>(null);
+    const [isModalOpen, setIsModalOpen] = React.useState(false);
+    const [isAnimatingModal, setIsAnimatingModal] = React.useState(false);
+    const [editingCycle, setEditingCycle] = React.useState<CropCycle | null>(null);
 
-    const [filterGreenhouse, setFilterGreenhouse] = useState('all');
-    const [searchQuery, setSearchQuery] = useState('');
-    const [activeTab, setActiveTab] = useState<'active' | 'closed' | 'archived'>('active');
+    const [filterGreenhouse, setFilterGreenhouse] = React.useState('all');
+    const [searchQuery, setSearchQuery] = React.useState('');
+    const [activeTab, setActiveTab] = React.useState<'active' | 'closed' | 'archived'>('active');
     
-    const [closingCycle, setClosingCycle] = useState<CropCycle | null>(null);
-    const [deletingCycleId, setDeletingCycleId] = useState<string | null>(null);
+    const [closingCycle, setClosingCycle] = React.useState<CropCycle | null>(null);
+    const [deletingCycleId, setDeletingCycleId] = React.useState<string | null>(null);
 
-    const modalRef = useRef<HTMLDivElement>(null);
+    const modalRef = React.useRef<HTMLDivElement>(null);
     
-    useEffect(() => {
+    React.useEffect(() => {
         const isAnyModalOpen = isModalOpen || !!closingCycle || !!deletingCycleId;
         if (isAnyModalOpen) {
             document.body.classList.add('body-no-scroll');
@@ -303,25 +304,25 @@ const CropCyclesPage: FC = () => {
         };
     }, [isModalOpen, closingCycle, deletingCycleId]);
 
-    const handleOpenAddModal = useCallback(() => {
+    const handleOpenAddModal = React.useCallback(() => {
         setEditingCycle(null);
         setIsModalOpen(true);
     }, []);
 
-    const handleOpenEditModal = useCallback((cycle: CropCycle) => {
+    const handleOpenEditModal = React.useCallback((cycle: CropCycle) => {
         setEditingCycle(cycle);
         setIsModalOpen(true);
     }, []);
 
-    const handleSetClosingCycle = useCallback((cycle: CropCycle) => {
+    const handleSetClosingCycle = React.useCallback((cycle: CropCycle) => {
         setClosingCycle(cycle);
     }, []);
 
-    const handleSetDeletingCycleId = useCallback((id: string) => {
+    const handleSetDeletingCycleId = React.useCallback((id: string) => {
         setDeletingCycleId(id);
     }, []);
 
-    useEffect(() => {
+    React.useEffect(() => {
         const state = location.state as { action?: string };
         if (state?.action === 'add-cycle') {
             handleOpenAddModal();
@@ -329,7 +330,7 @@ const CropCyclesPage: FC = () => {
         }
     }, [location.state, navigate, handleOpenAddModal]);
 
-    useEffect(() => {
+    React.useEffect(() => {
         if (isModalOpen) {
             const timer = setTimeout(() => setIsAnimatingModal(true), 10);
             return () => clearTimeout(timer);
@@ -339,7 +340,7 @@ const CropCyclesPage: FC = () => {
     }, [isModalOpen]);
 
     // Focus Trap and Escape key handler for modal
-    useEffect(() => {
+    React.useEffect(() => {
         if (!isModalOpen) return;
         
         const modalNode = modalRef.current;
@@ -406,12 +407,12 @@ const CropCyclesPage: FC = () => {
         setDeletingCycleId(null);
     };
     
-    const cycleToDelete = useMemo(() => 
+    const cycleToDelete = React.useMemo(() => 
         deletingCycleId ? cropCycles.find(c => c.id === deletingCycleId) : null,
         [deletingCycleId, cropCycles]
     );
 
-    const isCycleEmpty = useMemo(() => {
+    const isCycleEmpty = React.useMemo(() => {
         if (!cycleToDelete) return true;
         const hasTransactions = transactions.some(t => t.cropCycleId === cycleToDelete.id);
         const hasWithdrawals = farmerWithdrawals.some(w => w.cropCycleId === cycleToDelete.id);
@@ -419,7 +420,7 @@ const CropCyclesPage: FC = () => {
     }, [cycleToDelete, transactions, farmerWithdrawals]);
 
 
-    const filteredCycles = useMemo(() => {
+    const filteredCycles = React.useMemo(() => {
         const statusMap = {
             'active': CropCycleStatus.ACTIVE,
             'closed': CropCycleStatus.CLOSED,
@@ -443,7 +444,7 @@ const CropCyclesPage: FC = () => {
         return cycles.sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
     }, [cropCycles, filterGreenhouse, searchQuery, activeTab]);
 
-    const cyclesWithStats = useMemo(() => {
+    const cyclesWithStats = React.useMemo(() => {
         // OPTIMIZATION: Group transactions by cycle ID in a single pass
         const transactionsByCycleId = new Map<string, Transaction[]>();
         for (const t of transactions) {

@@ -1,5 +1,4 @@
 import React from 'react';
-import { useParams, Link } from 'react-router-dom';
 import { AppContext } from '../App';
 import { AppContextType, CropCycle, Greenhouse } from '../types';
 import { ArrowRightIcon, GreenhouseIcon, SeedIcon } from './Icons';
@@ -10,6 +9,8 @@ import ProgramsTab from './tabs/ProgramsTab';
 import FarmerTab from './tabs/FarmerTab';
 import TimelineTab from './tabs/TimelineTab';
 
+// FIX: Cannot find name 'ReactRouterDOM'. Import from 'react-router-dom' instead.
+import { useParams, Link } from 'react-router-dom';
 
 const CropCycleDetailsPage: React.FC = () => {
     const { cropCycleId } = useParams<{ cropCycleId: string }>();

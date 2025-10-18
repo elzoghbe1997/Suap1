@@ -1,5 +1,4 @@
-import React, { useState, useMemo, useEffect, useCallback, useRef, useContext, FC, FormEvent, memo } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import React from 'react';
 import { AppContext } from '../App.tsx';
 import { AppContextType, TransactionType, Farmer, FarmerWithdrawal, CropCycle, CropCycleStatus, Transaction } from '../types.ts';
 import { FarmerIcon, RevenueIcon, ExpenseIcon, ProfitIcon, AddIcon, EditIcon, DeleteIcon, ReportIcon, CloseIcon } from './Icons.tsx';
@@ -10,12 +9,15 @@ import { useAnimatedCounter } from '../hooks/useAnimatedCounter.ts';
 import WithdrawalForm from './WithdrawalForm.tsx';
 import Pagination from './Pagination.tsx';
 
+// FIX: Cannot find name 'ReactRouterDOM'. Import from 'react-router-dom' instead.
+import { useLocation, useNavigate } from 'react-router-dom';
+
 const formInputClass = "mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500";
 
-const FarmerForm: FC<{ farmer?: Farmer; onSave: (farmer: Omit<Farmer, 'id'> | Farmer) => void; onCancel: () => void }> = ({ farmer, onSave, onCancel }) => {
-    const [name, setName] = useState(farmer?.name || '');
+const FarmerForm: React.FC<{ farmer?: Farmer; onSave: (farmer: Omit<Farmer, 'id'> | Farmer) => void; onCancel: () => void }> = ({ farmer, onSave, onCancel }) => {
+    const [name, setName] = React.useState(farmer?.name || '');
 
-    const handleSubmit = (e: FormEvent) => {
+    const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         const data = { name };
         if (farmer) {
@@ -41,12 +43,12 @@ const FarmerForm: FC<{ farmer?: Farmer; onSave: (farmer: Omit<Farmer, 'id'> | Fa
 
 const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EGP', maximumFractionDigits: 0 }).format(amount);
 
-const AnimatedNumber: FC<{ value: number }> = memo(({ value }) => {
+const AnimatedNumber: React.FC<{ value: number }> = React.memo(({ value }) => {
     const count = useAnimatedCounter(value);
     return <>{formatCurrency(count)}</>;
 });
 
-const FarmerStatCard: FC<{ title: string; value: number; icon: React.ReactNode; }> = memo(({ title, value, icon }) => (
+const FarmerStatCard: React.FC<{ title: string; value: number; icon: React.ReactNode; }> = React.memo(({ title, value, icon }) => (
     <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-4">
         <div className="flex items-center">
             {icon}
@@ -60,9 +62,9 @@ const FarmerStatCard: FC<{ title: string; value: number; icon: React.ReactNode; 
     </div>
 ));
 
-const WithdrawalsReportModal: FC<{ farmer: Farmer; withdrawals: FarmerWithdrawal[]; onClose: () => void; onEdit: (w: FarmerWithdrawal) => void; onDelete: (id: string) => void; }> = ({ farmer, withdrawals, onClose, onEdit, onDelete }) => {
-    const { cropCycles } = useContext(AppContext) as AppContextType;
-    const [currentPage, setCurrentPage] = useState(1);
+const WithdrawalsReportModal: React.FC<{ farmer: Farmer; withdrawals: FarmerWithdrawal[]; onClose: () => void; onEdit: (w: FarmerWithdrawal) => void; onDelete: (id: string) => void; }> = ({ farmer, withdrawals, onClose, onEdit, onDelete }) => {
+    const { cropCycles } = React.useContext(AppContext) as AppContextType;
+    const [currentPage, setCurrentPage] = React.useState(1);
     const ITEMS_PER_PAGE = 5;
 
     const totalPages = Math.ceil(withdrawals.length / ITEMS_PER_PAGE);
@@ -144,7 +146,7 @@ const WithdrawalsReportModal: FC<{ farmer: Farmer; withdrawals: FarmerWithdrawal
 };
 
 
-const FarmerCard: FC<{
+const FarmerCard: React.FC<{
     farmer: Farmer;
     highlighted: boolean;
     onEdit: (farmer: Farmer) => void;
@@ -156,7 +158,7 @@ const FarmerCard: FC<{
     balance: number;
     cycleCount: number;
     isDeletable: boolean;
-}> = memo(({ farmer, highlighted, onEdit, onDelete, onReport, onAddWithdrawal, totalShare, totalWithdrawals, balance, cycleCount, isDeletable }) => {
+}> = React.memo(({ farmer, highlighted, onEdit, onDelete, onReport, onAddWithdrawal, totalShare, totalWithdrawals, balance, cycleCount, isDeletable }) => {
     return (
         <div
             id={`farmer-card-${farmer.id}`}
@@ -211,30 +213,30 @@ const FarmerCard: FC<{
 });
 
 
-const FarmerAccountsPage: FC = () => {
-    const { loading, settings, farmers, cropCycles, transactions, farmerWithdrawals, addFarmer, updateFarmer, deleteFarmer, addFarmerWithdrawal, updateFarmerWithdrawal, deleteFarmerWithdrawal, getWithdrawalsForFarmer } = useContext(AppContext) as AppContextType;
+const FarmerAccountsPage: React.FC = () => {
+    const { loading, settings, farmers, cropCycles, transactions, farmerWithdrawals, addFarmer, updateFarmer, deleteFarmer, addFarmerWithdrawal, updateFarmerWithdrawal, deleteFarmerWithdrawal, getWithdrawalsForFarmer } = React.useContext(AppContext) as AppContextType;
     
     const location = useLocation();
     const navigate = useNavigate();
 
-    const [isFarmerFormOpen, setIsFarmerFormOpen] = useState(false);
-    const [isWithdrawalModalOpen, setIsWithdrawalModalOpen] = useState(false);
+    const [isFarmerFormOpen, setIsFarmerFormOpen] = React.useState(false);
+    const [isWithdrawalModalOpen, setIsWithdrawalModalOpen] = React.useState(false);
 
-    const [editingFarmer, setEditingFarmer] = useState<Farmer | undefined>(undefined);
-    const [editingWithdrawal, setEditingWithdrawal] = useState<FarmerWithdrawal | undefined>(undefined);
+    const [editingFarmer, setEditingFarmer] = React.useState<Farmer | undefined>(undefined);
+    const [editingWithdrawal, setEditingWithdrawal] = React.useState<FarmerWithdrawal | undefined>(undefined);
     
-    const [deletingFarmerId, setDeletingFarmerId] = useState<string | null>(null);
-    const [deletingWithdrawalId, setDeletingWithdrawalId] = useState<string | null>(null);
+    const [deletingFarmerId, setDeletingFarmerId] = React.useState<string | null>(null);
+    const [deletingWithdrawalId, setDeletingWithdrawalId] = React.useState<string | null>(null);
 
-    const [reportingFarmer, setReportingFarmer] = useState<Farmer | undefined>(undefined);
-    const [highlightedFarmerId, setHighlightedFarmerId] = useState<string | null>(null);
-    const [preselectedFarmerId, setPreselectedFarmerId] = useState<string>('');
+    const [reportingFarmer, setReportingFarmer] = React.useState<Farmer | undefined>(undefined);
+    const [highlightedFarmerId, setHighlightedFarmerId] = React.useState<string | null>(null);
+    const [preselectedFarmerId, setPreselectedFarmerId] = React.useState<string>('');
     
-    const farmerFormModalRef = useRef<HTMLDivElement>(null);
-    const withdrawalFormModalRef = useRef<HTMLDivElement>(null);
+    const farmerFormModalRef = React.useRef<HTMLDivElement>(null);
+    const withdrawalFormModalRef = React.useRef<HTMLDivElement>(null);
 
 
-    useEffect(() => {
+    React.useEffect(() => {
         const isAnyModalOpen = isFarmerFormOpen || isWithdrawalModalOpen || !!deletingFarmerId || !!deletingWithdrawalId || !!reportingFarmer;
         if (isAnyModalOpen) {
             document.body.classList.add('body-no-scroll');
@@ -247,7 +249,7 @@ const FarmerAccountsPage: FC = () => {
     }, [isFarmerFormOpen, isWithdrawalModalOpen, deletingFarmerId, deletingWithdrawalId, reportingFarmer]);
     
     // Focus Trap and Escape key handler for Farmer Form
-    useEffect(() => {
+    React.useEffect(() => {
         if (!isFarmerFormOpen) return;
         const modalNode = farmerFormModalRef.current;
         if (!modalNode) return;
@@ -271,7 +273,7 @@ const FarmerAccountsPage: FC = () => {
     }, [isFarmerFormOpen]);
     
      // Focus Trap and Escape key handler for Withdrawal Form
-    useEffect(() => {
+    React.useEffect(() => {
         if (!isWithdrawalModalOpen) return;
         const modalNode = withdrawalFormModalRef.current;
         if (!modalNode) return;
@@ -295,7 +297,7 @@ const FarmerAccountsPage: FC = () => {
     }, [isWithdrawalModalOpen]);
 
 
-    useEffect(() => {
+    React.useEffect(() => {
         const state = location.state as { action?: string, highlightFarmerId?: string };
 
         if (state?.action === 'add-withdrawal') {
@@ -317,7 +319,7 @@ const FarmerAccountsPage: FC = () => {
         }
     }, [location, navigate]);
 
-    useEffect(() => {
+    React.useEffect(() => {
         if (highlightedFarmerId) {
             const element = document.getElementById(`farmer-card-${highlightedFarmerId}`);
             element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -357,21 +359,21 @@ const FarmerAccountsPage: FC = () => {
         setDeletingWithdrawalId(null);
     };
     
-    const handleEditFarmer = useCallback((farmer: Farmer) => {
+    const handleEditFarmer = React.useCallback((farmer: Farmer) => {
         setEditingFarmer(farmer);
         setIsFarmerFormOpen(true);
     }, []);
     
-    const handleQuickAddWithdrawal = useCallback((farmerId: string) => {
+    const handleQuickAddWithdrawal = React.useCallback((farmerId: string) => {
         setPreselectedFarmerId(farmerId);
         setEditingWithdrawal(undefined);
         setIsWithdrawalModalOpen(true);
     }, []);
 
-    const handleDeleteFarmer = useCallback((id: string) => setDeletingFarmerId(id), []);
-    const handleReport = useCallback((farmer: Farmer) => setReportingFarmer(farmer), []);
+    const handleDeleteFarmer = React.useCallback((id: string) => setDeletingFarmerId(id), []);
+    const handleReport = React.useCallback((farmer: Farmer) => setReportingFarmer(farmer), []);
 
-    const farmerAccountData = useMemo(() => {
+    const farmerAccountData = React.useMemo(() => {
         const cyclesByFarmerId = new Map<string, CropCycle[]>();
         cropCycles.forEach(c => {
             if (c.farmerId) {

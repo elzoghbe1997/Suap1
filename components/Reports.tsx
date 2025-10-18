@@ -1,17 +1,19 @@
-import React, { FC, useContext, useMemo } from 'react';
+import React from 'react';
 import { AppContext } from '../App.tsx';
 import { AppContextType, TransactionType } from '../types.ts';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import LoadingSpinner from './LoadingSpinner.tsx';
 
-const ReportsPage: FC = () => {
-    const { loading, cropCycles, transactions, greenhouses, settings } = useContext(AppContext) as AppContextType;
+// FIX: Cannot find name 'Recharts'. Import from 'recharts' instead.
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+
+const ReportsPage: React.FC = () => {
+    const { loading, cropCycles, transactions, greenhouses, settings } = React.useContext(AppContext) as AppContextType;
 
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EGP', maximumFractionDigits: 0 }).format(amount);
     };
 
-    const cyclesPerformanceData = useMemo(() => {
+    const cyclesPerformanceData = React.useMemo(() => {
         return cropCycles.map(cycle => {
             const cycleTransactions = transactions.filter(t => t.cropCycleId === cycle.id);
             const revenue = cycleTransactions.filter(t => t.type === TransactionType.REVENUE).reduce((sum, t) => sum + t.amount, 0);
@@ -30,7 +32,7 @@ const ReportsPage: FC = () => {
         }).sort((a, b) => b['صافي ربح المالك'] - a['صافي ربح المالك']);
     }, [cropCycles, transactions, settings.isFarmerSystemEnabled]);
 
-    const expenseByGreenhouseData = useMemo(() => {
+    const expenseByGreenhouseData = React.useMemo(() => {
         const data: { [key: string]: number } = {};
         
         transactions

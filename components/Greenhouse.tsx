@@ -1,5 +1,4 @@
-import React, { FC, useContext, useState, FormEvent, memo, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import React from 'react';
 import { AppContext } from '../App.tsx';
 import { AppContextType, Greenhouse } from '../types.ts';
 import { ToastContext, ToastContextType } from '../context/ToastContext.tsx';
@@ -7,15 +6,18 @@ import { AddIcon, EditIcon, DeleteIcon, CostIcon, GreenhouseIcon, CycleIcon, Rep
 import ConfirmationModal from './ConfirmationModal.tsx';
 import SkeletonCard from './SkeletonCard.tsx';
 
+// FIX: Cannot find name 'ReactRouterDOM'. Import from 'react-router-dom' instead.
+import { Link } from 'react-router-dom';
+
 const formInputClass = "mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500";
 
-const GreenhouseForm: FC<{ greenhouse?: Greenhouse; onSave: (greenhouse: Omit<Greenhouse, 'id'> | Greenhouse) => void; onCancel: () => void }> = ({ greenhouse, onSave, onCancel }) => {
-    const { addToast } = useContext(ToastContext) as ToastContextType;
-    const [name, setName] = useState(greenhouse?.name || '');
-    const [initialCost, setInitialCost] = useState(greenhouse?.initialCost?.toString() || '');
-    const [creationDate] = useState(greenhouse?.creationDate || new Date().toISOString().split('T')[0]);
+const GreenhouseForm: React.FC<{ greenhouse?: Greenhouse; onSave: (greenhouse: Omit<Greenhouse, 'id'> | Greenhouse) => void; onCancel: () => void }> = ({ greenhouse, onSave, onCancel }) => {
+    const { addToast } = React.useContext(ToastContext) as ToastContextType;
+    const [name, setName] = React.useState(greenhouse?.name || '');
+    const [initialCost, setInitialCost] = React.useState(greenhouse?.initialCost?.toString() || '');
+    const [creationDate] = React.useState(greenhouse?.creationDate || new Date().toISOString().split('T')[0]);
 
-    const handleSubmit = (e: FormEvent) => {
+    const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         
         const numericCost = Number(initialCost);
@@ -50,7 +52,7 @@ const GreenhouseForm: FC<{ greenhouse?: Greenhouse; onSave: (greenhouse: Omit<Gr
     );
 };
 
-const GreenhouseCard: FC<{ greenhouse: Greenhouse; onEdit: (g: Greenhouse) => void; onDelete: (id: string) => void; cycleCount: number; }> = memo(({ greenhouse, onEdit, onDelete, cycleCount }) => {
+const GreenhouseCard: React.FC<{ greenhouse: Greenhouse; onEdit: (g: Greenhouse) => void; onDelete: (id: string) => void; cycleCount: number; }> = React.memo(({ greenhouse, onEdit, onDelete, cycleCount }) => {
     const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EGP', maximumFractionDigits: 0 }).format(amount);
 
     return (
@@ -102,17 +104,17 @@ const GreenhouseCard: FC<{ greenhouse: Greenhouse; onEdit: (g: Greenhouse) => vo
 });
 
 
-const GreenhousePage: FC = () => {
-    const { loading, greenhouses, cropCycles, addGreenhouse, updateGreenhouse, deleteGreenhouse } = useContext(AppContext) as AppContextType;
-    const { addToast } = useContext(ToastContext) as ToastContextType;
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isAnimatingModal, setIsAnimatingModal] = useState(false);
-    const [editingGreenhouse, setEditingGreenhouse] = useState<Greenhouse | undefined>(undefined);
-    const [deletingId, setDeletingId] = useState<string | null>(null);
-    const modalRef = useRef<HTMLDivElement>(null);
+const GreenhousePage: React.FC = () => {
+    const { loading, greenhouses, cropCycles, addGreenhouse, updateGreenhouse, deleteGreenhouse } = React.useContext(AppContext) as AppContextType;
+    const { addToast } = React.useContext(ToastContext) as ToastContextType;
+    const [isModalOpen, setIsModalOpen] = React.useState(false);
+    const [isAnimatingModal, setIsAnimatingModal] = React.useState(false);
+    const [editingGreenhouse, setEditingGreenhouse] = React.useState<Greenhouse | undefined>(undefined);
+    const [deletingId, setDeletingId] = React.useState<string | null>(null);
+    const modalRef = React.useRef<HTMLDivElement>(null);
 
 
-    useEffect(() => {
+    React.useEffect(() => {
         const isAnyModalOpen = isModalOpen || !!deletingId;
         if (isAnyModalOpen) {
             document.body.classList.add('body-no-scroll');
@@ -124,7 +126,7 @@ const GreenhousePage: FC = () => {
         };
     }, [isModalOpen, deletingId]);
 
-    useEffect(() => {
+    React.useEffect(() => {
         if (isModalOpen) {
             const timer = setTimeout(() => setIsAnimatingModal(true), 10);
             return () => clearTimeout(timer);
@@ -134,7 +136,7 @@ const GreenhousePage: FC = () => {
     }, [isModalOpen]);
 
     // Focus Trap and Escape key handler for modal
-    useEffect(() => {
+    React.useEffect(() => {
         if (!isModalOpen) return;
         
         const modalNode = modalRef.current;
@@ -186,12 +188,12 @@ const GreenhousePage: FC = () => {
         setEditingGreenhouse(undefined);
     };
 
-    const handleEdit = useCallback((greenhouse: Greenhouse) => {
+    const handleEdit = React.useCallback((greenhouse: Greenhouse) => {
         setEditingGreenhouse(greenhouse);
         setIsModalOpen(true);
     }, []);
 
-    const handleDelete = useCallback((id: string) => {
+    const handleDelete = React.useCallback((id: string) => {
         const hasCycles = cropCycles.some(c => c.greenhouseId === id);
         if (hasCycles) {
             addToast('لا يمكن حذف الصوبة لأنها تحتوي على عروات. يجب حذف أو أرشفة العروات أولاً.', 'error');
@@ -207,7 +209,7 @@ const GreenhousePage: FC = () => {
         setDeletingId(null);
     };
     
-    const cycleCounts = useMemo(() => {
+    const cycleCounts = React.useMemo(() => {
         const counts = new Map<string, number>();
         for (const cycle of cropCycles) {
             counts.set(cycle.greenhouseId, (counts.get(cycle.greenhouseId) || 0) + 1);

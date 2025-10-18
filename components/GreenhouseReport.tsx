@@ -1,20 +1,23 @@
-import React, { FC, memo, useMemo, useContext, ReactNode } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import React from 'react';
 import { AppContext } from '../App.tsx';
 import { AppContextType, TransactionType } from '../types.ts';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { ArrowRightIcon, CostIcon, RevenueIcon, ExpenseIcon, ProfitIcon } from './Icons.tsx';
 import LoadingSpinner from './LoadingSpinner.tsx';
 import { useAnimatedCounter } from '../hooks/useAnimatedCounter.ts';
 
+// FIX: Cannot find name 'ReactRouterDOM'. Import from 'react-router-dom' instead.
+import { useParams, Link } from 'react-router-dom';
+// FIX: Cannot find name 'Recharts'. Import from 'recharts' instead.
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+
 const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EGP', maximumFractionDigits: 0 }).format(amount);
 
-const AnimatedNumber: FC<{ value: number; formatter: (val: number) => string; }> = memo(({ value, formatter }) => {
+const AnimatedNumber: React.FC<{ value: number; formatter: (val: number) => string; }> = React.memo(({ value, formatter }) => {
     const count = useAnimatedCounter(value);
     return <>{formatter(count)}</>;
 });
 
-const StatCard: FC<{ title: string; value: number; icon: ReactNode; color?: string; description?: string; formatter?: (val: number) => string; }> = memo(({ title, value, icon, color, description, formatter = formatCurrency }) => (
+const StatCard: React.FC<{ title: string; value: number; icon: React.ReactNode; color?: string; description?: string; formatter?: (val: number) => string; }> = React.memo(({ title, value, icon, color, description, formatter = formatCurrency }) => (
     <div className={`bg-white dark:bg-slate-800 rounded-lg shadow-md p-5 border-r-4 ${color || 'border-slate-300'}`}>
         <div className="flex items-center">
              <div className="flex-shrink-0">
@@ -31,13 +34,13 @@ const StatCard: FC<{ title: string; value: number; icon: ReactNode; color?: stri
     </div>
 ));
 
-const GreenhouseReport: FC = () => {
+const GreenhouseReport: React.FC = () => {
     const { greenhouseId } = useParams<{ greenhouseId: string }>();
-    const { loading, greenhouses, cropCycles, transactions, settings } = useContext(AppContext) as AppContextType;
+    const { loading, greenhouses, cropCycles, transactions, settings } = React.useContext(AppContext) as AppContextType;
 
-    const greenhouse = useMemo(() => greenhouses.find(g => g.id === greenhouseId), [greenhouses, greenhouseId]);
+    const greenhouse = React.useMemo(() => greenhouses.find(g => g.id === greenhouseId), [greenhouses, greenhouseId]);
     
-    const reportData = useMemo(() => {
+    const reportData = React.useMemo(() => {
         if (!greenhouse) return null;
         
         const cyclesInGreenhouse = cropCycles.filter(c => c.greenhouseId === greenhouse.id);

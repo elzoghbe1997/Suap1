@@ -1,6 +1,8 @@
+// FIX: Add imports for React and ReactDOM
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App.tsx';
+
+const App = React.lazy(() => import('./App.tsx'));
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -10,6 +12,8 @@ if (!rootElement) {
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <App />
+    <React.Suspense fallback={null}>
+      <App />
+    </React.Suspense>
   </React.StrictMode>
 );

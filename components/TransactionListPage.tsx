@@ -1,13 +1,14 @@
 import React from 'react';
-import { useLocation, useSearchParams } from 'react-router-dom';
-import { AppContext } from '../App';
-import { AppContextType, Transaction, CropCycle, TransactionType, Supplier, CropCycleStatus, FertilizationProgram } from '../types';
-import { AddIcon, EditIcon, DeleteIcon, RevenueIcon, ExpenseIcon, ArrowUpIcon, ArrowDownIcon, InvoiceIcon, ReceiptIcon } from './Icons';
-import ConfirmationModal from './ConfirmationModal';
-import Pagination from './Pagination';
-import { useAnimatedCounter } from '../hooks/useAnimatedCounter';
-import InvoiceForm from './InvoiceForm';
-import ExpenseForm from './ExpenseForm';
+import { AppContext } from '../App.tsx';
+import { AppContextType, Transaction, CropCycle, TransactionType, Supplier, FertilizationProgram } from '../types.ts';
+// FIX: Imported RevenueIcon and ExpenseIcon.
+import { AddIcon, EditIcon, DeleteIcon, ArrowUpIcon, ArrowDownIcon, InvoiceIcon, ReceiptIcon, RevenueIcon, ExpenseIcon } from './Icons.tsx';
+import ConfirmationModal from './ConfirmationModal.tsx';
+import Pagination from './Pagination.tsx';
+import { useAnimatedCounter } from '../hooks/useAnimatedCounter.ts';
+import InvoiceForm from './InvoiceForm.tsx';
+import ExpenseForm from './ExpenseForm.tsx';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EGP' }).format(amount);
 
@@ -32,27 +33,20 @@ const StatCard: React.FC<{ title: string; value: number; icon: React.ReactNode; 
 
 const SkeletonList: React.FC = () => (
     <div className="space-y-4">
-        {[...Array(3)].map((_, i) => (
-             <div key={i} className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-4 space-y-3 animate-pulse">
+        {[...Array(5)].map((_, i) => (
+             <div key={i} className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-4 space-y-3 skeleton-shimmer">
                 <div className="flex justify-between items-start">
                     <div className="h-5 bg-slate-200 dark:bg-slate-700 rounded w-3/5"></div>
                     <div className="h-5 bg-slate-200 dark:bg-slate-700 rounded w-1/5"></div>
                 </div>
                 <div className="space-y-2">
                     <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/2"></div>
-                    <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-2/3"></div>
-                </div>
-                <div className="flex justify-between items-center border-t border-slate-200 dark:border-slate-700 pt-3 mt-3">
-                    <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-1/4"></div>
-                    <div className="flex items-center space-x-2 space-x-reverse">
-                        <div className="h-6 w-6 bg-slate-200 dark:bg-slate-700 rounded-full"></div>
-                        <div className="h-6 w-6 bg-slate-200 dark:bg-slate-700 rounded-full"></div>
-                    </div>
                 </div>
             </div>
         ))}
     </div>
 );
+
 
 type MappedTransaction = Transaction & { cropCycleName: string; supplierName?: string; };
 
@@ -63,297 +57,247 @@ interface RowProps {
     index: number;
 }
 
+
 const InvoiceRowDesktop: React.FC<RowProps> = React.memo(({ transaction, onEdit, onDelete, index }) => (
-    <tr style={{ animationDelay: `${index * 50}ms` }} className="even:bg-slate-50 dark:even:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors duration-200 animate-fadeInSlideUp">
-        <td className="py-4 px-4 whitespace-nowrap">{transaction.date}</td>
-        <td className="py-4 px-4 whitespace-nowrap">{transaction.description}</td>
-        <td className="py-4 px-4 whitespace-nowrap text-slate-500 dark:text-slate-400">{transaction.cropCycleName}</td>
-        <td className="py-4 px-4 whitespace-nowrap text-slate-500 dark:text-slate-400">{transaction.market}</td>
-        <td className="py-4 px-4 whitespace-nowrap">{transaction.quantity?.toLocaleString() ?? '-'}</td>
-        <td className="py-4 px-4 whitespace-nowrap font-medium text-green-600">{formatCurrency(transaction.amount)}</td>
-        <td className="py-4 px-4 whitespace-nowrap font-medium">
-            <div className="flex items-center space-x-2 space-x-reverse">
-                <button onClick={() => onEdit(transaction)} className="text-blue-500 hover:text-blue-700 p-1 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/50" aria-label={`تعديل الفاتورة ${transaction.description}`}><EditIcon className="w-5 h-5"/></button>
-                <button onClick={() => onDelete(transaction.id)} className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50" aria-label={`حذف الفاتورة ${transaction.description}`}><DeleteIcon className="w-5 h-5"/></button>
+    <tr style={{ animationDelay: `${index * 50}ms` }} className="even:bg-slate-50 dark:even:bg-slate-800/50 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/20 animate-fadeInSlideUp">
+        <td className="p-3 text-sm">{transaction.date}</td>
+        <td className="p-3 text-sm font-medium text-slate-800 dark:text-slate-200">{transaction.description || '-'}</td>
+        <td className="p-3 text-sm text-slate-500 dark:text-slate-400">{transaction.cropCycleName}</td>
+        <td className="p-3 text-sm text-slate-500 dark:text-slate-400">{transaction.market}</td>
+        <td className="p-3 text-sm font-semibold text-emerald-600 dark:text-emerald-400">{formatCurrency(transaction.amount)}</td>
+        <td className="p-3 text-sm text-slate-500 dark:text-slate-400">{transaction.quantity ? `${transaction.quantity} ك.ج` : '-'}</td>
+        <td className="p-3 text-center">
+            <div className="flex items-center justify-center gap-1">
+                <button onClick={() => onEdit(transaction)} className="p-1.5 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-full"><EditIcon className="w-4 h-4"/></button>
+                <button onClick={() => onDelete(transaction.id)} className="p-1.5 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-full"><DeleteIcon className="w-4 h-4"/></button>
             </div>
         </td>
     </tr>
-));
-
-const InvoiceRowMobile: React.FC<RowProps> = React.memo(({ transaction, onEdit, onDelete, index }) => (
-    <div style={{ animationDelay: `${index * 50}ms` }} className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-4 space-y-3 animate-fadeInSlideUp">
-        <div className="flex justify-between items-start">
-            <p className="font-bold text-slate-800 dark:text-white flex-1 pr-2">{transaction.description}</p>
-            <p className="font-semibold text-green-600 whitespace-nowrap">{formatCurrency(transaction.amount)}</p>
-        </div>
-        <div className="text-sm text-slate-600 dark:text-slate-400">
-            <p><strong className="font-medium text-slate-700 dark:text-slate-300">العروة:</strong> {transaction.cropCycleName}</p>
-            <p><strong className="font-medium text-slate-700 dark:text-slate-300">السوق:</strong> {transaction.market}</p>
-            <p><strong className="font-medium text-slate-700 dark:text-slate-300">الكمية:</strong> {transaction.quantity?.toLocaleString() ?? '-'} ك.ج</p>
-        </div>
-        <div className="flex justify-between items-center border-t border-slate-200 dark:border-slate-700 pt-3 mt-3">
-            <p className="text-xs text-slate-500 dark:text-slate-400">{transaction.date}</p>
-            <div className="flex items-center space-x-2 space-x-reverse">
-                <button onClick={() => onEdit(transaction)} className="text-blue-500 hover:text-blue-700 p-1 rounded-full" aria-label={`تعديل الفاتورة ${transaction.description}`}><EditIcon className="w-5 h-5"/></button>
-                <button onClick={() => onDelete(transaction.id)} className="text-red-500 hover:text-red-700 p-1 rounded-full" aria-label={`حذف الفاتورة ${transaction.description}`}><DeleteIcon className="w-5 h-5"/></button>
-            </div>
-        </div>
-    </div>
 ));
 
 const ExpenseRowDesktop: React.FC<RowProps> = React.memo(({ transaction, onEdit, onDelete, index }) => (
-    <tr style={{ animationDelay: `${index * 50}ms` }} className="even:bg-slate-50 dark:even:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors duration-200 animate-fadeInSlideUp">
-        <td className="py-4 px-4 whitespace-nowrap">{transaction.date}</td>
-        <td className="py-4 px-4 whitespace-nowrap">{transaction.description}</td>
-        <td className="py-4 px-4 whitespace-nowrap text-slate-500 dark:text-slate-400">{transaction.cropCycleName}</td>
-        <td className="py-4 px-4 whitespace-nowrap">{transaction.category}</td>
-        <td className="py-4 px-4 whitespace-nowrap text-slate-500 dark:text-slate-400">{transaction.supplierName || 'نقدي'}</td>
-        <td className="py-4 px-4 whitespace-nowrap font-medium text-red-600">{formatCurrency(transaction.amount)}</td>
-        <td className="py-4 px-4 whitespace-nowrap font-medium">
-            <div className="flex items-center space-x-2 space-x-reverse">
-                <button onClick={() => onEdit(transaction)} className="text-blue-500 hover:text-blue-700 p-1 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/50" aria-label={`تعديل المصروف ${transaction.description}`}><EditIcon className="w-5 h-5"/></button>
-                <button onClick={() => onDelete(transaction.id)} className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50" aria-label={`حذف المصروف ${transaction.description}`}><DeleteIcon className="w-5 h-5"/></button>
+    <tr style={{ animationDelay: `${index * 50}ms` }} className="even:bg-slate-50 dark:even:bg-slate-800/50 hover:bg-rose-50/50 dark:hover:bg-rose-900/20 animate-fadeInSlideUp">
+        <td className="p-3 text-sm">{transaction.date}</td>
+        <td className="p-3 text-sm font-medium text-slate-800 dark:text-slate-200">{transaction.description}</td>
+        <td className="p-3 text-sm text-slate-500 dark:text-slate-400">{transaction.category}</td>
+        <td className="p-3 text-sm text-slate-500 dark:text-slate-400">{transaction.cropCycleName}</td>
+        <td className="p-3 text-sm font-semibold text-rose-600 dark:text-rose-400">{formatCurrency(transaction.amount)}</td>
+        <td className="p-3 text-sm text-slate-500 dark:text-slate-400">{transaction.supplierName || 'نقدي'}</td>
+        <td className="p-3 text-center">
+             <div className="flex items-center justify-center gap-1">
+                <button onClick={() => onEdit(transaction)} className="p-1.5 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-full"><EditIcon className="w-4 h-4"/></button>
+                <button onClick={() => onDelete(transaction.id)} className="p-1.5 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-full"><DeleteIcon className="w-4 h-4"/></button>
             </div>
         </td>
     </tr>
 ));
 
-const ExpenseRowMobile: React.FC<RowProps> = React.memo(({ transaction, onEdit, onDelete, index }) => (
-     <div style={{ animationDelay: `${index * 50}ms` }} className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-4 space-y-3 animate-fadeInSlideUp">
-         <div className="flex justify-between items-start">
-            <p className="font-bold text-slate-800 dark:text-white flex-1 pr-2">{transaction.description}</p>
-            <p className="font-semibold text-red-600 whitespace-nowrap">{formatCurrency(transaction.amount)}</p>
+const TransactionCardMobile: React.FC<RowProps> = React.memo(({ transaction, onEdit, onDelete }) => (
+    <div className={`bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm flex flex-col gap-3 border-l-4 ${transaction.type === TransactionType.REVENUE ? 'border-emerald-500' : 'border-rose-500'}`}>
+        <div className="flex justify-between items-start">
+            <div>
+                <p className="font-semibold text-slate-800 dark:text-white">{transaction.description}</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">{transaction.cropCycleName}</p>
+            </div>
+            <p className={`text-lg font-bold ${transaction.type === TransactionType.REVENUE ? 'text-emerald-600' : 'text-rose-600'}`}>{formatCurrency(transaction.amount)}</p>
         </div>
-         <div className="text-sm text-slate-600 dark:text-slate-400">
-            <p><strong className="font-medium text-slate-700 dark:text-slate-300">العروة:</strong> {transaction.cropCycleName}</p>
-            <p><strong className="font-medium text-slate-700 dark:text-slate-300">الفئة:</strong> {transaction.category}</p>
-            <p><strong className="font-medium text-slate-700 dark:text-slate-300">المورد:</strong> {transaction.supplierName || 'نقدي'}</p>
+        <div className="text-xs text-slate-500 dark:text-slate-400">
+            {transaction.type === TransactionType.EXPENSE && <p><strong>الفئة:</strong> {transaction.category} {transaction.supplierName ? `(${transaction.supplierName})`: ''}</p>}
+            {transaction.type === TransactionType.REVENUE && <p><strong>السوق:</strong> {transaction.market} | <strong>الكمية:</strong> {transaction.quantity || 0} ك.ج</p>}
         </div>
-        <div className="flex justify-between items-center border-t border-slate-200 dark:border-slate-700 pt-3 mt-3">
+        <div className="flex justify-between items-center border-t border-slate-200 dark:border-slate-700 pt-3 mt-2">
             <p className="text-xs text-slate-500 dark:text-slate-400">{transaction.date}</p>
             <div className="flex items-center space-x-2 space-x-reverse">
-                <button onClick={() => onEdit(transaction)} className="text-blue-500 hover:text-blue-700 p-1 rounded-full" aria-label={`تعديل المصروف ${transaction.description}`}><EditIcon className="w-5 h-5"/></button>
-                <button onClick={() => onDelete(transaction.id)} className="text-red-500 hover:text-red-700 p-1 rounded-full" aria-label={`حذف المصروف ${transaction.description}`}><DeleteIcon className="w-5 h-5"/></button>
+                <button onClick={() => onEdit(transaction)} className="p-1 text-slate-400 hover:text-blue-500 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700"><EditIcon className="w-5 h-5"/></button>
+                <button onClick={() => onDelete(transaction.id)} className="p-1 text-slate-400 hover:text-red-500 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700"><DeleteIcon className="w-5 h-5"/></button>
             </div>
         </div>
     </div>
 ));
 
 
-type SortDirection = 'ascending' | 'descending';
-type SortableKeys = 'date' | 'description' | 'cropCycleName' | 'category' | 'amount' | 'supplierName' | 'quantity' | 'market';
-
-interface TransactionListPageProps {
-    type: 'invoice' | 'expense';
-}
-
-const TransactionListPage: React.FC<TransactionListPageProps> = ({ type }) => {
-    const { loading, transactions, cropCycles, suppliers, settings, fertilizationPrograms, addTransaction, updateTransaction, deleteTransaction } = React.useContext(AppContext) as AppContextType;
+// Main component
+const TransactionListPage: React.FC<{ type: 'invoice' | 'expense' }> = ({ type }) => {
+    const context = React.useContext(AppContext) as AppContextType;
+    const { loading, transactions, cropCycles, suppliers, addTransaction, updateTransaction, deleteTransaction, settings, fertilizationPrograms } = context;
+    
     const location = useLocation();
-    const [searchParams] = useSearchParams();
+    const navigate = useNavigate();
     
-    const [isModalOpen, setIsModalOpen] = React.useState(false);
-    const [editingTransaction, setEditingTransaction] = React.useState<Transaction | undefined>(undefined);
+    const [modal, setModal] = React.useState<{ transaction?: Transaction } | null>(null);
     const [deletingId, setDeletingId] = React.useState<string | null>(null);
-    const [sortConfig, setSortConfig] = React.useState<{ key: SortableKeys, direction: SortDirection }>({ key: 'date', direction: 'descending' });
     const [currentPage, setCurrentPage] = React.useState(1);
-    const ITEMS_PER_PAGE = 10;
+    const [filterCycle, setFilterCycle] = React.useState('all');
+    const [searchQuery, setSearchQuery] = React.useState('');
+    const [sortBy, setSortBy] = React.useState<{ key: keyof MappedTransaction, order: 'asc' | 'desc' }>({ key: 'date', order: 'desc' });
     
-    const isInvoice = type === 'invoice';
-
-    const modalRef = React.useRef<HTMLDivElement>(null);
+    const ITEMS_PER_PAGE = 10;
+    const transactionType = type === 'invoice' ? TransactionType.REVENUE : TransactionType.EXPENSE;
     
     React.useEffect(() => {
         const state = location.state as { action?: string };
-        const queryAction = searchParams.get('action');
-        const action = state?.action || queryAction;
-
-        if (action === (isInvoice ? 'add-invoice' : 'add-expense')) {
-            setEditingTransaction(undefined);
-            setIsModalOpen(true);
+        const action = `add-${type}`;
+        if (state?.action === action) {
+            setModal({});
+            navigate(location.pathname, { replace: true, state: {} });
         }
-    }, [location.state, searchParams, isInvoice]);
+    }, [location, type, navigate]);
 
-    React.useEffect(() => {
-        const isAnyModalOpen = isModalOpen || !!deletingId;
-        if (isAnyModalOpen) document.body.classList.add('body-no-scroll');
-        else document.body.classList.remove('body-no-scroll');
-        return () => document.body.classList.remove('body-no-scroll');
-    }, [isModalOpen, deletingId]);
-
-    // Focus Trap and Escape key handler for modal
-    React.useEffect(() => {
-        if (!isModalOpen) return;
-        
-        const modalNode = modalRef.current;
-        if (!modalNode) return;
-
-        const focusableElements = modalNode.querySelectorAll<HTMLElement>('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
-        if (focusableElements.length === 0) return;
-        
-        const firstElement = focusableElements[0];
-        const lastElement = focusableElements[focusableElements.length - 1];
-
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') setIsModalOpen(false);
-            if (e.key === 'Tab') {
-                if (e.shiftKey) { if (document.activeElement === firstElement) { lastElement.focus(); e.preventDefault(); }
-                } else { if (document.activeElement === lastElement) { firstElement.focus(); e.preventDefault(); } }
-            }
-        };
-        document.addEventListener('keydown', handleKeyDown);
-        firstElement?.focus();
-        
-        return () => document.removeEventListener('keydown', handleKeyDown);
-    }, [isModalOpen]);
-
-    const { processedTransactions, totalAmount } = React.useMemo(() => {
-        const activeCycleIds = new Set(
-            cropCycles.filter(c => c.status === CropCycleStatus.ACTIVE).map(c => c.id)
-        );
-
-        let filtered = transactions
-            .filter(t => 
-                t.type === (isInvoice ? TransactionType.REVENUE : TransactionType.EXPENSE) &&
-                activeCycleIds.has(t.cropCycleId)
-            )
-            .map(t => ({
-                ...t,
-                cropCycleName: cropCycles.find(c => c.id === t.cropCycleId)?.name ?? 'N/A',
-                supplierName: suppliers.find(s => s.id === t.supplierId)?.name ?? '',
-            }));
-        
-        filtered.sort((a, b) => {
-            const aValue = a[sortConfig.key as keyof typeof a];
-            const bValue = b[sortConfig.key as keyof typeof b];
-            if (aValue == null || aValue === undefined) return sortConfig.direction === 'ascending' ? -1 : 1;
-            if (bValue == null || bValue === undefined) return sortConfig.direction === 'ascending' ? 1 : -1;
-            if (aValue < bValue) return sortConfig.direction === 'ascending' ? -1 : 1;
-            if (aValue > bValue) return sortConfig.direction === 'ascending' ? 1 : -1;
-            return 0;
-        });
-        
-        const total = filtered.reduce((sum, t) => sum + t.amount, 0);
-        return { processedTransactions: filtered, totalAmount: total };
-    }, [transactions, sortConfig, cropCycles, suppliers, isInvoice]);
-    
-    const handleSave = React.useCallback((transaction: Omit<Transaction, 'id'> | Transaction) => {
-        if ('id' in transaction) updateTransaction(transaction); else addTransaction(transaction);
-        setIsModalOpen(false);
-        setEditingTransaction(undefined);
-    }, [addTransaction, updateTransaction]);
-
-    const handleEdit = React.useCallback((transaction: Transaction) => {
-        setEditingTransaction(transaction);
-        setIsModalOpen(true);
-    }, []);
-    
-    const handleDelete = React.useCallback((id: string) => setDeletingId(id), []);
-
-    const confirmDelete = React.useCallback(() => {
-        if (deletingId) deleteTransaction(deletingId);
-        setDeletingId(null);
-    }, [deletingId, deleteTransaction]);
-    
-    const requestSort = React.useCallback((key: SortableKeys) => {
-        let direction: SortDirection = 'ascending';
-        if (sortConfig.key === key && sortConfig.direction === 'ascending') direction = 'descending';
-        setSortConfig({ key, direction });
-        setCurrentPage(1); // Reset to first page on sort
-    }, [sortConfig]);
-
-    const getSortIcon = (key: SortableKeys) => {
-        if (sortConfig.key !== key) return <div className="w-4 h-4" />;
-        return sortConfig.direction === 'ascending' ? <ArrowUpIcon className="w-4 h-4" /> : <ArrowDownIcon className="w-4 h-4" />;
+    const handleSort = (key: keyof MappedTransaction) => {
+        if (sortBy.key === key) {
+            setSortBy({ key, order: sortBy.order === 'asc' ? 'desc' : 'asc' });
+        } else {
+            setSortBy({ key, order: 'desc' });
+        }
     };
 
-    const TableHeader: React.FC<{ sortKey: SortableKeys; children: React.ReactNode; }> = ({ sortKey, children }) => (
-        <th className="py-3 px-4 text-right font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider cursor-pointer" onClick={() => requestSort(sortKey)}>
-            <div className="flex items-center"><span>{children}</span><span className="mr-2">{getSortIcon(sortKey)}</span></div>
-        </th>
-    );
+    const sortedAndFilteredTransactions = React.useMemo(() => {
+        const mapped = transactions
+            .filter(t => t.type === transactionType)
+            .map(t => {
+                const cropCycleName = cropCycles.find(c => c.id === t.cropCycleId)?.name || 'غير محددة';
+                const supplierName = suppliers.find(s => s.id === t.supplierId)?.name;
+                return { ...t, cropCycleName, supplierName };
+            });
+        
+        const filtered = mapped.filter(t => 
+            (filterCycle === 'all' || t.cropCycleId === filterCycle) &&
+            ((t.description || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
+             t.cropCycleName.toLowerCase().includes(searchQuery.toLowerCase()))
+        );
+
+        return filtered.sort((a, b) => {
+            const aVal = a[sortBy.key];
+            const bVal = b[sortBy.key];
+            
+            let comparison = 0;
+            if (typeof aVal === 'string' && typeof bVal === 'string') {
+                if(sortBy.key === 'date') comparison = new Date(bVal).getTime() - new Date(aVal).getTime();
+                else comparison = aVal.localeCompare(bVal);
+            } else if (typeof aVal === 'number' && typeof bVal === 'number') {
+                comparison = bVal - aVal;
+            }
+            
+            return sortBy.order === 'desc' ? comparison : -comparison;
+        });
+    }, [transactions, transactionType, cropCycles, suppliers, filterCycle, searchQuery, sortBy]);
+
+    const totalAmount = React.useMemo(() => sortedAndFilteredTransactions.reduce((sum, t) => sum + t.amount, 0), [sortedAndFilteredTransactions]);
+    const totalPages = Math.ceil(sortedAndFilteredTransactions.length / ITEMS_PER_PAGE);
+    const currentTransactions = sortedAndFilteredTransactions.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+    const handleSave = (t: Omit<Transaction, 'id'> | Transaction) => {
+        if ('id' in t) updateTransaction(t); else addTransaction(t);
+        setModal(null);
+    };
+
+    const confirmDelete = () => {
+        if (deletingId) deleteTransaction(deletingId);
+        setDeletingId(null);
+    };
     
+    const isInvoice = type === 'invoice';
+    const config = {
+        title: isInvoice ? 'الفواتير' : 'المصروفات',
+        noun: isInvoice ? 'فاتورة' : 'مصروف',
+        icon: isInvoice ? <InvoiceIcon className="w-8 h-8 text-emerald-500" /> : <ReceiptIcon className="w-8 h-8 text-rose-500" />,
+        color: isInvoice ? 'border-emerald-500' : 'border-rose-500',
+        accentClass: isInvoice ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-rose-600 hover:bg-rose-700',
+        TableComponent: isInvoice ? InvoiceRowDesktop : ExpenseRowDesktop,
+        headers: isInvoice
+            ? [ {key: 'date', label: 'التاريخ'}, {key: 'description', label: 'الوصف'}, {key: 'cropCycleName', label: 'العروة'}, {key: 'market', label: 'السوق'}, {key: 'amount', label: 'المبلغ'}, {key: 'quantity', label: 'الكمية'}, {key: 'actions', label: 'الإجراءات'} ]
+            : [ {key: 'date', label: 'التاريخ'}, {key: 'description', label: 'الوصف'}, {key: 'category', label: 'الفئة'}, {key: 'cropCycleName', label: 'العروة'}, {key: 'amount', label: 'المبلغ'}, {key: 'supplierName', label: 'المورد'}, {key: 'actions', label: 'الإجراءات'} ]
+    };
+
+
     const renderContent = () => {
         if (loading) return <SkeletonList />;
-        if (processedTransactions.length === 0) return (
-            <div className="text-center py-16 bg-white dark:bg-slate-800 rounded-lg border-2 border-dashed border-slate-200 dark:border-slate-700">
-                <div className="flex justify-center mb-4 text-slate-400 dark:text-slate-500">{isInvoice ? <InvoiceIcon className="w-16 h-16"/> : <ReceiptIcon className="w-16 h-16"/>}</div>
-                <p className="text-lg font-semibold text-slate-600 dark:text-slate-300">{isInvoice ? "لا توجد فواتير للعروات النشطة" : "لا توجد مصروفات للعروات النشطة"}</p>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{isInvoice ? "ابدأ بإضافة فاتورة لبيع المحصول." : "ابدأ بإضافة المصروفات لتتبعها."}</p>
-            </div>
-        );
-        
-        const totalPages = Math.ceil(processedTransactions.length / ITEMS_PER_PAGE);
-        const currentTransactions = processedTransactions.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
-
+        if (sortedAndFilteredTransactions.length === 0 && !searchQuery && filterCycle === 'all') {
+             return (
+                <div className="text-center py-16 bg-white dark:bg-slate-800 rounded-lg border-2 border-dashed border-slate-200 dark:border-slate-700">
+                    <div className="flex justify-center mb-4 text-slate-400 dark:text-slate-500">{config.icon}</div>
+                    <p className="text-lg font-semibold text-slate-600 dark:text-slate-300">لا توجد {config.title} مسجلة بعد.</p>
+                </div>
+            );
+        }
+         if (currentTransactions.length === 0) {
+            return (
+                <div className="text-center py-16 bg-white dark:bg-slate-800 rounded-lg border-2 border-dashed border-slate-200 dark:border-slate-700">
+                    <div className="flex justify-center mb-4 text-slate-400 dark:text-slate-500">{config.icon}</div>
+                    <p className="text-lg font-semibold text-slate-600 dark:text-slate-300">لا توجد {config.title} تطابق بحثك.</p>
+                </div>
+            );
+        }
         return (
             <>
+                 {/* Desktop Table */}
                 <div className="hidden md:block bg-white dark:bg-slate-800 rounded-lg shadow-md overflow-hidden">
-                    <div className="overflow-x-auto"><table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700 text-sm"><thead className="bg-slate-50 dark:bg-slate-700/50"><tr><TableHeader sortKey="date">التاريخ</TableHeader><TableHeader sortKey="description">الوصف</TableHeader><TableHeader sortKey="cropCycleName">العروة</TableHeader>{isInvoice ? <><TableHeader sortKey="market">السوق</TableHeader><TableHeader sortKey="quantity">الكمية (ك.ج)</TableHeader></> : <><TableHeader sortKey="category">الفئة</TableHeader><TableHeader sortKey="supplierName">المورد</TableHeader></>}<TableHeader sortKey="amount">المبلغ</TableHeader><th className="py-3 px-4 text-right font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">الإجراءات</th></tr></thead><tbody className="divide-y divide-slate-200 dark:divide-slate-700">{currentTransactions.map((t, index) => (isInvoice ? <InvoiceRowDesktop key={t.id} transaction={t} onEdit={handleEdit} onDelete={handleDelete} index={index} /> : <ExpenseRowDesktop key={t.id} transaction={t} onEdit={handleEdit} onDelete={handleDelete} index={index} />))}</tbody></table></div>
+                    <table className="min-w-full">
+                        <thead className="bg-slate-100 dark:bg-slate-700/50">
+                            <tr>
+                                {config.headers.map(h => (
+                                    <th key={h.key} className="p-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider text-right">
+                                        {h.key !== 'actions' ? (
+                                             <button onClick={() => handleSort(h.key as keyof MappedTransaction)} className="flex items-center gap-1">
+                                                <span>{h.label}</span>
+                                                {sortBy.key === h.key && (sortBy.order === 'asc' ? <ArrowUpIcon className="w-3 h-3"/> : <ArrowDownIcon className="w-3 h-3"/>)}
+                                            </button>
+                                        ) : <div className="text-center">{h.label}</div>}
+                                    </th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {currentTransactions.map((t, index) => <config.TableComponent key={t.id} transaction={t} onEdit={() => setModal({ transaction: t })} onDelete={setDeletingId} index={index}/>)}
+                        </tbody>
+                    </table>
                 </div>
-                <div className="md:hidden space-y-4">{currentTransactions.map((t, index) => (isInvoice ? <InvoiceRowMobile key={t.id} transaction={t} onEdit={handleEdit} onDelete={handleDelete} index={index} /> : <ExpenseRowMobile key={t.id} transaction={t} onEdit={handleEdit} onDelete={handleDelete} index={index} />))}</div>
-                 <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+                {/* Mobile Cards */}
+                <div className="md:hidden space-y-3">
+                     {currentTransactions.map((t, index) => <TransactionCardMobile key={t.id} transaction={t} onEdit={() => setModal({ transaction: t })} onDelete={setDeletingId} index={index}/>)}
+                </div>
+                <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
             </>
         );
-    }
-    
+    };
+
     return (
         <div className="space-y-6">
-             <div className="flex justify-end">
-                 <button onClick={() => { setEditingTransaction(undefined); setIsModalOpen(true); }} className="flex-shrink-0 flex items-center justify-center px-4 py-2 bg-emerald-600 text-white rounded-md shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors">
-                    <AddIcon className="w-5 h-5 ml-2" />
-                    <span>{isInvoice ? 'فاتورة جديدة' : 'مصروف جديد'}</span>
-                </button>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <StatCard title={`إجمالي ${config.title}`} value={totalAmount} icon={isInvoice ? <RevenueIcon className="w-8 h-8 text-emerald-500" /> : <ExpenseIcon className="w-8 h-8 text-rose-500" />} color={config.color} />
+                <StatCard title={`عدد ${config.title}`} value={sortedAndFilteredTransactions.length} icon={config.icon} color={config.color} />
             </div>
-            
-            <StatCard 
-                title={isInvoice ? "إجمالي إيرادات العروات النشطة" : "إجمالي مصروفات العروات النشطة"}
-                value={totalAmount} 
-                icon={isInvoice ? <RevenueIcon className="h-8 w-8 text-green-500"/> : <ExpenseIcon className="h-8 w-8 text-red-500"/>} 
-                color={isInvoice ? "border-green-500" : "border-red-500"} 
-            />
-            
+
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+                <button onClick={() => setModal({})} className={`flex items-center justify-center px-4 py-2 text-white rounded-md shadow-sm ${config.accentClass}`}>
+                    <AddIcon className="w-5 h-5 ml-2" /><span>إضافة {config.noun}</span>
+                </button>
+                <div className="flex-grow flex flex-col sm:flex-row gap-4">
+                    <input type="text" placeholder="ابحث بالوصف أو العروة..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="block w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500"/>
+                    <select value={filterCycle} onChange={e => setFilterCycle(e.target.value)} className="block w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500">
+                        <option value="all">كل العروات</option>
+                        {cropCycles.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                </div>
+            </div>
+
             {renderContent()}
 
-            {isModalOpen && (
-                <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4" aria-modal="true" role="dialog" onClick={() => setIsModalOpen(false)}>
-                    <div ref={modalRef} className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+            {modal && (
+                 <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4" onClick={() => setModal(null)}>
+                    <div className="bg-slate-50 dark:bg-slate-900 rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col" onClick={e=>e.stopPropagation()}>
                         <div className="p-6 pb-4 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
-                           <h2 className="text-2xl font-bold text-slate-800 dark:text-white">{isInvoice ? (editingTransaction ? 'تعديل فاتورة' : 'إضافة فاتورة جديدة') : (editingTransaction ? 'تعديل مصروف' : 'إضافة مصروف جديد')}</h2>
+                            <h2 className="text-2xl font-bold text-slate-800 dark:text-white">{modal.transaction ? 'تعديل' : 'إضافة'} {config.noun}</h2>
                         </div>
                         <div className="p-6 flex-grow overflow-y-auto modal-scroll-contain">
-                            {isInvoice ? (
-                                <InvoiceForm
-                                    invoice={editingTransaction}
-                                    onSave={handleSave} 
-                                    onCancel={() => setIsModalOpen(false)} 
-                                    cycles={cropCycles}
-                                    fertilizationPrograms={fertilizationPrograms}
-                                />
-                            ) : (
-                                <ExpenseForm
-                                    expense={editingTransaction}
-                                    onSave={handleSave} 
-                                    onCancel={() => setIsModalOpen(false)} 
-                                    cycles={cropCycles}
-                                    suppliers={suppliers}
-                                    fertilizationPrograms={fertilizationPrograms}
-                                    settings={settings}
-                                    transactions={transactions}
-                                />
-                            )}
+                            {isInvoice ? 
+                                <InvoiceForm invoice={modal.transaction} onSave={handleSave} onCancel={() => setModal(null)} cycles={cropCycles} fertilizationPrograms={fertilizationPrograms} /> : 
+                                <ExpenseForm expense={modal.transaction} onSave={handleSave} onCancel={() => setModal(null)} cycles={cropCycles} suppliers={suppliers} settings={settings} fertilizationPrograms={fertilizationPrograms} transactions={transactions} />}
                         </div>
                     </div>
                 </div>
             )}
-            
-            <ConfirmationModal
-                isOpen={!!deletingId}
-                onClose={() => setDeletingId(null)}
-                onConfirm={confirmDelete}
-                title={isInvoice ? "تأكيد حذف الفاتورة" : "تأكيد حذف المصروف"}
-                message={isInvoice ? "هل أنت متأكد من حذف هذه الفاتورة؟" : "هل أنت متأكد من حذف هذا المصروف؟"}
-            />
+            <ConfirmationModal isOpen={!!deletingId} onClose={() => setDeletingId(null)} onConfirm={confirmDelete} title={`تأكيد حذف ${config.noun}`} message="هل أنت متأكد من حذف هذه المعاملة؟" />
         </div>
     );
 };

@@ -1,17 +1,20 @@
-import React, { FC, memo, ReactNode, useContext, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import React from 'react';
 import { AppContext } from '../App.tsx';
 import { AppContextType, Transaction, TransactionType, CropCycleStatus, CropCycle } from '../types.ts';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, Cell } from 'recharts';
 import { RevenueIcon, ExpenseIcon, ProfitIcon, ActiveCycleIcon, AddIcon, InvoiceIcon, ReceiptIcon, CycleIcon, SparklesIcon, TrophyIcon, GreenhouseIcon, ReportIcon, FarmerIcon } from './Icons.tsx';
 import { useAnimatedCounter } from '../hooks/useAnimatedCounter.ts';
 import DashboardSkeleton from './DashboardSkeleton.tsx';
+
+// FIX: Cannot find name 'ReactRouterDOM'. Import from 'react-router-dom' instead.
+import { Link } from 'react-router-dom';
+// FIX: Cannot find name 'Recharts'. Import from 'recharts' instead.
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, Cell } from 'recharts';
 
 const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EGP', maximumFractionDigits: 0 }).format(amount);
 };
 
-const AnimatedNumber: FC<{ value: number; formatter: (val: number) => string; }> = memo(({ value, formatter }) => {
+const AnimatedNumber: React.FC<{ value: number; formatter: (val: number) => string; }> = React.memo(({ value, formatter }) => {
     const count = useAnimatedCounter(value);
     return <>{formatter(count)}</>;
 });
@@ -28,7 +31,7 @@ const colorMap: Record<StatCardColor, { hex: string; border: string }> = {
     purple: { hex: '#8b5cf6', border: 'border-purple-500' },
 };
 
-const StatCard: FC<{ title: string; value: number; icon: ReactNode; colorName: StatCardColor; sparklineData?: { value: number }[] }> = memo(({ title, value, icon, colorName, sparklineData }) => {
+const StatCard: React.FC<{ title: string; value: number; icon: React.ReactNode; colorName: StatCardColor; sparklineData?: { value: number }[] }> = React.memo(({ title, value, icon, colorName, sparklineData }) => {
     const theme = colorMap[colorName];
 
     return (
@@ -65,13 +68,13 @@ const StatCard: FC<{ title: string; value: number; icon: ReactNode; colorName: S
 });
 
 
-const HighlightCard: FC<{
+const HighlightCard: React.FC<{
     title: string;
     name: string;
     value: number;
     prefix: string;
-    icon: ReactNode;
-}> = memo(({ title, name, value, prefix, icon }) => (
+    icon: React.ReactNode;
+}> = React.memo(({ title, name, value, prefix, icon }) => (
     <div className="bg-slate-100 dark:bg-slate-800/50 rounded-lg p-4 flex items-center space-x-4 space-x-reverse border border-slate-200 dark:border-slate-700">
         <div className="flex-shrink-0">{icon}</div>
         <div className="flex-1 min-w-0">
@@ -85,14 +88,14 @@ const HighlightCard: FC<{
 ));
 
 
-const QuickActionButton: FC<{ to: string; title: string; icon: ReactNode; color: string; state?: object; }> = memo(({ to, title, icon, color, state }) => (
+const QuickActionButton: React.FC<{ to: string; title: string; icon: React.ReactNode; color: string; state?: object; }> = React.memo(({ to, title, icon, color, state }) => (
     <Link to={to} state={state} className={`flex items-center p-4 rounded-lg shadow-sm transition-all duration-200 ease-in-out transform hover:-translate-y-1 ${color}`}>
         {icon}
         <span className="mr-3 font-semibold text-white">{title}</span>
     </Link>
 ));
 
-const DashboardEmptyState: FC = memo(() => {
+const DashboardEmptyState: React.FC = React.memo(() => {
   return (
     <div className="text-center py-16 px-6 bg-white dark:bg-slate-800 rounded-lg border-2 border-dashed border-slate-200 dark:border-slate-700">
       <SparklesIcon className="w-16 h-16 text-emerald-500 mx-auto mb-6" />
@@ -112,7 +115,7 @@ const DashboardEmptyState: FC = memo(() => {
   );
 });
 
-const LastClosedCycleSummary: FC<{ cycle: CropCycle; stats: { revenue: number; expense: number; profit: number } }> = memo(({ cycle, stats }) => {
+const LastClosedCycleSummary: React.FC<{ cycle: CropCycle; stats: { revenue: number; expense: number; profit: number } }> = React.memo(({ cycle, stats }) => {
     return (
         <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-5 border-l-4 border-slate-500 animate-fadeInSlideUp">
             <h2 className="text-xl font-semibold mb-4 text-slate-800 dark:text-white">ملخص آخر عروة مغلقة</h2>
@@ -148,7 +151,7 @@ const LastClosedCycleSummary: FC<{ cycle: CropCycle; stats: { revenue: number; e
 });
 
 
-const ActiveDashboardEmptyState: FC = memo(() => {
+const ActiveDashboardEmptyState: React.FC = React.memo(() => {
   return (
     <div className="text-center py-16 px-6 bg-white dark:bg-slate-800 rounded-lg border-2 border-dashed border-slate-200 dark:border-slate-700">
       <CycleIcon className="w-16 h-16 text-emerald-500 mx-auto mb-6" />
@@ -165,7 +168,7 @@ const ActiveDashboardEmptyState: FC = memo(() => {
   );
 });
 
-const RecentTransactionRow = memo(({ t }: { t: Transaction }) => (
+const RecentTransactionRow = React.memo(({ t }: { t: Transaction }) => (
     <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors duration-200">
         <td className="py-4 px-4 whitespace-nowrap">{t.date}</td>
         <td className="py-4 px-4 whitespace-nowrap">
@@ -181,7 +184,7 @@ const RecentTransactionRow = memo(({ t }: { t: Transaction }) => (
     </tr>
 ));
 
-const RecentTransactionCard: FC<{ t: Transaction }> = memo(({ t }) => (
+const RecentTransactionCard: React.FC<{ t: Transaction }> = React.memo(({ t }) => (
     <div className="bg-slate-50/50 dark:bg-slate-800/50 p-4 rounded-lg flex justify-between items-center">
         <div>
             <p className="font-semibold text-slate-800 dark:text-white">{t.description}</p>
@@ -197,20 +200,20 @@ const RecentTransactionCard: FC<{ t: Transaction }> = memo(({ t }) => (
     </div>
 ));
 
-const Dashboard: FC = () => {
-    const { cropCycles, transactions, loading, settings, greenhouses } = useContext(AppContext) as AppContextType;
+const Dashboard: React.FC = () => {
+    const { cropCycles, transactions, loading, settings, greenhouses } = React.useContext(AppContext) as AppContextType;
 
-    const activeCycleIds = useMemo(() => 
+    const activeCycleIds = React.useMemo(() => 
         new Set(cropCycles.filter(c => c.status === CropCycleStatus.ACTIVE).map(c => c.id)), 
         [cropCycles]
     );
 
-    const activeTransactions = useMemo(() => 
+    const activeTransactions = React.useMemo(() => 
         transactions.filter(t => activeCycleIds.has(t.cropCycleId)),
         [transactions, activeCycleIds]
     );
 
-    const { totalRevenue, totalExpenses, totalProfit, totalFarmerShare, activeCyclesCount } = useMemo(() => {
+    const { totalRevenue, totalExpenses, totalProfit, totalFarmerShare, activeCyclesCount } = React.useMemo(() => {
         const totalRevenue = activeTransactions
             .filter(t => t.type === TransactionType.REVENUE)
             .reduce((sum, t) => sum + t.amount, 0);
@@ -240,7 +243,7 @@ const Dashboard: FC = () => {
         };
     }, [activeTransactions, cropCycles, settings.isFarmerSystemEnabled, activeCycleIds]);
 
-    const sevenDaysSparklineData = useMemo(() => {
+    const sevenDaysSparklineData = React.useMemo(() => {
         const today = new Date();
         const dailyData: { [key: string]: { revenue: number; expense: number; profit: number } } = {};
         const dailyFarmerShare: { [key: string]: number } = {};
@@ -286,7 +289,7 @@ const Dashboard: FC = () => {
         return { revenue, expense, profit, farmerShare };
     }, [activeTransactions, cropCycles, settings.isFarmerSystemEnabled]);
 
-    const monthlyData = useMemo(() => {
+    const monthlyData = React.useMemo(() => {
         const data: { [key: string]: { month: string; إيرادات: number; مصروفات: number } } = {};
         activeTransactions.forEach(t => {
             const month = new Date(t.date).toLocaleString('ar-EG', { month: 'short', year: 'numeric' });
@@ -302,7 +305,7 @@ const Dashboard: FC = () => {
         return Object.values(data).reverse();
     }, [activeTransactions]);
     
-    const expenseCategoryData = useMemo(() => {
+    const expenseCategoryData = React.useMemo(() => {
         const data: { [key: string]: number } = {};
         activeTransactions
             .filter(t => t.type === TransactionType.EXPENSE)
@@ -314,7 +317,7 @@ const Dashboard: FC = () => {
             .sort((a, b) => b.value - a.value);
     }, [activeTransactions]);
 
-    const kpis = useMemo(() => {
+    const kpis = React.useMemo(() => {
         if (loading || activeTransactions.length === 0) {
             return { starCycle: null, topGreenhouse: null, topExpense: null };
         }
@@ -354,7 +357,7 @@ const Dashboard: FC = () => {
         };
     }, [loading, activeTransactions, cropCycles, greenhouses, expenseCategoryData, settings.isFarmerSystemEnabled, activeCycleIds]);
     
-    const lastClosedCycle = useMemo(() => {
+    const lastClosedCycle = React.useMemo(() => {
         const closedCycles = cropCycles.filter(c => c.status === CropCycleStatus.CLOSED);
         if (closedCycles.length === 0) return null;
 
@@ -371,7 +374,7 @@ const Dashboard: FC = () => {
         return cyclesWithLastDate[0].cycle;
     }, [cropCycles, transactions]);
 
-    const lastClosedCycleStats = useMemo(() => {
+    const lastClosedCycleStats = React.useMemo(() => {
         if (!lastClosedCycle) return null;
 
         const cycleTransactions = transactions.filter(t => t.cropCycleId === lastClosedCycle.id);
@@ -390,7 +393,7 @@ const Dashboard: FC = () => {
 
     const COLORS = ['#10b981', '#0ea5e9', '#f97316', '#f43f5e', '#8b5cf6', '#f59e0b', '#6366f1'];
     
-    const categoryColorMap = useMemo(() => {
+    const categoryColorMap = React.useMemo(() => {
         const map = new Map<string, string>();
         const sortedCategories = [...settings.expenseCategories].sort((a, b) => a.name.localeCompare(b.name));
         sortedCategories.forEach((category, index) => {
