@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useCallback, useRef, useContext, memo, useState } from 'react';
+import React, { useMemo, useEffect, useRef, useContext, memo, useState } from 'react';
 import { AppContext } from '../App';
 import { AppContextType, TransactionType, Supplier, SupplierPayment, Transaction, CropCycle, CropCycleStatus } from '../types';
 import { SupplierIcon, InvoiceIcon, ExpenseIcon, ProfitIcon, AddIcon, EditIcon, DeleteIcon, ReportIcon, CloseIcon } from './Icons';
@@ -406,18 +406,18 @@ const SuppliersPage: React.FC = () => {
         });
     }, [suppliers, transactions, supplierPayments]);
 
-    const handleSaveSupplier = useCallback((supplier: Omit<Supplier, 'id'> | Supplier) => {
+    const handleSaveSupplier = React.useCallback((supplier: Omit<Supplier, 'id'> | Supplier) => {
         if ('id' in supplier) updateSupplier(supplier); else addSupplier(supplier);
         setModal(null);
     }, [updateSupplier, addSupplier]);
 
-    const handleSavePayment = useCallback((payment: Omit<SupplierPayment, 'id'> | SupplierPayment) => {
+    const handleSavePayment = React.useCallback((payment: Omit<SupplierPayment, 'id'> | SupplierPayment) => {
         if ('id' in payment) updateSupplierPayment(payment); else addSupplierPayment(payment);
         setModal(null);
     }, [updateSupplierPayment, addSupplierPayment]);
 
     // FIX: Removed explicit generic type argument from useCallback to resolve an "Untyped function calls may not accept type arguments" error. The function's type is correctly inferred by TypeScript.
-    const confirmDelete = useCallback(() => {
+    const confirmDelete = React.useCallback(() => {
         if (!deletingId) return;
         if (deletingId.type === 'supplier') {
             deleteSupplier(deletingId.id);
@@ -427,16 +427,16 @@ const SuppliersPage: React.FC = () => {
         setDeletingId(null);
     }, [deletingId, deleteSupplier, deleteSupplierPayment]);
     
-    const handleEdit = useCallback((supplier: Supplier) => {
+    const handleEdit = React.useCallback((supplier: Supplier) => {
         setSelectedSupplier(supplier);
         setModal('EDIT_SUPPLIER');
     }, []);
 
-    const handleDelete = useCallback((id: string) => {
+    const handleDelete = React.useCallback((id: string) => {
         setDeletingId({ id, type: 'supplier' });
     }, []);
 
-    const handleDetails = useCallback((supplier: Supplier) => {
+    const handleDetails = React.useCallback((supplier: Supplier) => {
         setSelectedSupplier(supplier);
         setModal('DETAILS');
     }, []);
