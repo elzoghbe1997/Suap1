@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v6';
+const CACHE_VERSION = 'v8'; // Bump version
 const CACHE_NAME = `greenhouse-accountant-${CACHE_VERSION}`;
 const APP_SHELL_URLS = [
     '/',
@@ -16,12 +16,11 @@ const APP_SHELL_URLS = [
 
 self.addEventListener('install', event => {
     event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then(cache => {
-                console.log('Service Worker: Caching App Shell for offline use.');
-                const requests = APP_SHELL_URLS.map(url => new Request(url, { cache: 'reload' }));
-                return cache.addAll(requests);
-            })
+        caches.open(CACHE_NAME).then(cache => {
+            console.log('Service Worker: Caching App Shell for offline use.');
+            const requests = APP_SHELL_URLS.map(url => new Request(url, { cache: 'reload' }));
+            return cache.addAll(requests);
+        })
     );
 });
 
@@ -30,71 +29,47 @@ self.addEventListener('activate', event => {
         caches.keys().then(cacheNames => {
             return Promise.all(
                 cacheNames.map(cacheName => {
-                    if (cacheName !== CACHE_NAME) {
+                    if (cacheName.startsWith('greenhouse-accountant-') && cacheName !== CACHE_NAME) {
                         console.log('Service Worker: Deleting old cache:', cacheName);
                         return caches.delete(cacheName);
                     }
                 })
             );
-        }).then(() => self.clients.claim())
+        }).then(() => self.clients.claim()) // Ensure the new SW takes control immediately.
     );
 });
 
 self.addEventListener('fetch', event => {
     const { request } = event;
 
-    // Strategy: Network-first for navigation, then cache. This ensures users get the latest HTML.
-    // A robust offline fallback is critical for PWA installation criteria.
+    // Strategy: Network falling back to cache for navigation requests.
+    // This ensures users get the latest HTML if they are online.
     if (request.mode === 'navigate') {
         event.respondWith(
-            (async () => {
-                try {
-                    const networkResponse = await fetch(request);
-                    // Check if the response is valid before caching
-                    if (networkResponse && networkResponse.ok) {
-                        const cache = await caches.open(CACHE_NAME);
-                        cache.put(request, networkResponse.clone());
-                    }
-                    return networkResponse;
-                } catch (error) {
-                    console.log('Service Worker: Fetch failed for navigation, returning offline fallback.', error);
-                    // When offline, the browser's installability check needs a valid response for the start_url.
-                    const cache = await caches.open(CACHE_NAME);
-                    // Try to match the exact request first.
-                    const cachedResponse = await cache.match(request);
-                    if (cachedResponse) {
-                        return cachedResponse;
-                    }
-                    // If the exact request isn't cached (e.g. for '/'), serve 'index.html' as the SPA shell.
-                    const fallbackResponse = await cache.match('index.html');
-                    return fallbackResponse;
-                }
-            })()
+            fetch(request).catch(() => {
+                // If the network fails, serve the main app shell from cache.
+                console.log('Service Worker: Fetch failed for navigation. Serving index.html from cache.');
+                return caches.match('index.html');
+            })
         );
         return;
     }
 
-    // Strategy: Cache-first for all other assets (JS, CSS, images, fonts).
-    // This is fast and reliable for offline use.
+    // Strategy: Stale-While-Revalidate for other assets (JS, CSS, fonts, etc.).
+    // This serves assets from cache for speed, then updates the cache in the background.
     event.respondWith(
-        caches.match(request).then(cachedResponse => {
-            if (cachedResponse) {
-                return cachedResponse;
-            }
+        caches.open(CACHE_NAME).then(cache => {
+            return cache.match(request).then(cachedResponse => {
+                const fetchPromise = fetch(request).then(networkResponse => {
+                    // Check for valid responses before caching.
+                    if (networkResponse && networkResponse.status === 200) {
+                        cache.put(request, networkResponse.clone());
+                    }
+                    return networkResponse;
+                });
 
-            return fetch(request).then(networkResponse => {
-                // Check for valid, cacheable responses
-                if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic' && !request.url.startsWith('chrome-extension://')) {
-                    const responseToCache = networkResponse.clone();
-                    caches.open(CACHE_NAME).then(cache => {
-                        cache.put(request, responseToCache);
-                    });
-                }
-                return networkResponse;
-            }).catch(error => {
-                console.warn(`Service Worker: Fetch failed for asset ${request.url}`, error);
-                // For non-navigation requests, if it's not in cache and network fails, it will result in a browser error.
-                // This is usually acceptable for non-critical assets.
+                // Return cached response immediately if available, otherwise wait for network.
+                return cachedResponse || fetchPromise;
             });
         })
     );
