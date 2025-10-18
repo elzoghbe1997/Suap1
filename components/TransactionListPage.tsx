@@ -1,5 +1,5 @@
 import React from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import { AppContext } from '../App';
 import { AppContextType, Transaction, CropCycle, TransactionType, Supplier, CropCycleStatus, FertilizationProgram } from '../types';
 import { AddIcon, EditIcon, DeleteIcon, RevenueIcon, ExpenseIcon, ArrowUpIcon, ArrowDownIcon, InvoiceIcon, ReceiptIcon } from './Icons';
@@ -150,6 +150,7 @@ interface TransactionListPageProps {
 const TransactionListPage: React.FC<TransactionListPageProps> = ({ type }) => {
     const { loading, transactions, cropCycles, suppliers, settings, fertilizationPrograms, addTransaction, updateTransaction, deleteTransaction } = React.useContext(AppContext) as AppContextType;
     const location = useLocation();
+    const [searchParams] = useSearchParams();
     
     const [isModalOpen, setIsModalOpen] = React.useState(false);
     const [editingTransaction, setEditingTransaction] = React.useState<Transaction | undefined>(undefined);
@@ -164,11 +165,14 @@ const TransactionListPage: React.FC<TransactionListPageProps> = ({ type }) => {
     
     React.useEffect(() => {
         const state = location.state as { action?: string };
-        if (state?.action === (isInvoice ? 'add-invoice' : 'add-expense')) {
+        const queryAction = searchParams.get('action');
+        const action = state?.action || queryAction;
+
+        if (action === (isInvoice ? 'add-invoice' : 'add-expense')) {
             setEditingTransaction(undefined);
             setIsModalOpen(true);
         }
-    }, [location.state, isInvoice]);
+    }, [location.state, searchParams, isInvoice]);
 
     React.useEffect(() => {
         const isAnyModalOpen = isModalOpen || !!deletingId;

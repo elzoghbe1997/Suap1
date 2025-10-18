@@ -2,7 +2,8 @@ import React, { useEffect, useState, useContext, createContext, FC, useCallback,
 import { HashRouter, Routes, Route, Navigate, useLocation, Outlet } from 'react-router-dom';
 import Sidebar from './components/Sidebar.tsx';
 import Header from './components/Header.tsx';
-import { AppContextType } from './types.ts';
+// FIX: Added Theme type import to support appearance settings across the app.
+import { AppContextType, Theme } from './types.ts';
 import { useAppData } from './hooks/useAppData.ts';
 import { ToastProvider } from './context/ToastContext.tsx';
 import ToastContainer from './components/ToastContainer.tsx';
@@ -131,40 +132,51 @@ const AppLayout: FC = () => {
         return () => mediaQuery.removeEventListener('change', handler);
     }, []);
     
-    // System-Only Theme Logic
     useEffect(() => {
-        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        const root = document.documentElement;
+        const theme = contextValue.settings.theme;
+        const themeMeta = document.querySelector('meta[name="theme-color"]');
+        const darkColor = '#0f172a'; // slate-900
+        const lightColor = '#f8fafc'; // slate-50
 
-        const applyTheme = (isDark: boolean) => {
-            if (isDark) {
-                document.documentElement.classList.add('dark');
+        const applySystemTheme = (e: { matches: boolean }) => {
+            if (e.matches) {
+                root.classList.add('dark');
+                if (themeMeta) themeMeta.setAttribute('content', darkColor);
             } else {
-                document.documentElement.classList.remove('dark');
+                root.classList.remove('dark');
+                if (themeMeta) themeMeta.setAttribute('content', lightColor);
             }
         };
 
-        const mediaQueryListener = (e: MediaQueryListEvent) => {
-            applyTheme(e.matches);
-        };
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        // FIX: The type error was resolved in the last update, but this ensures robustness by removing any previous listeners before adding a new one.
+        try { mediaQuery.removeEventListener('change', applySystemTheme); } catch(e) {}
 
-        // Apply theme on initial load
-        applyTheme(mediaQuery.matches);
-        
-        // Add listener for changes
-        mediaQuery.addEventListener('change', mediaQueryListener);
+        if (theme === 'system') {
+            applySystemTheme(mediaQuery);
+            mediaQuery.addEventListener('change', applySystemTheme);
+        } else {
+            if (theme === 'dark') {
+                root.classList.add('dark');
+                if (themeMeta) themeMeta.setAttribute('content', darkColor);
+            } else { // 'light'
+                root.classList.remove('dark');
+                if (themeMeta) themeMeta.setAttribute('content', lightColor);
+            }
+        }
 
-        // Cleanup
         return () => {
-            mediaQuery.removeEventListener('change', mediaQueryListener);
+            try { mediaQuery.removeEventListener('change', applySystemTheme); } catch(e) {}
         };
-    }, []);
+    }, [contextValue.settings.theme]);
 
 
     if (contextValue.loading) {
         return (
-             <div className="relative h-screen flex overflow-hidden bg-slate-50 dark:bg-slate-900">
+             <div className="relative h-screen flex overflow-hidden">
                 <div className="flex-1 flex flex-col w-full">
-                    <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+                    <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto bg-slate-50 dark:bg-slate-900">
                         <DashboardSkeleton />
                     </main>
                 </div>
@@ -173,9 +185,9 @@ const AppLayout: FC = () => {
     }
 
     return (
-        <div className="relative h-screen flex overflow-hidden bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-200">
+        <div className="relative h-screen flex overflow-hidden text-slate-900 dark:text-slate-200">
             <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} settings={contextValue.settings} />
-            <div className={`flex-1 flex flex-col w-full transition-all duration-300 ease-in-out ${isSidebarOpen ? 'md:mr-64' : 'md:mr-0'}`}>
+            <div className={`flex-1 flex flex-col w-full transition-all duration-300 ease-in-out bg-slate-50 dark:bg-slate-900 ${isSidebarOpen ? 'md:mr-64' : 'md:mr-0'}`}>
                 <Header toggleSidebar={toggleSidebar} />
                 <main key={location.pathname} className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto animate-page-fade-in">
                     <Suspense fallback={<DashboardSkeleton />}>

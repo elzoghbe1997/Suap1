@@ -60,6 +60,12 @@ export const useAppData = (): AppContextType => {
 
     const updateSettings = async (newSettings: Partial<AppSettings>) => {
         const updated = { ...settings, ...newSettings };
+        
+        // FIX: Persist theme preference to localStorage to prevent Flash of Incorrect Theme (FOUC) on subsequent visits.
+        if (newSettings.theme) {
+            localStorage.setItem('theme', newSettings.theme);
+        }
+
         const { data, error } = await supabase.auth.updateUser({
             data: { app_settings: toSnakeCase(updated) }
         });

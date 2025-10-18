@@ -6,7 +6,7 @@
     <title>المحاسب للصوب الزراعية</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" integrity="sha512-NhSC1YmyruXifcj/KFRWoC561YpHpc5JtzgvbuzxVy-yV6fuindyMVpxfzTCpGm1OMsaGbYbprfqhNscAUY+aQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="manifest" href="manifest.json" />
-    <meta name="theme-color" content="#0f172a" />
+    <meta name="theme-color" content="#f8fafc" />
     <script>
       tailwind.config = {
         darkMode: 'class',
@@ -129,19 +129,25 @@
 </script>
 <script>
   // Prevents Flash of Incorrect Theme (FOUC)
-  // This script strictly follows the system preference.
   (function () {
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      document.documentElement.classList.add('dark');
+    const theme = localStorage.getItem('theme');
+    const root = document.documentElement;
+    const themeMeta = document.querySelector('meta[name="theme-color"]');
+    const isDark = theme === 'dark' || (!theme && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    
+    if (isDark) {
+      root.classList.add('dark');
+      if(themeMeta) themeMeta.setAttribute('content', '#0f172a');
     } else {
-      document.documentElement.classList.remove('dark');
+      root.classList.remove('dark');
+      if(themeMeta) themeMeta.setAttribute('content', '#f8fafc');
     }
   })();
 </script>
 <!-- Add Babel Standalone for in-browser JSX/TSX compilation -->
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
-  <body class="bg-slate-50 dark:bg-slate-900">
+  <body>
     <div id="root">
       <style>
         .initial-loader-container {
@@ -153,15 +159,19 @@
             position: fixed;
             top: 0;
             left: 0;
+            background-color: #f8fafc; /* bg-slate-50 */
+        }
+        .dark .initial-loader-container {
+            background-color: #0f172a; /* bg-slate-900 */
         }
         .initial-loader-spinner {
             animation: spin 1s linear infinite;
             height: 56px;
             width: 56px;
-            color: #10b981;
+            color: #10b981; /* emerald-500 */
         }
         .dark .initial-loader-spinner {
-            color: #34d399;
+            color: #34d399; /* emerald-400 */
         }
         @keyframes spin {
             from {
