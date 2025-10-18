@@ -1,31 +1,33 @@
-import React, { useEffect, useState, useContext, createContext, FC, useCallback } from 'react';
+import React, { useEffect, useState, useContext, createContext, FC, useCallback, lazy, Suspense } from 'react';
 import { HashRouter, Routes, Route, Navigate, useLocation, Outlet } from 'react-router-dom';
 import Sidebar from './components/Sidebar.tsx';
 import Header from './components/Header.tsx';
-import Dashboard from './components/Dashboard.tsx';
-import CropCyclesPage from './components/CropCycles.tsx';
-import CropCycleDetailsPage from './components/CropCycleDetailsPage.tsx';
-import GreenhousePage from './components/Greenhouse.tsx';
-import GreenhouseReport from './components/GreenhouseReport.tsx';
-import ReportsPage from './components/Reports.tsx';
-import SettingsPage from './components/SettingsPage.tsx';
-import FarmerAccountsPage from './components/FarmerAccountsPage.tsx';
-import SuppliersPage from './components/SuppliersPage.tsx';
-import FertilizationProgramsPage from './components/FertilizationProgramsPage.tsx';
-import TreasuryPage from './components/TreasuryPage.tsx';
-import TreasuryDetailsPage from './components/TreasuryDetailsPage.tsx';
-import AdvancesPage from './components/AdvancesPage.tsx';
 import { AppContextType } from './types.ts';
 import { useAppData } from './hooks/useAppData.ts';
 import { ToastProvider } from './context/ToastContext.tsx';
 import ToastContainer from './components/ToastContainer.tsx';
 import { SparklesIcon } from './components/Icons.tsx';
 import { AuthProvider, useAuth } from './context/AuthContext.tsx';
-import AuthPage from './components/AuthPage.tsx';
 import ProtectedRoute from './components/ProtectedRoute.tsx';
 import DashboardSkeleton from './components/DashboardSkeleton.tsx';
 import PWAInstallBanner from './components/PWAInstallBanner.tsx';
-import TransactionListPage from './components/TransactionListPage.tsx';
+
+// Lazy load page components for code splitting
+const Dashboard = lazy(() => import('./components/Dashboard.tsx'));
+const CropCyclesPage = lazy(() => import('./components/CropCycles.tsx'));
+const CropCycleDetailsPage = lazy(() => import('./components/CropCycleDetailsPage.tsx'));
+const GreenhousePage = lazy(() => import('./components/Greenhouse.tsx'));
+const GreenhouseReport = lazy(() => import('./components/GreenhouseReport.tsx'));
+const ReportsPage = lazy(() => import('./components/Reports.tsx'));
+const SettingsPage = lazy(() => import('./components/SettingsPage.tsx'));
+const FarmerAccountsPage = lazy(() => import('./components/FarmerAccountsPage.tsx'));
+const SuppliersPage = lazy(() => import('./components/SuppliersPage.tsx'));
+const FertilizationProgramsPage = lazy(() => import('./components/FertilizationProgramsPage.tsx'));
+const TreasuryPage = lazy(() => import('./components/TreasuryPage.tsx'));
+const TreasuryDetailsPage = lazy(() => import('./components/TreasuryDetailsPage.tsx'));
+const AdvancesPage = lazy(() => import('./components/AdvancesPage.tsx'));
+const AuthPage = lazy(() => import('./components/AuthPage.tsx'));
+const TransactionListPage = lazy(() => import('./components/TransactionListPage.tsx'));
 
 
 // --- PWA Install Context ---
@@ -161,7 +163,9 @@ const AppLayout: FC = () => {
             <div className={`flex-1 flex flex-col w-full transition-all duration-300 ease-in-out ${isSidebarOpen ? 'md:mr-64' : 'md:mr-0'}`}>
                 <Header toggleSidebar={toggleSidebar} />
                 <main key={location.pathname} className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto animate-page-fade-in">
-                    <Outlet />
+                    <Suspense fallback={<DashboardSkeleton />}>
+                        <Outlet />
+                    </Suspense>
                 </main>
             </div>
             
@@ -191,10 +195,23 @@ const AppContent: FC = () => {
       );
   }
   
+  const AuthLoader: FC = () => (
+      <div className="flex items-center justify-center h-screen w-screen bg-slate-900">
+          <svg className="animate-spin h-14 w-14 text-emerald-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+      </div>
+  );
+  
   return (
     <AppContext.Provider value={contextValue}>
       <Routes>
-        <Route path="/login" element={<AuthPage />} />
+        <Route path="/login" element={
+            <Suspense fallback={<AuthLoader />}>
+                <AuthPage />
+            </Suspense>
+        } />
         <Route element={<ProtectedRoute />}>
             <Route element={<AppLayout />}>
                 <Route path="/dashboard" element={<Dashboard />} />
